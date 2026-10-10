@@ -1,6 +1,7 @@
 # CI del frontend web (Angular).
 # - push a cualquier rama de trabajo, develop o main: validación rápida + artefacto.
-# - pull_request hacia develop/main: puerta completa (agrega seguridad y Playwright).
+# - pull_request hacia develop/main: puerta completa (agrega seguridad, Playwright y
+#   la prueba de la imagen de contenedor).
 # Despliegue/promoción a GCP: pendiente (OIDC/WIF y ambientes sin definir).
 # Las acciones se fijan a SHA completo; actualizarlas solo mediante PR revisado.
 name: ci-web
@@ -171,3 +172,17 @@ jobs:
             test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+  container:
+    name: container
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Construir la imagen web
+        run: docker build -t "sportapp/web:${GITHUB_SHA}" --build-arg "REVISION=${GITHUB_SHA}" .
+      - name: Prueba de humo del contenedor
+        run: bash deploy/docker/smoke-test.sh "sportapp/web:${GITHUB_SHA}"
