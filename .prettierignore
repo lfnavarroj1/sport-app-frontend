@@ -1,0 +1,10 @@
+# Generado o externo
+node_modules
+dist
+coverage
+.angular
+package-lock.json
+playwright-report
+playwright-report-integrated
+test-results
+public/favicon.ico

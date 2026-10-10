@@ -1,0 +1,25 @@
+.technical-status {
+  max-width: 40rem;
+  margin: 2rem auto;
+}
+
+h1 {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
+}
+
+dt {
+  font-weight: 500;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

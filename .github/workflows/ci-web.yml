@@ -1,0 +1,173 @@
+# CI del frontend web (Angular).
+# - push a cualquier rama de trabajo, develop o main: validación rápida + artefacto.
+# - pull_request hacia develop/main: puerta completa (agrega seguridad y Playwright).
+# Despliegue/promoción a GCP: pendiente (OIDC/WIF y ambientes sin definir).
+# Las acciones se fijan a SHA completo; actualizarlas solo mediante PR revisado.
+name: ci-web
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'release/**'
+      - 'hotfix/**'
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-web-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
+
+env:
+  CI: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Formato
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Tipos
+        run: npm run typecheck
+
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Unitarias y componentes (Jasmine + cobertura)
+        run: npm run test:ci
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ github.sha }}
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+  build:
+    name: build
+    needs: [quality, unit-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Build de producción
+        run: npm run build
+      - name: Empaquetar artefacto con checksum y manifiesto
+        run: |
+          set -euo pipefail
+          name="sport-app-frontend-${GITHUB_SHA}"
+          mkdir -p artifact
+          tar --sort=name --mtime='1970-01-01 00:00Z' --owner=0 --group=0 --numeric-owner \
+            -C dist/sport-app-frontend/browser -cf - . | gzip -n > "artifact/${name}.tgz"
+          (cd artifact && sha256sum "${name}.tgz" > "${name}.tgz.sha256")
+          node -e '
+            const fs = require("fs");
+            const [sha, rawFile] = fs.readFileSync(process.argv[1], "utf8").trim().split(/\s+/);
+            const file = rawFile.replace(/^\*/, "");
+            const manifest = {
+              repository: process.env.GITHUB_REPOSITORY,
+              commit: process.env.GITHUB_SHA,
+              ref: process.env.GITHUB_REF,
+              version: require("./package.json").version,
+              node: process.version,
+              artifact: file,
+              sha256: sha,
+              checks: ["quality", "unit-tests", "build"],
+              run: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+            };
+            fs.writeFileSync("artifact/manifest.json", JSON.stringify(manifest, null, 2));
+          ' "artifact/${name}.tgz.sha256"
+          cat artifact/manifest.json
+      - name: Publicar artefacto web
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-${{ github.sha }}
+          path: artifact/
+          retention-days: 30
+          if-no-files-found: error
+
+  security:
+    name: security
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Vulnerabilidades en dependencias de producción
+        run: npm run audit:prod
+
+  e2e:
+    name: e2e
+    if: github.event_name == 'pull_request'
+    needs: [quality, unit-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Instalar navegador de Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Playwright (aplicación local, sin BFF; no es E2E integrado)
+        run: npm run e2e
+      - name: Publicar reporte de Playwright
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore

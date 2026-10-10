@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "SportApp",
+    "skipToContent": "Saltar al contenido principal"
+  },
+  "common": {
+    "state": {
+      "loading": "Cargando…",
+      "empty": "No hay información para mostrar.",
+      "retry": "Reintentar"
+    },
+    "errors": {
+      "offline": "No hay conexión. Revisa tu red e inténtalo de nuevo.",
+      "validation": "Algunos datos no son válidos. Revísalos e inténtalo de nuevo.",
+      "unauthenticated": "Tu sesión no es válida. Inicia sesión de nuevo.",
+      "forbidden": "No tienes permiso para realizar esta acción.",
+      "not_found": "La información solicitada no existe o ya no está disponible.",
+      "conflict": "La información cambió mientras trabajabas. Recarga los datos antes de continuar.",
+      "server": "El servicio no está disponible en este momento. Inténtalo más tarde.",
+      "not_configured": "El servicio aún no está disponible en este ambiente.",
+      "unknown": "Ocurrió un error inesperado.",
+      "reference": "Código de referencia: {{id}}"
+    }
+  },
+  "validation": {
+    "required": "Este campo es obligatorio.",
+    "email": "Ingresa un correo electrónico válido.",
+    "minlength": "Debe tener al menos {{requiredLength}} caracteres.",
+    "maxlength": "Debe tener como máximo {{requiredLength}} caracteres.",
+    "min": "El valor mínimo permitido es {{min}}.",
+    "max": "El valor máximo permitido es {{max}}.",
+    "pattern": "El formato no es válido.",
+    "invalid": "El valor no es válido."
+  },
+  "registration": {
+    "title": "Crear cuenta",
+    "fields": {
+      "fullName": "Nombre completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "showPassword": "Mostrar contraseña",
+      "actorType": "Tipo de usuario"
+    },
+    "actorTypes": {
+      "athlete": "Deportista",
+      "organizer": "Organizador de eventos",
+      "service_provider": "Profesional de servicios"
+    },
+    "policies": {
+      "legend": "Políticas",
+      "accept": "Acepto la {{name}}",
+      "read": "Leer documento (se abre en una pestaña nueva)",
+      "names": {
+        "terms": "política de términos y condiciones",
+        "privacy": "política de privacidad y tratamiento de datos"
+      }
+    },
+    "errors": {
+      "emailTaken": "Ya existe una cuenta con este correo electrónico.",
+      "policyRequired": "Debes aceptar esta política para registrarte."
+    },
+    "optionsEmpty": "El registro no está disponible en este momento.",
+    "submit": "Registrarme",
+    "submitting": "Registrando…",
+    "success": {
+      "title": "Tu cuenta fue creada",
+      "message": "Registramos la cuenta asociada a {{email}}."
+    }
+  },
+  "technicalStatus": {
+    "title": "Estado técnico",
+    "description": "Verificación de arranque y configuración de la aplicación web.",
+    "environment": "Ambiente",
+    "bffWeb": "BFF web",
+    "bffConfigured": "Configurado",
+    "bffNotConfigured": "No configurado",
+    "language": "Idioma",
+    "diagnosticId": "Identificador de diagnóstico"
+  }
+}

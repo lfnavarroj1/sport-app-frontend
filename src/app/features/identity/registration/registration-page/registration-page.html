@@ -1,0 +1,42 @@
+<mat-card appearance="outlined" class="registration">
+  <mat-card-header>
+    <mat-card-title>
+      <h1>{{ 'registration.title' | translate }}</h1>
+    </mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (registered(); as result) {
+      <section class="registration__success" role="status" data-testid="registration-success">
+        <h2 #successHeading tabindex="-1">{{ 'registration.success.title' | translate }}</h2>
+        <p>{{ 'registration.success.message' | translate: { email: result.email } }}</p>
+      </section>
+    } @else {
+      <app-async-state
+        [state]="options()"
+        emptyMessageKey="registration.optionsEmpty"
+        (retry)="loadOptions()"
+      >
+        @if (loadedOptions(); as loaded) {
+          @if (failure(); as error) {
+            <div class="registration__error" role="alert" data-testid="registration-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p class="registration__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          <app-registration-form
+            [options]="loaded"
+            [submitting]="submitting()"
+            [serverErrors]="serverErrors()"
+            (submitted)="register($event)"
+            (edited)="onEdited()"
+          />
+        }
+      </app-async-state>
+    }
+  </mat-card-content>
+</mat-card>
