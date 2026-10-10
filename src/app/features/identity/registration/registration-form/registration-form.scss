@@ -1,0 +1,34 @@
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.registration-form__policies {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+
+  legend {
+    margin-bottom: 0.5rem;
+    font: var(--mat-sys-title-small);
+  }
+}
+
+.registration-form__policy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.5rem;
+}
+
+.registration-form__policy-error {
+  flex-basis: 100%;
+  margin: 0 0 0.5rem;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-small);
+}
+
+.registration-form__submit {
+  align-self: flex-start;
+}

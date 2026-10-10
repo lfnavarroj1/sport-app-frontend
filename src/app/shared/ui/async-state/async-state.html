@@ -1,0 +1,33 @@
+@switch (state().status) {
+  @case ('loading') {
+    <div class="async-state" role="status" aria-live="polite" data-testid="state-loading">
+      <mat-progress-spinner mode="indeterminate" diameter="32" aria-hidden="true" />
+      <span>{{ 'common.state.loading' | translate }}</span>
+    </div>
+  }
+  @case ('empty') {
+    <p class="async-state" role="status" data-testid="state-empty">
+      {{ emptyMessageKey() | translate }}
+    </p>
+  }
+  @case ('error') {
+    @if (error(); as error) {
+      <div class="async-state" role="alert" data-testid="state-error">
+        <p>{{ 'common.errors.' + error.kind | translate }}</p>
+        @if (error.correlationId) {
+          <p class="async-state__reference">
+            {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+          </p>
+        }
+        @if (retryable()) {
+          <button mat-stroked-button type="button" (click)="retry.emit()">
+            {{ 'common.state.retry' | translate }}
+          </button>
+        }
+      </div>
+    }
+  }
+  @case ('success') {
+    <ng-content />
+  }
+}

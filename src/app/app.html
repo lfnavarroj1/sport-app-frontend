@@ -1,0 +1,11 @@
+<a class="skip-link" href="#main-content" (click)="skipToMain($event, main)">
+  {{ 'app.skipToContent' | translate }}
+</a>
+
+<mat-toolbar role="banner">
+  <span class="app-name">{{ 'app.name' | translate }}</span>
+</mat-toolbar>
+
+<main #main id="main-content" tabindex="-1">
+  <router-outlet />
+</main>

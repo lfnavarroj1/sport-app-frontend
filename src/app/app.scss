@@ -1,0 +1,30 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+
+  &:focus {
+    top: 0.5rem;
+  }
+}
+
+.app-name {
+  font: var(--mat-sys-title-large);
+}
+
+main {
+  padding: 0 1rem;
+
+  &:focus {
+    outline: none;
+  }
+}

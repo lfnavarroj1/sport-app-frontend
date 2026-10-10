@@ -1,0 +1,83 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate class="registration-form">
+  <mat-form-field appearance="outline">
+    <mat-label>{{ 'registration.fields.fullName' | translate }}</mat-label>
+    <input matInput formControlName="fullName" autocomplete="name" required />
+    <mat-error><app-field-error [control]="form.controls.fullName" /></mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>{{ 'registration.fields.email' | translate }}</mat-label>
+    <input matInput type="email" formControlName="email" autocomplete="email" required />
+    <mat-error>
+      @if (form.controls.email.hasError('emailTaken')) {
+        <span>{{ 'registration.errors.emailTaken' | translate }}</span>
+      } @else {
+        <app-field-error [control]="form.controls.email" />
+      }
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>{{ 'registration.fields.password' | translate }}</mat-label>
+    <input
+      matInput
+      [type]="passwordVisible() ? 'text' : 'password'"
+      formControlName="password"
+      autocomplete="new-password"
+      required
+    />
+    <button
+      mat-icon-button
+      matSuffix
+      type="button"
+      (click)="togglePasswordVisibility()"
+      [attr.aria-label]="'registration.fields.showPassword' | translate"
+      [attr.aria-pressed]="passwordVisible()"
+    >
+      <mat-icon aria-hidden="true">{{
+        passwordVisible() ? 'visibility_off' : 'visibility'
+      }}</mat-icon>
+    </button>
+    <mat-error><app-field-error [control]="form.controls.password" /></mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>{{ 'registration.fields.actorType' | translate }}</mat-label>
+    <mat-select formControlName="actorType" required>
+      @for (actorType of options().actorTypes; track actorType.code) {
+        <mat-option [value]="actorType.code">
+          {{ 'registration.actorTypes.' + actorType.code | translate }}
+        </mat-option>
+      }
+    </mat-select>
+    <mat-error><app-field-error [control]="form.controls.actorType" /></mat-error>
+  </mat-form-field>
+
+  @if (options().policies.length > 0) {
+    <fieldset class="registration-form__policies" formGroupName="policies">
+      <legend>{{ 'registration.policies.legend' | translate }}</legend>
+      @for (policy of options().policies; track policy.id) {
+        <div class="registration-form__policy">
+          <mat-checkbox [formControlName]="policy.id" [required]="policy.required">
+            {{
+              'registration.policies.accept'
+                | translate: { name: ('registration.policies.names.' + policy.id | translate) }
+            }}
+          </mat-checkbox>
+          <a [href]="policy.url" target="_blank" rel="noopener noreferrer">
+            {{ 'registration.policies.read' | translate }}
+          </a>
+          @if (policyMissing(policy.id)) {
+            <p class="registration-form__policy-error" role="alert">
+              {{ 'registration.errors.policyRequired' | translate }}
+            </p>
+          }
+        </div>
+      }
+    </fieldset>
+  }
+
+  <button mat-flat-button type="submit" [disabled]="submitting()" class="registration-form__submit">
+    {{ (submitting() ? 'registration.submitting' : 'registration.submit') | translate }}
+  </button>
+</form>
