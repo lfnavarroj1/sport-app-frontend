@@ -1,0 +1,17 @@
+# Contexto mínimo para `docker build`: solo lo que necesita el build de Angular
+# y los archivos de deploy/docker.
+.git
+.github
+.angular
+.vscode
+node_modules
+dist
+artifact
+coverage
+test-results
+playwright-report*
+playwright
+e2e
+deploy/k8s
+CLAUDE.md
+*.log

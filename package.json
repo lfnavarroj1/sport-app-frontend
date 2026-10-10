@@ -24,6 +24,7 @@
     "e2e:integrated": "playwright test -c playwright.integrated.config.ts",
     "smoke": "playwright test -c playwright.integrated.config.ts --grep @smoke",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "container:build": "docker build -t sportapp/web:local .",
     "precommit": "npm run format:check && npm run lint && npm run typecheck && npm run test:ci",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:ci && npm run build && npm run e2e:smoke"
   },

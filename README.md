@@ -16,23 +16,25 @@ Stack fijado: Angular 21.2 (CLI 21.2.26), TypeScript 5.9.3, Angular Material 21.
 
 ## Comandos
 
-| Propósito                            | Comando                                             |
-| ------------------------------------ | --------------------------------------------------- |
-| Instalación reproducible             | `npm ci`                                            |
-| Ejecución local                      | `npm start` → http://localhost:4200                 |
-| Formato (corregir / verificar)       | `npm run format` / `npm run format:check`           |
-| Lint                                 | `npm run lint`                                      |
-| Tipos (TypeScript estricto)          | `npm run typecheck`                                 |
-| Unitarias y componentes (modo watch) | `npm test`                                          |
-| Unitarias y componentes + cobertura  | `npm run test:ci`                                   |
-| Build de producción                  | `npm run build` → `dist/sport-app-frontend/browser` |
-| Playwright completo (local)          | `npm run e2e`                                       |
-| Playwright smoke (local)             | `npm run e2e:smoke`                                 |
-| Playwright integrado (ambiente)      | `PLAYWRIGHT_BASE_URL=<url> npm run e2e:integrated`  |
-| Smoke posterior a despliegue         | `PLAYWRIGHT_BASE_URL=<url> npm run smoke`           |
-| Vulnerabilidades de producción       | `npm run audit:prod`                                |
-| Verificación rápida antes de commit  | `npm run precommit`                                 |
-| Verificación local equivalente a CI  | `npm run ci`                                        |
+| Propósito                            | Comando                                                                |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| Instalación reproducible             | `npm ci`                                                               |
+| Ejecución local                      | `npm start` → http://localhost:4200                                    |
+| Formato (corregir / verificar)       | `npm run format` / `npm run format:check`                              |
+| Lint                                 | `npm run lint`                                                         |
+| Tipos (TypeScript estricto)          | `npm run typecheck`                                                    |
+| Unitarias y componentes (modo watch) | `npm test`                                                             |
+| Unitarias y componentes + cobertura  | `npm run test:ci`                                                      |
+| Build de producción                  | `npm run build` → `dist/sport-app-frontend/browser`                    |
+| Playwright completo (local)          | `npm run e2e`                                                          |
+| Playwright smoke (local)             | `npm run e2e:smoke`                                                    |
+| Playwright integrado (ambiente)      | `PLAYWRIGHT_BASE_URL=<url> npm run e2e:integrated`                     |
+| Smoke posterior a despliegue         | `PLAYWRIGHT_BASE_URL=<url> npm run smoke`                              |
+| Vulnerabilidades de producción       | `npm run audit:prod`                                                   |
+| Verificación rápida antes de commit  | `npm run precommit`                                                    |
+| Verificación local equivalente a CI  | `npm run ci`                                                           |
+| Imagen de contenedor                 | `npm run container:build` (ver [Contenedor](#contenedor-y-kubernetes)) |
+| Prueba de humo de la imagen          | `bash deploy/docker/smoke-test.sh sportapp/web:local`                  |
 
 La primera vez que se ejecute Playwright: `npx playwright install chromium`.
 
@@ -58,7 +60,11 @@ public/
   app-config.json         configuración de ejecución del ambiente local
   i18n/es.json            textos de la interfaz
 e2e/                      pruebas Playwright
-.github/workflows/        CI (ci-web.yml)
+deploy/
+  docker/                 nginx, script de arranque y prueba de humo de la imagen
+  k8s/base/               Deployment y Service `web` (Kustomize)
+Dockerfile                imagen única para Kubernetes local y Cloud Run
+.github/workflows/        CI (ci-web.yml) y publicación de la imagen (release-web.yml)
 ```
 
 ## Configuración por ambiente
@@ -76,6 +82,42 @@ La aplicación lee `app-config.json` al arrancar, de modo que el mismo artefacto
 
 Si el archivo falta o es inválido, la aplicación **no arranca** y muestra un mensaje de error. Con `bffWebBaseUrl: null`, cualquier llamada al BFF falla con `BffNotConfiguredError` y la interfaz muestra el estado "servicio no disponible".
 
+Con `npm start` se usa `public/app-config.json`. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
+
+## Contenedor y Kubernetes
+
+Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.
+
+```bash
+npm run container:build                 # docker build -t sportapp/web:local .
+docker run --rm -p 18082:8080 -e APP_ENV=local -e BFF_WEB_BASE_URL=http://localhost:18080 sportapp/web:local
+bash deploy/docker/smoke-test.sh sportapp/web:local   # Git Bash, Linux o macOS
+```
+
+En Windows, la prueba de humo se ejecuta desde Git Bash: `npm run` usaría el `bash` de WSL, que no ve Docker Desktop.
+
+| Elemento           | Contrato                                                                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Puerto             | `8080`                                                                                                                           |
+| Usuario            | `101:101` (`nginx`), sin root; compatible con raíz de solo lectura si `/tmp` tiene escritura                                     |
+| `APP_ENV`          | Obligatoria: `local`, `development`, `staging` o `production`                                                                    |
+| `BFF_WEB_BASE_URL` | `http(s)://host[:puerto][/ruta]`; vacía o ausente publica `null`                                                                 |
+| `/app-config.json` | Generado al arrancar en `/tmp/sportapp`; `Cache-Control: no-store`                                                               |
+| `/healthz`         | `200` sin depender de la aplicación (sondas de Kubernetes)                                                                       |
+| Rutas de la SPA    | Toda ruta que no sea un archivo devuelve `index.html`; un archivo con hash inexistente devuelve `404`                            |
+| Caché              | `index.html` y `app-config.json` sin caché; archivos con hash `max-age=31536000, immutable`; el resto (i18n, favicon) `no-cache` |
+
+Si `APP_ENV` o `BFF_WEB_BASE_URL` son inválidas, el contenedor termina con código `64` y un mensaje en la salida de error; nginx no llega a arrancar.
+
+`deploy/k8s/base` (`kubectl kustomize deploy/k8s/base`) define el `Deployment` y el `Service` `web` (puerto `80` → `http`). Lee `APP_ENV` y `BFF_WEB_BASE_URL` del ConfigMap `sportapp-runtime`. La imagen va sin tag, y el namespace, el ConfigMap, el tag y el acceso en `localhost:18082` los aporta `sport-app-platform`.
+
+| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           |
+| ----------------------------- | ------------ | -------------------------------------------- |
+| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     |
+| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` |
+
+Para que el navegador pueda llamar al BFF, `bff-web` debe permitir CORS para el origen de la web (`localhost:18082`, `localhost:4200` y la URL de producción). Es una tarea del backend.
+
 ## Pruebas
 
 - **Unitarias y componentes (Jasmine + TestBed):** estado, validadores, transformaciones y estados de interfaz (carga, éxito, vacío, validación, error, conflicto, permiso denegado). La cobertura se reporta en `coverage/`; el umbral web aún no está ratificado, por eso no se aplica uno.
@@ -86,14 +128,22 @@ Si el archivo falta o es inválido, la aplicación **no arranca** y muestra un m
 
 Workflow `ci-web` (`.github/workflows/ci-web.yml`):
 
-| Evento                                                                                    | Jobs                             |
-| ----------------------------------------------------------------------------------------- | -------------------------------- |
-| `push` a `feature/**`, `fix/**`, `chore/**`, `release/**`, `hotfix/**`, `develop`, `main` | `quality`, `unit-tests`, `build` |
-| `pull_request` hacia `develop` o `main`                                                   | lo anterior + `security` y `e2e` |
+| Evento                                                                                    | Jobs                                          |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `push` a `feature/**`, `fix/**`, `chore/**`, `release/**`, `hotfix/**`, `develop`, `main` | `quality`, `unit-tests`, `build`              |
+| `pull_request` hacia `develop` o `main`                                                   | lo anterior + `security`, `e2e` y `container` |
 
-`build` publica el artefacto web empaquetado de forma reproducible con su SHA-256 y un `manifest.json` (repositorio, commit, versión, checks). Permisos mínimos (`contents: read`) y acciones fijadas a SHA completo. Ningún workflow fusiona ramas automáticamente.
+`build` publica el artefacto web empaquetado de forma reproducible con su SHA-256 y un `manifest.json` (repositorio, commit, versión, checks). `container` construye la imagen y ejecuta `deploy/docker/smoke-test.sh`. Permisos mínimos (`contents: read`) y acciones fijadas a SHA completo. Ningún workflow fusiona ramas automáticamente.
 
-Checks propuestos como obligatorios para el PR: `quality`, `unit-tests`, `build`, `security`, `e2e`.
+Checks propuestos como obligatorios para el PR: `quality`, `unit-tests`, `build`, `security`, `e2e`, `container`.
+
+Workflow `release-web` (`.github/workflows/release-web.yml`), al crear un tag `vX.Y.Z`, en el Environment `production`:
+
+1. Rechaza el tag si su commit no pertenece a `main`.
+2. Construye la imagen una vez y la prueba con `deploy/docker/smoke-test.sh`.
+3. Publica esa misma imagen en `GCP_ARTIFACT_REGISTRY` como `web:<tag>` mediante OIDC/WIF y deja el digest en el resumen del job.
+
+Si faltan `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DELIVERY_SERVICE_ACCOUNT`, `GCP_ARTIFACT_REGISTRY` o `GCP_ARTIFACT_REGISTRY_HOST`, informa `BLOQUEADO` y no publica. No despliega: Cloud Run se actualiza desde Terraform de `sport-app-platform` con el digest.
 
 ## Ramas y commits
 
@@ -106,6 +156,8 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Contrato OpenAPI del BFF web: sin él no hay cliente generado ni pruebas de contrato.
 - URL del BFF web por ambiente y nombre de la cabecera de correlación.
 - Sesión/autenticación (ADR-009).
-- Despliegue a GCP (destino, OIDC/WIF, ambientes de GitHub) y artefacto/imagen definitiva.
+- Variables del Environment `production` en GitHub (OIDC/WIF y Artifact Registry) para que `release-web` publique.
+- CORS en `bff-web` para el origen de la web (tarea del backend).
+- Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).
