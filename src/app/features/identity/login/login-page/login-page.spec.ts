@@ -123,7 +123,18 @@ describe('LoginPage (HU003)', () => {
       password: 'clave-sintetica-123',
     });
     expect(session.user()).toEqual(SESSION.user);
-    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/inicio');
+    // ADR-025: el profesional entra a su propio inicio.
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/profesional/inicio');
+  });
+
+  it('CA10: un actor ausente o desconocido no inicia sesión y va al acceso no autorizado', async () => {
+    gateway.login.and.resolveTo({ kind: 'unauthorized_actor' });
+    await create();
+
+    await fillAndSubmit();
+
+    expect(session.isAuthenticated()).toBeFalse();
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/acceso-no-autorizado');
   });
 
   it('CA2/CA3: muestra un mensaje genérico, no inicia sesión y descarta la contraseña', async () => {

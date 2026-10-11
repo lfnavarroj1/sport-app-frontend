@@ -1,6 +1,26 @@
 import { Routes } from '@angular/router';
 
-import { requireSession } from './core/session/session.guards';
+import { ActorType } from './core/session/session.store';
+import { requireActor } from './shell/navigation/actor.guards';
+
+/** Área autenticada de un actor (ADR-025): menú lateral y su inicio. */
+function actorArea(path: string, actor: ActorType): Routes[number] {
+  return {
+    path,
+    canActivate: [requireActor(actor)],
+    data: { actor },
+    loadComponent: () =>
+      import('./shell/actor-shell/actor-shell').then((module) => module.ActorShell),
+    children: [
+      {
+        path: 'inicio',
+        loadComponent: () =>
+          import('./shell/actor-home/actor-home-page').then((module) => module.ActorHomePage),
+      },
+      { path: '', pathMatch: 'full', redirectTo: 'inicio' },
+    ],
+  };
+}
 
 /**
  * Cada feature de dominio (`features/<dominio>`) se registra aquí con carga
@@ -14,18 +34,20 @@ export const routes: Routes = [
       import('./features/identity/login/login.routes').then((module) => module.LOGIN_ROUTES),
   },
   {
-    // HU003: inicio común tras iniciar sesión.
-    path: 'inicio',
-    canActivate: [requireSession],
-    loadComponent: () =>
-      import('./features/identity/home/home-page').then((module) => module.HomePage),
-  },
-  {
     path: 'registro',
     loadChildren: () =>
       import('./features/identity/registration/registration.routes').then(
         (module) => module.REGISTRATION_ROUTES,
       ),
+  },
+  // HU003 (CA7–CA10) y ADR-025: un inicio y un menú por tipo de actor.
+  actorArea('deportista', 'athlete'),
+  actorArea('organizador', 'organizer'),
+  actorArea('profesional', 'service_provider'),
+  {
+    path: 'acceso-no-autorizado',
+    loadComponent: () =>
+      import('./shell/unauthorized/unauthorized-page').then((module) => module.UnauthorizedPage),
   },
   {
     path: 'status',

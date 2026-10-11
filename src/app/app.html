@@ -11,7 +11,7 @@
     @if (user(); as user) {
       <a
         mat-button
-        routerLink="/inicio"
+        [routerLink]="homeRoute()"
         routerLinkActive="app-nav__active"
         ariaCurrentWhenActive="page"
       >

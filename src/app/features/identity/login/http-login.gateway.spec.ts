@@ -137,6 +137,29 @@ describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
     });
   }
 
+  it('CA10: un actor_type desconocido no produce sesión', async () => {
+    const outcome = await loginWith({
+      status: 200,
+      body: {
+        ...CREATE_SESSION_RESPONSES.authenticated.body,
+        user: { ...CREATE_SESSION_RESPONSES.authenticated.body.user, actor_type: 'admin' },
+      },
+    });
+
+    expect(outcome).toEqual({ kind: 'unauthorized_actor' });
+  });
+
+  it('CA10: un actor_type ausente no asume un rol predeterminado', async () => {
+    const user: Record<string, unknown> = { ...CREATE_SESSION_RESPONSES.authenticated.body.user };
+    delete user['actor_type'];
+    const outcome = await loginWith({
+      status: 200,
+      body: { ...CREATE_SESSION_RESPONSES.authenticated.body, user },
+    });
+
+    expect(outcome).toEqual({ kind: 'unauthorized_actor' });
+  });
+
   it('un 401 que no es invalid_credentials no se presenta como credenciales incorrectas', async () => {
     const outcome = await loginWith({ status: 401, body: { detail: 'otro' } });
 

@@ -20,7 +20,8 @@ import { SessionStore } from '../../../../core/session/session.store';
 import { AuthShell } from '../../../../shared/ui/auth-shell/auth-shell';
 import { FieldError } from '../../../../shared/forms/field-error/field-error';
 import { LoginGateway } from '../login.gateway';
-import { HOME_BY_ACTOR_TYPE, LoginOutcome } from '../login.model';
+import { homeFor, UNAUTHORIZED_PATH } from '../../../../shell/navigation/navigation.registry';
+import { LoginOutcome } from '../login.model';
 
 /** Límites de `LoginRequest` en el contrato bff-web 0.3.0. */
 const LIMITS = { emailMax: 254, passwordMax: 128 } as const;
@@ -117,7 +118,12 @@ export class LoginPage {
 
     if (outcome.kind === 'authenticated') {
       this.session.start(outcome.session);
-      await this.router.navigateByUrl(HOME_BY_ACTOR_TYPE[outcome.session.user.actorType]);
+      await this.router.navigateByUrl(homeFor(outcome.session.user.actorType));
+      return;
+    }
+    if (outcome.kind === 'unauthorized_actor') {
+      this.session.end();
+      await this.router.navigateByUrl(UNAUTHORIZED_PATH);
       return;
     }
 

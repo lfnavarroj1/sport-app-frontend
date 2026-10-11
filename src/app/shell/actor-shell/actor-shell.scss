@@ -1,0 +1,105 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: flex;
+  flex: 1;
+}
+
+.actor-shell {
+  flex: 1;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.actor-shell__menu {
+  width: 17rem;
+  padding: 1rem 0.5rem;
+  border-right: 0;
+  background: var(--mat-sys-surface);
+  box-shadow: 1px 0 0 var(--mat-sys-outline-variant);
+}
+
+.actor-shell__role {
+  margin: 0 0.75rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--sa-night);
+  color: var(--sa-on-night);
+  font: var(--mat-sys-label-large);
+  text-align: center;
+}
+
+.actor-shell__group {
+  margin: 1rem 1rem 0.25rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mat-mdc-nav-list {
+  padding: 0;
+  @include mat.list-overrides(
+    (
+      list-item-container-shape: 999px,
+    )
+  );
+}
+
+.actor-shell__item--active {
+  background: color-mix(in srgb, var(--sa-brand-orange) 16%, transparent);
+
+  .mat-icon {
+    color: var(--mat-sys-primary);
+  }
+}
+
+.actor-shell__upcoming {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3rem;
+  padding: 0.375rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: default;
+
+  .mat-icon {
+    flex: none;
+    opacity: 0.6;
+  }
+}
+
+.actor-shell__upcoming-text {
+  display: flex;
+  flex-direction: column;
+  font: var(--mat-sys-body-large);
+  line-height: 1.25;
+}
+
+.actor-shell__upcoming-line {
+  font: var(--mat-sys-label-small);
+  letter-spacing: 0.02em;
+  color: var(--mat-sys-primary);
+}
+
+.actor-shell__plan {
+  margin: 0.5rem 0.75rem 0;
+
+  p {
+    margin: 0.25rem 0.25rem 0;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    font: var(--mat-sys-body-small);
+  }
+}
+
+.actor-shell__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.actor-shell__toggle {
+  align-self: flex-start;
+  margin: 1rem 1rem 0;
+}

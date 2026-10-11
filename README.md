@@ -54,6 +54,7 @@ src/
       ui/                 ViewState y <app-async-state> (carga, vacío, error, éxito)
       forms/              <app-field-error> (mensajes de validación localizados)
     features/             una carpeta por dominio: identity, affiliation, training, services, events
+    shell/                áreas autenticadas por actor (ADR-025): menú lateral, inicios, guardas, registro de navegación
     technical/            ruta técnica /status (arranque y configuración; no es una HU)
   testing/                utilidades solo para pruebas
 public/
@@ -101,7 +102,9 @@ Dirección «Energía deportiva» (decisión del responsable, 2026-10-11): naran
 
 ## Sesión (HU003)
 
-- `/iniciar-sesion` es la página inicial; desde ella se llega al registro (`/registro`). Tras ingresar, cada tipo de cuenta va al destino de `HOME_BY_ACTOR_TYPE` (`features/identity/login/login.model.ts`); hoy todos van a `/inicio`, protegida por `requireSession`.
+- `/iniciar-sesion` es la página inicial; desde ella se llega al registro (`/registro`).
+- **Inicio por tipo de usuario (ADR-025, HU003 CA7–CA10):** tras ingresar, `athlete` va a `/deportista/inicio`, `organizer` a `/organizador/inicio` y `service_provider` a `/profesional/inicio`. Cada área tiene un menú lateral izquierdo (`shell/actor-shell`) y la guarda `requireActor`: la URL de otro actor lleva a `/acceso-no-autorizado`. Un `actor_type` ausente o desconocido no inicia sesión ni asume un rol.
+- **Registro de navegación** (`shell/navigation/navigation.registry.ts`): fuente única de opciones por actor, con grupo, orden, icono, ruta documentada, permiso y HU. Solo incluye HU aprobadas para web. Las opciones cuya HU aún no existe se muestran deshabilitadas como «Próximamente» (decisión del responsable, 2026-10-11): se activan con `available: true` y su ruta cuando se implemente la HU. Para el deportista, las opciones del plan esperan el contrato de capacidades (ADR-024).
 - La sesión vive **solo en memoria** (`core/session/session.store.ts`): el access token nunca se escribe en `localStorage`, `sessionStorage`, cookies accesibles ni logs. Al vencer (`expires_in`) la sesión termina y se pide ingresar de nuevo; al recargar la pestaña también.
 - El refresh token debe viajar en una cookie HttpOnly que fija el BFF (decisión del 2026-10-10). El contrato 0.3.0 aún lo devuelve en el cuerpo; la web lo descarta sin guardarlo. La renovación automática y la recuperación de la sesión al recargar esperan el contrato con la cookie.
 - Los errores de credenciales usan siempre el mismo mensaje genérico; `429 too_many_attempts` muestra la espera indicada por `Retry-After`.

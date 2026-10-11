@@ -3,13 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { toApiError } from '../../../core/api/api-error';
-import { readErrorResponse } from '../../../core/api/bff-web/contract';
+import { ACTOR_TYPES, readErrorResponse } from '../../../core/api/bff-web/contract';
 import {
   BffWebSessionsApi,
   CREATE_SESSION_ERROR_CODES,
   SessionResponseDto,
 } from '../../../core/api/bff-web/sessions.api';
-import { Session } from '../../../core/session/session.store';
+import { ActorType, Session } from '../../../core/session/session.store';
 import { LoginGateway } from './login.gateway';
 import { LoginCredentials, LoginOutcome } from './login.model';
 
@@ -23,11 +23,20 @@ export class HttpLoginGateway extends LoginGateway {
       const response = await firstValueFrom(
         this.api.createSession({ email: credentials.email, password: credentials.password }),
       );
+      // CA10: un actor ausente o fuera del catálogo no inicia sesión ni recibe
+      // un rol predeterminado.
+      if (!isKnownActor(response.user?.actor_type)) {
+        return { kind: 'unauthorized_actor' };
+      }
       return { kind: 'authenticated', session: toSession(response, Date.now()) };
     } catch (error) {
       return outcomeFromError(error);
     }
   }
+}
+
+function isKnownActor(value: unknown): value is ActorType {
+  return (ACTOR_TYPES as readonly unknown[]).includes(value);
 }
 
 /**
