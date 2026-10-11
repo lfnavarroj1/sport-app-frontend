@@ -26,6 +26,13 @@
       autocomplete="new-password"
       required
     />
+    <!-- mat-form-field enlaza la pista con el campo mediante aria-describedby. -->
+    <mat-hint>
+      {{
+        'registration.fields.passwordHint'
+          | translate: { min: limits.passwordMin, max: limits.passwordMax }
+      }}
+    </mat-hint>
     <button
       mat-icon-button
       matSuffix
@@ -53,29 +60,24 @@
     <mat-error><app-field-error [control]="form.controls.actorType" /></mat-error>
   </mat-form-field>
 
-  @if (options().policies.length > 0) {
-    <fieldset class="registration-form__policies" formGroupName="policies">
-      <legend>{{ 'registration.policies.legend' | translate }}</legend>
-      @for (policy of options().policies; track policy.id) {
-        <div class="registration-form__policy">
-          <mat-checkbox [formControlName]="policy.id" [required]="policy.required">
-            {{
-              'registration.policies.accept'
-                | translate: { name: ('registration.policies.names.' + policy.id | translate) }
-            }}
-          </mat-checkbox>
-          <a [href]="policy.url" target="_blank" rel="noopener noreferrer">
-            {{ 'registration.policies.read' | translate }}
-          </a>
-          @if (policyMissing(policy.id)) {
-            <p class="registration-form__policy-error" role="alert">
-              {{ 'registration.errors.policyRequired' | translate }}
-            </p>
-          }
-        </div>
+  <fieldset class="registration-form__policies">
+    <legend>{{ 'registration.policies.legend' | translate }}</legend>
+    <div class="registration-form__policy">
+      <mat-checkbox formControlName="policies" required>
+        {{ 'registration.policies.accept' | translate: { version: options().policiesVersion } }}
+      </mat-checkbox>
+      @if (policiesError(); as error) {
+        <p class="registration-form__policy-error" role="alert">
+          {{
+            (error === 'outdated'
+              ? 'registration.errors.policiesOutdated'
+              : 'registration.errors.policyRequired'
+            ) | translate
+          }}
+        </p>
       }
-    </fieldset>
-  }
+    </div>
+  </fieldset>
 
   <button mat-flat-button type="submit" [disabled]="submitting()" class="registration-form__submit">
     {{ (submitting() ? 'registration.submitting' : 'registration.submit') | translate }}

@@ -5,13 +5,15 @@ import { defineConfig, devices } from '@playwright/test';
  * `ng serve` y la configuración `public/app-config.json` (ambiente `local`).
  *
  * Estas ejecuciones NO son E2E integrados. Los recorridos que dependan del BFF
- * deben usar un simulador derivado del contrato OpenAPI aprobado; la suite
- * contra un ambiente desplegado es `playwright.integrated.config.ts`.
+ * usan el simulador derivado del contrato (`@simulado`); los marcados
+ * `@integrado` necesitan el BFF real y solo corren con
+ * `playwright.integrated.config.ts`.
  */
 const PORT = 4300;
 
 export default defineConfig({
   testDir: './e2e',
+  grepInvert: /@integrado/,
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,

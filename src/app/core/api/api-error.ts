@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { ConfigValueMissingError } from '../config/app-config';
 import { BffNotConfiguredError } from './bff-web-url';
 
 /**
@@ -34,7 +35,7 @@ export interface ApiError {
  * lineamientos transversales; ajustar cuando se publique el contrato compartido.
  */
 export function toApiError(error: unknown): ApiError {
-  if (error instanceof BffNotConfiguredError) {
+  if (error instanceof BffNotConfiguredError || error instanceof ConfigValueMissingError) {
     return { kind: 'not_configured', status: null, code: null, correlationId: null };
   }
   if (!(error instanceof HttpErrorResponse)) {

@@ -1,16 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
+import { ConfigValueMissingError } from '../../../../core/config/app-config';
 import { RegistrationGateway } from '../registration.gateway';
 import { RegistrationDraft, RegistrationOptions, RegistrationOutcome } from '../registration.model';
 import { RegistrationForm } from '../registration-form/registration-form';
 import { RegistrationPage } from './registration-page';
 
-// Datos sintéticos de prueba; no representan el catálogo aprobado.
+// Datos sintéticos de prueba.
 const OPTIONS: RegistrationOptions = {
   actorTypes: [{ code: 'athlete' }],
-  policies: [{ id: 'terms', version: 'v1', url: 'https://example.test/terms', required: true }],
+  policiesVersion: 'v-sintetica',
 };
 
 const DRAFT: RegistrationDraft = {
@@ -18,7 +20,7 @@ const DRAFT: RegistrationDraft = {
   email: 'persona@example.test',
   password: 'clave-de-prueba',
   actorType: 'athlete',
-  acceptedPolicies: [{ id: 'terms', version: 'v1' }],
+  acceptedPoliciesVersion: 'v-sintetica',
 };
 
 class FakeRegistrationGateway extends RegistrationGateway {
@@ -64,7 +66,11 @@ describe('RegistrationPage (HU001)', () => {
     gateway = new FakeRegistrationGateway();
     await TestBed.configureTestingModule({
       imports: [RegistrationPage],
-      providers: [provideTranslateTesting(), { provide: RegistrationGateway, useValue: gateway }],
+      providers: [
+        provideRouter([]),
+        provideTranslateTesting(),
+        { provide: RegistrationGateway, useValue: gateway },
+      ],
     }).compileComponents();
   });
 
@@ -98,8 +104,19 @@ describe('RegistrationPage (HU001)', () => {
     expect(element.querySelector('app-registration-form form')).not.toBeNull();
   });
 
+  it('informa que el registro no está disponible si el ambiente no lo configura', async () => {
+    gateway.loadOptions.and.rejectWith(new ConfigValueMissingError('registrationPoliciesVersion'));
+
+    const element = await create();
+
+    expect(element.querySelector('[data-testid="state-error"]')?.textContent).toContain(
+      'El servicio aún no está disponible en este ambiente.',
+    );
+    expect(element.querySelector('form')).toBeNull();
+  });
+
   it('muestra un estado vacío si no hay tipos de actor habilitados', async () => {
-    gateway.loadOptions.and.resolveTo({ actorTypes: [], policies: [] });
+    gateway.loadOptions.and.resolveTo({ actorTypes: [], policiesVersion: 'v-sintetica' });
 
     const element = await create();
 
@@ -120,6 +137,17 @@ describe('RegistrationPage (HU001)', () => {
     expect(success?.textContent).toContain('persona@example.test');
     expect(element.querySelector('input[type="password"]')).toBeNull();
     expect(document.activeElement).toBe(success?.querySelector('h2') ?? null);
+    expect(success?.querySelector('a')?.getAttribute('href')).toBe('/iniciar-sesion');
+  });
+
+  it('permite volver al inicio de sesión si ya se tiene una cuenta', async () => {
+    const element = await create();
+    const link = element.querySelector<HTMLAnchorElement>('.registration__login a');
+
+    expect(element.querySelector('.registration__login')?.textContent).toContain(
+      '¿Ya tienes una cuenta?',
+    );
+    expect(link?.getAttribute('href')).toBe('/iniciar-sesion');
   });
 
   it('CA2: entrega al formulario el error de correo ya registrado', async () => {
@@ -130,6 +158,33 @@ describe('RegistrationPage (HU001)', () => {
 
     expect(element.querySelector('[data-testid="registration-success"]')).toBeNull();
     expect(element.textContent).toContain('Ya existe una cuenta con este correo electrónico.');
+  });
+
+  it('entrega al formulario el aviso de políticas desactualizadas', async () => {
+    gateway.register.and.resolveTo({ kind: 'policies_outdated' });
+    const element = await create();
+
+    await submitDraft();
+
+    expect(element.querySelector('[data-testid="registration-success"]')).toBeNull();
+    expect(element.textContent).toContain('La versión de las políticas ya no está vigente.');
+  });
+
+  it('CA3: entrega al formulario los campos rechazados por el backend', async () => {
+    gateway.register.and.resolveTo({ kind: 'invalid', fields: ['email'] });
+    const element = await create();
+
+    await submitDraft();
+
+    const form = fixture.debugElement.query(
+      (el) => el.componentInstance instanceof RegistrationForm,
+    ).componentInstance as RegistrationForm;
+    expect(element.querySelector('[data-testid="registration-success"]')).toBeNull();
+    expect(form.serverErrors()).toEqual({
+      emailTaken: false,
+      policiesOutdated: false,
+      invalidFields: ['email'],
+    });
   });
 
   it('muestra un fallo técnico de forma segura y trazable, sin interpretarlo como éxito', async () => {
@@ -182,6 +237,20 @@ describe('RegistrationPage (HU001)', () => {
     await submitDraft();
     editForm();
     await submitDraft({ ...DRAFT, email: 'otra@example.test' });
+
+    const [first, second] = keysUsed();
+    expect(second).not.toBe(first);
+  });
+
+  it('CA5: inicia un intento nuevo si el BFF rechaza la clave por reutilizada', async () => {
+    gateway.register.and.resolveTo({
+      kind: 'failed',
+      error: { kind: 'conflict', status: 409, code: 'idempotency_key_reused', correlationId: null },
+    });
+    await create();
+
+    await submitDraft();
+    await submitDraft();
 
     const [first, second] = keysUsed();
     expect(second).not.toBe(first);

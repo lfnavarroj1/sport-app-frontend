@@ -21,6 +21,17 @@ describe('App', () => {
     expect(element.querySelector('main#main-content')).not.toBeNull();
   });
 
+  it('ofrece en la navegación el acceso al inicio de sesión', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const nav = (fixture.nativeElement as HTMLElement).querySelector('nav');
+
+    expect(nav?.getAttribute('aria-label')).toBe('Navegación principal');
+    const link = nav?.querySelector('a');
+    expect(link?.textContent).toContain('Iniciar sesión');
+    expect(link?.getAttribute('href')).toBe('/iniciar-sesion');
+  });
+
   it('ofrece un enlace accesible para saltar al contenido', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();

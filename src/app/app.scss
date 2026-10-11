@@ -21,6 +21,15 @@
   font: var(--mat-sys-title-large);
 }
 
+.app-nav {
+  margin-left: auto;
+}
+
+.app-nav__active {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
 main {
   padding: 0 1rem;
 

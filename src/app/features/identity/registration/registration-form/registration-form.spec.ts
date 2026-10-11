@@ -16,13 +16,16 @@ import {
 } from '../registration.model';
 import { RegistrationForm } from './registration-form';
 
-// Datos sintéticos de prueba; no representan el catálogo aprobado.
+// Datos sintéticos de prueba.
 const OPTIONS: RegistrationOptions = {
   actorTypes: [{ code: 'athlete' }, { code: 'organizer' }],
-  policies: [
-    { id: 'terms', version: 'v1', url: 'https://example.test/terms', required: true },
-    { id: 'privacy', version: 'v2', url: 'https://example.test/privacy', required: true },
-  ],
+  policiesVersion: 'v-sintetica',
+};
+
+const NO_SERVER_ERRORS: RegistrationServerErrors = {
+  emailTaken: false,
+  policiesOutdated: false,
+  invalidFields: [],
 };
 
 @Component({
@@ -78,9 +81,7 @@ describe('RegistrationForm (HU001)', () => {
     const select = await loader.getHarness(MatSelectHarness);
     await select.open();
     await select.clickOptions({ text: 'Deportista' });
-    for (const checkbox of await loader.getAllHarnesses(MatCheckboxHarness)) {
-      await checkbox.check();
-    }
+    await (await loader.getHarness(MatCheckboxHarness)).check();
   }
 
   async function submit(): Promise<void> {
@@ -123,7 +124,7 @@ describe('RegistrationForm (HU001)', () => {
     const policyErrors = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '.registration-form__policy-error',
     );
-    expect(policyErrors.length).toBe(2);
+    expect(policyErrors.length).toBe(1);
   });
 
   it('CA3: rechaza un correo con formato inválido y un nombre en blanco', async () => {
@@ -138,19 +139,46 @@ describe('RegistrationForm (HU001)', () => {
     expect(await errorsOf('Nombre completo')).toEqual(['Este campo es obligatorio.']);
   });
 
-  it('exige aceptar las políticas obligatorias', async () => {
+  it('exige aceptar las políticas y muestra su versión vigente', async () => {
     await fillValidForm();
-    await (await loader.getAllHarnesses(MatCheckboxHarness))[1].uncheck();
+    const checkbox = await loader.getHarness(MatCheckboxHarness);
+    expect(await checkbox.getLabelText()).toBe(
+      'Acepto las políticas de uso y privacidad de SportApp (versión v-sintetica).',
+    );
+    await checkbox.uncheck();
 
     await submit();
 
     expect(host.drafts).toEqual([]);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Debes aceptar esta política para registrarte.',
+      'Debes aceptar las políticas para registrarte.',
     );
   });
 
-  it('CA1: envía los datos normalizados con las versiones de políticas aceptadas', async () => {
+  it('aplica los límites de longitud del contrato a la contraseña y el nombre', async () => {
+    await fillValidForm();
+    await (await input('Contraseña')).setValue('x'.repeat(11));
+    await (await input('Nombre completo')).setValue('n'.repeat(121));
+
+    await submit();
+
+    expect(host.drafts).toEqual([]);
+    expect(await errorsOf('Contraseña')).toEqual(['Debe tener al menos 12 caracteres.']);
+    expect(await errorsOf('Nombre completo')).toEqual(['Debe tener como máximo 120 caracteres.']);
+
+    await (await input('Contraseña')).setValue('x'.repeat(129));
+    expect(await errorsOf('Contraseña')).toEqual(['Debe tener como máximo 128 caracteres.']);
+  });
+
+  it('indica los límites de la contraseña antes de enviar', async () => {
+    const field = await loader.getHarness(
+      MatFormFieldHarness.with({ floatingLabelText: 'Contraseña' }),
+    );
+
+    expect(await field.getTextHints()).toEqual(['Entre 12 y 128 caracteres.']);
+  });
+
+  it('CA1: envía los datos normalizados con la versión de políticas aceptada', async () => {
     await fillValidForm();
 
     await submit();
@@ -161,10 +189,7 @@ describe('RegistrationForm (HU001)', () => {
         email: 'persona@example.test',
         password: 'clave-de-prueba',
         actorType: 'athlete',
-        acceptedPolicies: [
-          { id: 'terms', version: 'v1' },
-          { id: 'privacy', version: 'v2' },
-        ],
+        acceptedPoliciesVersion: 'v-sintetica',
       },
     ]);
   });
@@ -182,7 +207,7 @@ describe('RegistrationForm (HU001)', () => {
 
   it('CA2: marca el correo cuando el backend informa que ya está registrado', async () => {
     await fillValidForm();
-    host.serverErrors.set({ emailTaken: true, invalidFields: [] });
+    host.serverErrors.set({ ...NO_SERVER_ERRORS, emailTaken: true });
     await fixture.whenStable();
 
     expect(await errorsOf('Correo electrónico')).toEqual([
@@ -192,12 +217,24 @@ describe('RegistrationForm (HU001)', () => {
 
   it('CA3: marca los campos rechazados por el backend', async () => {
     await fillValidForm();
-    host.serverErrors.set({ emailTaken: false, invalidFields: ['fullName', 'password'] });
+    host.serverErrors.set({ ...NO_SERVER_ERRORS, invalidFields: ['fullName', 'password'] });
     await fixture.whenStable();
 
     expect(await errorsOf('Nombre completo')).toEqual(['El valor no es válido.']);
     expect(await errorsOf('Contraseña')).toEqual(['El valor no es válido.']);
     expect(await errorsOf('Correo electrónico')).toEqual([]);
+  });
+
+  it('informa que la versión de políticas aceptada ya no está vigente', async () => {
+    await fillValidForm();
+    host.serverErrors.set({ ...NO_SERVER_ERRORS, policiesOutdated: true });
+    await fixture.whenStable();
+
+    const error = (fixture.nativeElement as HTMLElement).querySelector(
+      '.registration-form__policy-error',
+    );
+    expect(error?.getAttribute('role')).toBe('alert');
+    expect(error?.textContent).toContain('La versión de las políticas ya no está vigente.');
   });
 
   it('informa cuando el usuario modifica los datos', async () => {

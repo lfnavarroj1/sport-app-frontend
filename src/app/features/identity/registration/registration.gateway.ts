@@ -2,13 +2,13 @@ import { RegistrationDraft, RegistrationOptions, RegistrationOutcome } from './r
 
 /**
  * Puerto hacia el BFF web para HU001. La pantalla depende solo de esta
- * abstracción; el adaptador HTTP traduce el contrato OpenAPI a estos tipos.
- *
- * BLOQUEADO: `bff-web.openapi.json` 0.1.0 no expone operaciones de registro.
- * No existe implementación ni ruta registrada hasta que el contrato se publique.
+ * abstracción; `HttpRegistrationGateway` traduce el contrato bff-web 0.2.0.
  */
 export abstract class RegistrationGateway {
-  /** Catálogo de tipos de actor y políticas vigentes. */
+  /**
+   * Tipos de actor permitidos y versión vigente de las políticas. Falla si el
+   * registro no está configurado en el ambiente.
+   */
   abstract loadOptions(): Promise<RegistrationOptions>;
 
   /**

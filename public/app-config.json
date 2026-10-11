@@ -1,4 +1,5 @@
 {
   "environment": "local",
-  "bffWebBaseUrl": null
+  "bffWebBaseUrl": "http://localhost:18080",
+  "registrationPoliciesVersion": "local-dev"
 }
