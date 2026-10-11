@@ -4,7 +4,8 @@
     "skipToContent": "Saltar al contenido principal",
     "navigation": "Navegación principal",
     "nav": {
-      "login": "Iniciar sesión"
+      "login": "Iniciar sesión",
+      "home": "Inicio"
     }
   },
   "common": {
@@ -79,9 +80,25 @@
       "showPassword": "Mostrar contraseña"
     },
     "submit": "Ingresar",
-    "notAvailable": "El inicio de sesión todavía no está disponible. Pronto podrás ingresar con tu cuenta.",
+    "submitting": "Ingresando…",
+    "sessionExpired": "Tu sesión expiró. Ingresa de nuevo para continuar.",
+    "errors": {
+      "invalidCredentials": "Correo o contraseña incorrectos.",
+      "tooManyAttempts": "Hiciste demasiados intentos. Espera unos minutos antes de intentarlo de nuevo.",
+      "tooManyAttemptsWait": "Hiciste demasiados intentos. Intenta de nuevo en {{minutes}} min."
+    },
     "noAccount": "¿Aún no tienes una cuenta?",
     "createAccount": "Crear cuenta"
+  },
+  "home": {
+    "greeting": "Hola, {{name}}",
+    "accountType": "Tipo de cuenta",
+    "email": "Correo electrónico",
+    "subtitle": "Este es tu espacio en SportApp."
+  },
+  "authShell": {
+    "headline": "Entrena, compite y conecta",
+    "tagline": "Planes de entrenamiento, eventos deportivos y servicios para tu rendimiento, en un solo lugar."
   },
   "technicalStatus": {
     "title": "Estado técnico",

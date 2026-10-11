@@ -2,17 +2,32 @@
   {{ 'app.skipToContent' | translate }}
 </a>
 
-<mat-toolbar role="banner">
-  <span class="app-name">{{ 'app.name' | translate }}</span>
+<mat-toolbar role="banner" class="app-bar">
+  <span class="app-brand">
+    <mat-icon class="app-brand__mark" aria-hidden="true">bolt</mat-icon>
+    <span class="app-name">{{ 'app.name' | translate }}</span>
+  </span>
   <nav class="app-nav" [attr.aria-label]="'app.navigation' | translate">
-    <a
-      mat-button
-      routerLink="/iniciar-sesion"
-      routerLinkActive="app-nav__active"
-      ariaCurrentWhenActive="page"
-    >
-      {{ 'app.nav.login' | translate }}
-    </a>
+    @if (user(); as user) {
+      <a
+        mat-button
+        routerLink="/inicio"
+        routerLinkActive="app-nav__active"
+        ariaCurrentWhenActive="page"
+      >
+        {{ 'app.nav.home' | translate }}
+      </a>
+      <span class="app-nav__user" data-testid="session-user">{{ user.fullName }}</span>
+    } @else {
+      <a
+        mat-button
+        routerLink="/iniciar-sesion"
+        routerLinkActive="app-nav__active"
+        ariaCurrentWhenActive="page"
+      >
+        {{ 'app.nav.login' | translate }}
+      </a>
+    }
   </nav>
 </mat-toolbar>
 

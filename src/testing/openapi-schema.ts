@@ -30,6 +30,7 @@ export interface OpenApiOperation {
       string,
       {
         readonly description: string;
+        readonly headers?: Readonly<Record<string, { readonly schema: Schema }>>;
         readonly content?: Readonly<Record<string, { readonly schema: Schema }>>;
       }
     >

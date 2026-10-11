@@ -7,10 +7,10 @@ import { BffNotConfiguredError, BffWebUrl } from '../../../core/api/bff-web-url'
 import {
   ACTOR_TYPES,
   ActorTypeDto,
-  BffWebUsersApi,
   ErrorResponseDto,
-  REGISTER_USER_ERROR_CODES,
-} from '../../../core/api/bff-web/users.api';
+  readErrorResponse,
+} from '../../../core/api/bff-web/contract';
+import { BffWebUsersApi, REGISTER_USER_ERROR_CODES } from '../../../core/api/bff-web/users.api';
 import { APP_CONFIG, ConfigValueMissingError } from '../../../core/config/app-config';
 import { RegistrationGateway } from './registration.gateway';
 import {
@@ -90,17 +90,6 @@ function outcomeFromError(error: unknown): RegistrationOutcome {
   // Incluye `idempotency_key_reused`, `upstream_unavailable`, `upstream_timeout`,
   // sin conexión y cualquier respuesta no prevista: nunca se interpreta como éxito.
   return { kind: 'failed', error: toApiError(error) };
-}
-
-function readErrorResponse(body: unknown): ErrorResponseDto | null {
-  if (
-    typeof body !== 'object' ||
-    body === null ||
-    typeof (body as ErrorResponseDto).code !== 'string'
-  ) {
-    return null;
-  }
-  return body as ErrorResponseDto;
 }
 
 /**

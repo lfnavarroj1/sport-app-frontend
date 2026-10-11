@@ -89,6 +89,23 @@ Si el archivo falta o es inválido, la aplicación **no arranca** y muestra un m
 
 Con `npm start` se usa `public/app-config.json`, que apunta al BFF de la composición local (`http://localhost:18080`) y a la versión `local-dev`, el valor por defecto de la plataforma. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
 
+## Estilo visual
+
+Dirección «Energía deportiva» (decisión del responsable, 2026-10-11): naranja de marca `#F26B1D`, azul petróleo `#0E5E6F` de apoyo y azul noche `#0B1B2B` en la barra y en los fondos de ingreso y registro.
+
+- **Tema:** `src/styles.scss` aplica `mat.theme()` con la paleta Material 3 de `src/styles/_theme-colors.scss`, generada con `ng generate @angular/material:theme-color --primary-color=#F26B1D --tertiary-color=#0E5E6F --directory=src/styles/ --include-high-contrast=true --is-scss=true`. Ese archivo no se edita a mano: se regenera.
+- **Contraste:** Material aplica a botones y textos el tono accesible (`#a14000`). El naranja vivo y los `--sa-*` (colores de marca, radios y sombras) se usan solo en fondos y acentos. Con `prefers-contrast: more` se activa el alto contraste.
+- **Tipografía:** Roboto para el texto y Barlow (600–800) para títulos y marca, ambas desde Google Fonts.
+- **Fondos:** `<app-auth-shell>` (`shared/ui/auth-shell`) envuelve las pantallas sin sesión con el degradado de marca y trazos diagonales, solo con CSS. La tarjeta proyectada usa la clase `sa-auth-card`.
+- **Barra superior:** sus colores se definen con `mat.toolbar-overrides`, que también dan color a los botones de navegación.
+
+## Sesión (HU003)
+
+- `/iniciar-sesion` es la página inicial; desde ella se llega al registro (`/registro`). Tras ingresar, cada tipo de cuenta va al destino de `HOME_BY_ACTOR_TYPE` (`features/identity/login/login.model.ts`); hoy todos van a `/inicio`, protegida por `requireSession`.
+- La sesión vive **solo en memoria** (`core/session/session.store.ts`): el access token nunca se escribe en `localStorage`, `sessionStorage`, cookies accesibles ni logs. Al vencer (`expires_in`) la sesión termina y se pide ingresar de nuevo; al recargar la pestaña también.
+- El refresh token debe viajar en una cookie HttpOnly que fija el BFF (decisión del 2026-10-10). El contrato 0.3.0 aún lo devuelve en el cuerpo; la web lo descarta sin guardarlo. La renovación automática y la recuperación de la sesión al recargar esperan el contrato con la cookie.
+- Los errores de credenciales usan siempre el mismo mensaje genérico; `429 too_many_attempts` muestra la espera indicada por `Retry-After`.
+
 ## Contenedor y Kubernetes
 
 Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.
@@ -162,9 +179,8 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 
 - Nombre de la cabecera de correlación en el contrato (el backend usa `X-Correlation-ID`).
 - Documentos de políticas de uso y privacidad (texto y URL) para enlazarlos desde el registro.
-- Sesión/autenticación (ADR-009).
+- Contrato bff-web con el refresh token en cookie HttpOnly (backend): renovación de sesión y recuperación al recargar.
 - Variables del Environment `production` en GitHub (OIDC/WIF y Artifact Registry) para que `release-web` publique.
-- CORS en `bff-web` para el origen de la web (tarea del backend).
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).

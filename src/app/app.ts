@@ -1,13 +1,17 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+
+import { SessionStore } from './core/session/session.store';
 
 @Component({
   selector: 'app-root',
   imports: [
     MatButtonModule,
+    MatIconModule,
     MatToolbarModule,
     RouterLink,
     RouterLinkActive,
@@ -19,6 +23,8 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
+  protected readonly user = inject(SessionStore).user;
+
   /** Con `<base href>` un ancla `#id` navegaría a la raíz; se mueve el foco directamente. */
   protected skipToMain(event: Event, main: HTMLElement): void {
     event.preventDefault();
