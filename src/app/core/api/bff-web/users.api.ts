@@ -3,17 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BffWebUrl } from '../bff-web-url';
+import { ActorTypeDto } from './contract';
 
 /**
  * Transporte de la operación `POST /v1/users` (operationId `register_v1_users_post`)
- * del contrato bff-web 0.2.0, copiado sin cambios en `contracts/bff-web.openapi.json`.
+ * del contrato bff-web (ver `contract.ts`). Sin cambios desde la versión 0.2.0.
  * Estos tipos son del transporte: la interfaz los transforma antes de usarlos.
  */
-export const BFF_WEB_CONTRACT_VERSION = '0.2.0';
-
-/** Enumeración `actor_type` de `RegisterUserRequest`. */
-export const ACTOR_TYPES = ['athlete', 'organizer', 'service_provider'] as const;
-export type ActorTypeDto = (typeof ACTOR_TYPES)[number];
 
 export interface RegisterUserRequestDto {
   readonly full_name: string;
@@ -31,18 +27,6 @@ export interface UserRegisteredResponseDto {
   readonly status: 'active';
   readonly aggregate_version: number;
   readonly created_at: string;
-}
-
-export interface ErrorDetailDto {
-  readonly field?: string | null;
-  readonly issue: string;
-}
-
-export interface ErrorResponseDto {
-  readonly code: string;
-  readonly message: string;
-  readonly correlation_id: string | null;
-  readonly details?: readonly ErrorDetailDto[];
 }
 
 /** Códigos de error que el contrato declara para `POST /v1/users`. */

@@ -25,6 +25,11 @@
   margin-left: auto;
 }
 
+.app-nav__user {
+  margin-left: 0.5rem;
+  font: var(--mat-sys-label-large);
+}
+
 .app-nav__active {
   text-decoration: underline;
   text-underline-offset: 0.3em;

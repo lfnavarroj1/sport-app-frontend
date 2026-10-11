@@ -5,14 +5,26 @@
 <mat-toolbar role="banner">
   <span class="app-name">{{ 'app.name' | translate }}</span>
   <nav class="app-nav" [attr.aria-label]="'app.navigation' | translate">
-    <a
-      mat-button
-      routerLink="/iniciar-sesion"
-      routerLinkActive="app-nav__active"
-      ariaCurrentWhenActive="page"
-    >
-      {{ 'app.nav.login' | translate }}
-    </a>
+    @if (user(); as user) {
+      <a
+        mat-button
+        routerLink="/inicio"
+        routerLinkActive="app-nav__active"
+        ariaCurrentWhenActive="page"
+      >
+        {{ 'app.nav.home' | translate }}
+      </a>
+      <span class="app-nav__user" data-testid="session-user">{{ user.fullName }}</span>
+    } @else {
+      <a
+        mat-button
+        routerLink="/iniciar-sesion"
+        routerLinkActive="app-nav__active"
+        ariaCurrentWhenActive="page"
+      >
+        {{ 'app.nav.login' | translate }}
+      </a>
+    }
   </nav>
 </mat-toolbar>
 

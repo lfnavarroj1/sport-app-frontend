@@ -10,12 +10,8 @@ import {
   validateAgainstSchema,
 } from '../../../../testing/openapi-schema';
 import contractJson from '../contracts/bff-web.openapi.json';
-import {
-  ACTOR_TYPES,
-  BFF_WEB_CONTRACT_VERSION,
-  REGISTER_USER_ERROR_CODES,
-  RegisterUserRequestDto,
-} from './users.api';
+import { ACTOR_TYPES, BFF_WEB_CONTRACT_VERSION } from './contract';
+import { REGISTER_USER_ERROR_CODES, RegisterUserRequestDto } from './users.api';
 
 const contract = contractJson as unknown as OpenApiDocument;
 const operation: OpenApiOperation = contract.paths[REGISTER_USER_PATH]['post'];
