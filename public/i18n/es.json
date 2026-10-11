@@ -92,9 +92,60 @@
   },
   "home": {
     "greeting": "Hola, {{name}}",
-    "accountType": "Tipo de cuenta",
     "email": "Correo electrónico",
-    "subtitle": "Este es tu espacio en SportApp."
+    "featuresTitle": "Tus funciones",
+    "intro": {
+      "athlete": "Este es tu espacio de deportista: aquí verás el estado de tu plan, tus entrenamientos y tu calendario.",
+      "organizer": "Desde aquí gestionarás tus eventos deportivos: borradores, publicaciones, inscritos, tarifas y calendario.",
+      "service_provider": "Desde aquí gestionarás tus servicios y tu trabajo profesional: publicaciones, planes, historiales autorizados y agenda."
+    },
+    "plan": {
+      "title": "Tu plan",
+      "pending": "Tu plan y sus opciones aparecerán aquí cuando estén confirmados."
+    }
+  },
+  "shell": {
+    "menuLabel": "Menú principal",
+    "openMenu": "Menú",
+    "upcoming": "Próximamente",
+    "groups": {
+      "events": "Eventos",
+      "services": "Servicios",
+      "training": "Entrenamiento",
+      "health": "Salud",
+      "nutrition": "Alimentación",
+      "calendar": "Calendario",
+      "account": "Mi cuenta"
+    },
+    "items": {
+      "home": "Inicio",
+      "profile": "Mi perfil",
+      "plan": "Mi plan",
+      "logout": "Cerrar sesión",
+      "event-create": "Crear evento",
+      "event-attendees": "Consultar inscritos",
+      "event-calendar": "Calendario de eventos",
+      "event-publish": "Publicar eventos",
+      "event-pricing": "Tarifas de eventos",
+      "integrated-calendar": "Calendario integrado",
+      "service-create": "Crear servicio",
+      "service-publish": "Publicar servicios",
+      "training-plans": "Crear planes de entrenamiento",
+      "training-history": "Historial de entrenamiento",
+      "health-history": "Historial de molestias o lesiones",
+      "nutrition-history": "Historial de alimentación",
+      "nutrition-plans": "Crear planes de alimentación"
+    },
+    "plan": {
+      "title": "Opciones de tu plan",
+      "pending": "Las opciones de tu plan aparecerán cuando tu plan esté confirmado."
+    }
+  },
+  "unauthorized": {
+    "title": "Acceso no autorizado",
+    "message": "No tienes permiso para ver esta sección.",
+    "goToHome": "Ir a mi inicio",
+    "goToLogin": "Ir a iniciar sesión"
   },
   "authShell": {
     "headline": "Entrena, compite y conecta",

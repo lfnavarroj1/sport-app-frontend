@@ -49,7 +49,7 @@ describe('App', () => {
     await fixture.whenStable();
     const nav = (fixture.nativeElement as HTMLElement).querySelector('nav');
 
-    expect(nav?.querySelector('a')?.getAttribute('href')).toBe('/inicio');
+    expect(nav?.querySelector('a')?.getAttribute('href')).toBe('/deportista/inicio');
     expect(nav?.querySelector('[data-testid="session-user"]')?.textContent).toContain(
       'Persona Sintética',
     );

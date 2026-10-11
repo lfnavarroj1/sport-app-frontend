@@ -16,7 +16,10 @@ if (!baseURL) {
 export default defineConfig({
   testDir: './e2e',
   grepInvert: /@simulado/,
-  fullyParallel: true,
+  // Un solo trabajador: los recorridos crean cuentas en un ambiente compartido y,
+  // en paralelo, saturan el backend local (Argon2id) con `504 upstream_timeout`.
+  // La capacidad bajo carga se mide con las pruebas de carga (HA003), no aquí.
+  workers: 1,
   forbidOnly: true,
   retries: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report-integrated' }]],
