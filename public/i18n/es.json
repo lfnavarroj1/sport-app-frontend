@@ -1,7 +1,11 @@
 {
   "app": {
     "name": "SportApp",
-    "skipToContent": "Saltar al contenido principal"
+    "skipToContent": "Saltar al contenido principal",
+    "navigation": "Navegación principal",
+    "nav": {
+      "login": "Iniciar sesión"
+    }
   },
   "common": {
     "state": {
@@ -39,7 +43,8 @@
       "email": "Correo electrónico",
       "password": "Contraseña",
       "showPassword": "Mostrar contraseña",
-      "actorType": "Tipo de usuario"
+      "actorType": "Tipo de usuario",
+      "passwordHint": "Entre {{min}} y {{max}} caracteres."
     },
     "actorTypes": {
       "athlete": "Deportista",
@@ -48,24 +53,35 @@
     },
     "policies": {
       "legend": "Políticas",
-      "accept": "Acepto la {{name}}",
-      "read": "Leer documento (se abre en una pestaña nueva)",
-      "names": {
-        "terms": "política de términos y condiciones",
-        "privacy": "política de privacidad y tratamiento de datos"
-      }
+      "accept": "Acepto las políticas de uso y privacidad de SportApp (versión {{version}})."
     },
     "errors": {
       "emailTaken": "Ya existe una cuenta con este correo electrónico.",
-      "policyRequired": "Debes aceptar esta política para registrarte."
+      "policyRequired": "Debes aceptar las políticas para registrarte.",
+      "policiesOutdated": "La versión de las políticas ya no está vigente. Recarga la página para revisar la versión actual."
     },
     "optionsEmpty": "El registro no está disponible en este momento.",
     "submit": "Registrarme",
     "submitting": "Registrando…",
     "success": {
       "title": "Tu cuenta fue creada",
-      "message": "Registramos la cuenta asociada a {{email}}."
-    }
+      "message": "Registramos la cuenta asociada a {{email}}.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "goToLogin": "Inicia sesión"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "fields": {
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "showPassword": "Mostrar contraseña"
+    },
+    "submit": "Ingresar",
+    "notAvailable": "El inicio de sesión todavía no está disponible. Pronto podrás ingresar con tu cuenta.",
+    "noAccount": "¿Aún no tienes una cuenta?",
+    "createAccount": "Crear cuenta"
   },
   "technicalStatus": {
     "title": "Estado técnico",

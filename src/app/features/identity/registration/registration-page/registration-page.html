@@ -10,6 +10,9 @@
       <section class="registration__success" role="status" data-testid="registration-success">
         <h2 #successHeading tabindex="-1">{{ 'registration.success.title' | translate }}</h2>
         <p>{{ 'registration.success.message' | translate: { email: result.email } }}</p>
+        <a mat-flat-button routerLink="/iniciar-sesion">
+          {{ 'registration.success.goToLogin' | translate }}
+        </a>
       </section>
     } @else {
       <app-async-state
@@ -37,6 +40,10 @@
           />
         }
       </app-async-state>
+      <p class="registration__login">
+        {{ 'registration.haveAccount' | translate }}
+        <a routerLink="/iniciar-sesion">{{ 'registration.goToLogin' | translate }}</a>
+      </p>
     }
   </mat-card-content>
 </mat-card>

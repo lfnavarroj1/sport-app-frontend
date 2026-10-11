@@ -20,7 +20,11 @@ describe('TechnicalStatus', () => {
   }
 
   it('muestra ambiente, idioma e identificador de diagnóstico', async () => {
-    const element = await render({ environment: 'local', bffWebBaseUrl: null });
+    const element = await render({
+      environment: 'local',
+      bffWebBaseUrl: null,
+      registrationPoliciesVersion: null,
+    });
 
     expect(element.querySelector('h1')?.textContent).toContain('Estado técnico');
     expect(field(element, 'environment')).toBe('local');
@@ -32,6 +36,7 @@ describe('TechnicalStatus', () => {
     const configured = await render({
       environment: 'development',
       bffWebBaseUrl: 'https://bff.example.test',
+      registrationPoliciesVersion: null,
     });
 
     expect(field(configured, 'bff-status')).toBe('Configurado');
@@ -39,7 +44,11 @@ describe('TechnicalStatus', () => {
   });
 
   it('indica cuando el BFF web no está configurado', async () => {
-    const element = await render({ environment: 'local', bffWebBaseUrl: null });
+    const element = await render({
+      environment: 'local',
+      bffWebBaseUrl: null,
+      registrationPoliciesVersion: null,
+    });
 
     expect(field(element, 'bff-status')).toBe('No configurado');
   });

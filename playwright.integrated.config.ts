@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright integrado: se ejecuta contra una aplicación ya desplegada
  * (development o staging). Requiere `PLAYWRIGHT_BASE_URL`; sin ella falla en
- * lugar de probar contra un servidor local por error.
+ * lugar de probar contra un servidor local por error. Excluye los recorridos
+ * `@simulado`, que reemplazan el BFF con el simulador del contrato.
  */
 const baseURL = process.env['PLAYWRIGHT_BASE_URL'];
 if (!baseURL) {
@@ -14,6 +15,7 @@ if (!baseURL) {
 
 export default defineConfig({
   testDir: './e2e',
+  grepInvert: /@simulado/,
   fullyParallel: true,
   forbidOnly: true,
   retries: 1,

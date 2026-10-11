@@ -8,3 +8,6 @@ playwright-report
 playwright-report-integrated
 test-results
 public/favicon.ico
+
+# Copias exactas de contratos del backend (ver src/app/core/api/contracts/README.md)
+src/app/core/api/contracts/*.json

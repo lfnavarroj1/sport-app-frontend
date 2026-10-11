@@ -4,7 +4,6 @@ import {
   AbstractControl,
   FormControl,
   FormGroup,
-  FormRecord,
   ReactiveFormsModule,
   ValidationErrors,
   Validators,
@@ -28,10 +27,18 @@ import {
 const notBlank = (control: AbstractControl<string>): ValidationErrors | null =>
   control.value && control.value.trim() === '' ? { required: true } : null;
 
+/** Límites de `RegisterUserRequest` en el contrato bff-web 0.2.0. */
+const LIMITS = {
+  fullNameMax: 120,
+  emailMax: 254,
+  passwordMin: 12,
+  passwordMax: 128,
+} as const;
+
 /**
- * Formulario de HU001. Solo aplica validaciones de experiencia (obligatorios y
- * formato); las reglas autoritativas (unicidad, catálogo, contraseña) son del
- * backend y llegan como `serverErrors`.
+ * Formulario de HU001. Solo aplica validaciones de experiencia (obligatorios,
+ * formato y límites del contrato); las reglas autoritativas (unicidad, catálogo,
+ * versión de políticas) son del backend y llegan como `serverErrors`.
  */
 @Component({
   selector: 'app-registration-form',
@@ -61,44 +68,41 @@ export class RegistrationForm {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly passwordVisible = signal(false);
+  protected readonly limits = LIMITS;
 
   protected readonly form = new FormGroup({
     fullName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, notBlank],
+      validators: [Validators.required, notBlank, Validators.maxLength(LIMITS.fullNameMax)],
     }),
     email: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.required, Validators.email, Validators.maxLength(LIMITS.emailMax)],
     }),
-    password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(LIMITS.passwordMin),
+        Validators.maxLength(LIMITS.passwordMax),
+      ],
+    }),
     actorType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    policies: new FormRecord<FormControl<boolean>>({}),
+    policies: new FormControl(false, { nonNullable: true, validators: [Validators.requiredTrue] }),
   });
 
   constructor() {
-    effect(() => {
-      const policies = new FormRecord<FormControl<boolean>>({});
-      for (const policy of this.options().policies) {
-        policies.addControl(
-          policy.id,
-          new FormControl(false, {
-            nonNullable: true,
-            validators: policy.required ? [Validators.requiredTrue] : [],
-          }),
-        );
-      }
-      this.form.setControl('policies', policies);
-    });
-
     effect(() => this.applyServerErrors(this.serverErrors()));
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.edited.emit());
   }
 
-  protected policyMissing(policyId: string): boolean {
-    const control = this.form.controls.policies.get(policyId);
-    return !!control && control.touched && control.invalid;
+  protected policiesError(): 'required' | 'outdated' | null {
+    const control = this.form.controls.policies;
+    if (!control.touched || control.valid) {
+      return null;
+    }
+    return control.hasError('outdated') ? 'outdated' : 'required';
   }
 
   protected togglePasswordVisibility(): void {
@@ -121,9 +125,7 @@ export class RegistrationForm {
       email: value.email.trim(),
       password: value.password,
       actorType: value.actorType,
-      acceptedPolicies: this.options()
-        .policies.filter((policy) => value.policies[policy.id])
-        .map(({ id, version }) => ({ id, version })),
+      acceptedPoliciesVersion: this.options().policiesVersion,
     });
   }
 
@@ -133,6 +135,9 @@ export class RegistrationForm {
     }
     if (errors.emailTaken) {
       this.markServerError('email', 'emailTaken');
+    }
+    if (errors.policiesOutdated) {
+      this.markServerError('policies', 'outdated');
     }
     for (const field of errors.invalidFields) {
       this.markServerError(field, 'server');

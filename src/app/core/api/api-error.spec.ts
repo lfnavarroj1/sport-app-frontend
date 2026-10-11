@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { ConfigValueMissingError } from '../config/app-config';
 import { toApiError } from './api-error';
 import { BffNotConfiguredError } from './bff-web-url';
 
@@ -45,5 +46,11 @@ describe('toApiError', () => {
 
   it('identifica la falta de configuración del BFF', () => {
     expect(toApiError(new BffNotConfiguredError()).kind).toBe('not_configured');
+  });
+
+  it('identifica la falta de un valor de configuración requerido', () => {
+    expect(toApiError(new ConfigValueMissingError('registrationPoliciesVersion')).kind).toBe(
+      'not_configured',
+    );
   });
 });

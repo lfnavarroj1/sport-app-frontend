@@ -8,10 +8,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { toApiError } from '../../../../core/api/api-error';
+import { REGISTER_USER_ERROR_CODES } from '../../../../core/api/bff-web/users.api';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
 import { RegistrationForm } from '../registration-form/registration-form';
@@ -23,6 +26,8 @@ import {
   RegistrationServerErrors,
 } from '../registration.model';
 
+const IDEMPOTENCY_KEY_REUSED = REGISTER_USER_ERROR_CODES.idempotencyKeyReused;
+
 type SubmissionState =
   | { readonly status: 'idle' }
   | { readonly status: 'submitting' }
@@ -31,7 +36,14 @@ type SubmissionState =
 /** Pantalla de registro de usuario (HU001). */
 @Component({
   selector: 'app-registration-page',
-  imports: [AsyncState, MatCardModule, RegistrationForm, TranslatePipe],
+  imports: [
+    AsyncState,
+    MatButtonModule,
+    MatCardModule,
+    RegistrationForm,
+    RouterLink,
+    TranslatePipe,
+  ],
   templateUrl: './registration-page.html',
   styleUrl: './registration-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,10 +86,13 @@ export class RegistrationPage {
   protected readonly serverErrors = computed<RegistrationServerErrors | null>(() => {
     const outcome = this.outcome();
     if (outcome?.kind === 'email_taken') {
-      return { emailTaken: true, invalidFields: [] };
+      return { emailTaken: true, policiesOutdated: false, invalidFields: [] };
+    }
+    if (outcome?.kind === 'policies_outdated') {
+      return { emailTaken: false, policiesOutdated: true, invalidFields: [] };
     }
     if (outcome?.kind === 'invalid') {
-      return { emailTaken: false, invalidFields: outcome.fields };
+      return { emailTaken: false, policiesOutdated: false, invalidFields: outcome.fields };
     }
     return null;
   });
@@ -113,7 +128,12 @@ export class RegistrationPage {
       outcome = { kind: 'failed', error: toApiError(error) };
     }
 
-    if (outcome.kind === 'registered') {
+    // Tras un éxito el intento terminó; si el BFF rechaza la clave por reutilizada,
+    // el siguiente envío debe ser un intento nuevo.
+    if (
+      outcome.kind === 'registered' ||
+      (outcome.kind === 'failed' && outcome.error.code === IDEMPOTENCY_KEY_REUSED)
+    ) {
       this.idempotencyKey = null;
     }
     this.submission.set({ status: 'done', outcome });

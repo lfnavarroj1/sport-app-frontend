@@ -4,6 +4,16 @@
 
 <mat-toolbar role="banner">
   <span class="app-name">{{ 'app.name' | translate }}</span>
+  <nav class="app-nav" [attr.aria-label]="'app.navigation' | translate">
+    <a
+      mat-button
+      routerLink="/iniciar-sesion"
+      routerLinkActive="app-nav__active"
+      ariaCurrentWhenActive="page"
+    >
+      {{ 'app.nav.login' | translate }}
+    </a>
+  </nav>
 </mat-toolbar>
 
 <main #main id="main-content" tabindex="-1">

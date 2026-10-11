@@ -72,17 +72,22 @@ Dockerfile                imagen única para Kubernetes local y Cloud Run
 La aplicación lee `app-config.json` al arrancar, de modo que el mismo artefacto se promueve entre ambientes sin recompilar. El archivo no debe contener secretos.
 
 ```json
-{ "environment": "local", "bffWebBaseUrl": null }
+{
+  "environment": "local",
+  "bffWebBaseUrl": "http://localhost:18080",
+  "registrationPoliciesVersion": "local-dev"
+}
 ```
 
-| Campo           | Obligatorio | Valores                                                            |
-| --------------- | ----------- | ------------------------------------------------------------------ |
-| `environment`   | Sí          | `local`, `development`, `staging`, `production`                    |
-| `bffWebBaseUrl` | Sí          | URL http(s) absoluta del BFF web, o `null` si aún no está definida |
+| Campo                         | Obligatorio | Valores                                                                                                                                                                                                        |
+| ----------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environment`                 | Sí          | `local`, `development`, `staging`, `production`                                                                                                                                                                |
+| `bffWebBaseUrl`               | Sí          | URL http(s) absoluta del BFF web, o `null` si aún no está definida                                                                                                                                             |
+| `registrationPoliciesVersion` | Sí          | Versión vigente de las políticas de registro (HU001), de 1 a 32 caracteres; debe coincidir con `REGISTRATION_POLICIES_VERSION` de users-management en el mismo ambiente. `null` deja el registro no disponible |
 
 Si el archivo falta o es inválido, la aplicación **no arranca** y muestra un mensaje de error. Con `bffWebBaseUrl: null`, cualquier llamada al BFF falla con `BffNotConfiguredError` y la interfaz muestra el estado "servicio no disponible".
 
-Con `npm start` se usa `public/app-config.json`. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
+Con `npm start` se usa `public/app-config.json`, que apunta al BFF de la composición local (`http://localhost:18080`) y a la versión `local-dev`, el valor por defecto de la plataforma. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
 
 ## Contenedor y Kubernetes
 
@@ -90,39 +95,41 @@ Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Deskto
 
 ```bash
 npm run container:build                 # docker build -t sportapp/web:local .
-docker run --rm -p 18082:8080 -e APP_ENV=local -e BFF_WEB_BASE_URL=http://localhost:18080 sportapp/web:local
+docker run --rm -p 18082:8080 -e APP_ENV=local -e BFF_WEB_BASE_URL=http://localhost:18080 \n  -e REGISTRATION_POLICIES_VERSION=local-dev sportapp/web:local
 bash deploy/docker/smoke-test.sh sportapp/web:local   # Git Bash, Linux o macOS
 ```
 
 En Windows, la prueba de humo se ejecuta desde Git Bash: `npm run` usaría el `bash` de WSL, que no ve Docker Desktop.
 
-| Elemento           | Contrato                                                                                                                         |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Puerto             | `8080`                                                                                                                           |
-| Usuario            | `101:101` (`nginx`), sin root; compatible con raíz de solo lectura si `/tmp` tiene escritura                                     |
-| `APP_ENV`          | Obligatoria: `local`, `development`, `staging` o `production`                                                                    |
-| `BFF_WEB_BASE_URL` | `http(s)://host[:puerto][/ruta]`; vacía o ausente publica `null`                                                                 |
-| `/app-config.json` | Generado al arrancar en `/tmp/sportapp`; `Cache-Control: no-store`                                                               |
-| `/healthz`         | `200` sin depender de la aplicación (sondas de Kubernetes)                                                                       |
-| Rutas de la SPA    | Toda ruta que no sea un archivo devuelve `index.html`; un archivo con hash inexistente devuelve `404`                            |
-| Caché              | `index.html` y `app-config.json` sin caché; archivos con hash `max-age=31536000, immutable`; el resto (i18n, favicon) `no-cache` |
+| Elemento                        | Contrato                                                                                                                         |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Puerto                          | `8080`                                                                                                                           |
+| Usuario                         | `101:101` (`nginx`), sin root; compatible con raíz de solo lectura si `/tmp` tiene escritura                                     |
+| `APP_ENV`                       | Obligatoria: `local`, `development`, `staging` o `production`                                                                    |
+| `BFF_WEB_BASE_URL`              | `http(s)://host[:puerto][/ruta]`; vacía o ausente publica `null`                                                                 |
+| `REGISTRATION_POLICIES_VERSION` | De 1 a 32 caracteres entre letras, dígitos y `. _ : + -`; vacía o ausente publica `null`                                         |
+| `/app-config.json`              | Generado al arrancar en `/tmp/sportapp`; `Cache-Control: no-store`                                                               |
+| `/healthz`                      | `200` sin depender de la aplicación (sondas de Kubernetes)                                                                       |
+| Rutas de la SPA                 | Toda ruta que no sea un archivo devuelve `index.html`; un archivo con hash inexistente devuelve `404`                            |
+| Caché                           | `index.html` y `app-config.json` sin caché; archivos con hash `max-age=31536000, immutable`; el resto (i18n, favicon) `no-cache` |
 
-Si `APP_ENV` o `BFF_WEB_BASE_URL` son inválidas, el contenedor termina con código `64` y un mensaje en la salida de error; nginx no llega a arrancar.
+Si `APP_ENV`, `BFF_WEB_BASE_URL` o `REGISTRATION_POLICIES_VERSION` son inválidas, el contenedor termina con código `64` y un mensaje en la salida de error; nginx no llega a arrancar.
 
-`deploy/k8s/base` (`kubectl kustomize deploy/k8s/base`) define el `Deployment` y el `Service` `web` (puerto `80` → `http`). Lee `APP_ENV` y `BFF_WEB_BASE_URL` del ConfigMap `sportapp-runtime`. La imagen va sin tag, y el namespace, el ConfigMap, el tag y el acceso en `localhost:18082` los aporta `sport-app-platform`.
+`deploy/k8s/base` (`kubectl kustomize deploy/k8s/base`) define el `Deployment` y el `Service` `web` (puerto `80` → `http`). Lee `APP_ENV`, `BFF_WEB_BASE_URL` y `REGISTRATION_POLICIES_VERSION` del ConfigMap `sportapp-runtime`; esta última es la misma clave que usa users-management. La imagen va sin tag, y el namespace, el ConfigMap, el tag y el acceso en `localhost:18082` los aporta `sport-app-platform`.
 
-| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           |
-| ----------------------------- | ------------ | -------------------------------------------- |
-| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     |
-| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` |
+| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           | `REGISTRATION_POLICIES_VERSION`                                     |
+| ----------------------------- | ------------ | -------------------------------------------- | ------------------------------------------------------------------- |
+| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     | `local-dev` (variable de Terraform `registration_policies_version`) |
+| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` | La misma que users-management en producción                         |
 
 Para que el navegador pueda llamar al BFF, `bff-web` debe permitir CORS para el origen de la web (`localhost:18082`, `localhost:4200` y la URL de producción). Es una tarea del backend.
 
 ## Pruebas
 
 - **Unitarias y componentes (Jasmine + TestBed):** estado, validadores, transformaciones y estados de interfaz (carga, éxito, vacío, validación, error, conflicto, permiso denegado). La cobertura se reporta en `coverage/`; el umbral web aún no está ratificado, por eso no se aplica uno.
-- **Playwright local/PR (`playwright.config.ts`):** levanta la build de producción. **No es E2E integrado.** Los recorridos que usen el BFF deberán simularlo a partir del contrato OpenAPI aprobado.
-- **Playwright integrado (`playwright.integrated.config.ts`):** se ejecuta contra un ambiente desplegado; exige `PLAYWRIGHT_BASE_URL`.
+- **Contrato simulado:** `src/app/core/api/contracts/` guarda la copia exacta del OpenAPI consumido (`bff-web` 0.2.0). `*.contract.spec.ts` verifica que los modelos de transporte y el simulador (`src/testing/bff-web/`) cumplan esa copia.
+- **Playwright local/PR (`playwright.config.ts`):** levanta la build de producción y ejecuta los recorridos `@simulado`, con el BFF reemplazado por el simulador del contrato. **No es E2E integrado.**
+- **Playwright integrado (`playwright.integrated.config.ts`):** se ejecuta contra un ambiente desplegado (`PLAYWRIGHT_BASE_URL`) e incluye los recorridos `@integrado`, que llaman al BFF real. Ejemplo local: `PLAYWRIGHT_BASE_URL=http://localhost:4200 npm run e2e:integrated` con `npm start` y la composición local de la plataforma activa.
 
 ## Integración continua
 
@@ -153,8 +160,8 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 
 ## Pendiente
 
-- Contrato OpenAPI del BFF web: sin él no hay cliente generado ni pruebas de contrato.
-- URL del BFF web por ambiente y nombre de la cabecera de correlación.
+- Nombre de la cabecera de correlación en el contrato (el backend usa `X-Correlation-ID`).
+- Documentos de políticas de uso y privacidad (texto y URL) para enlazarlos desde el registro.
 - Sesión/autenticación (ADR-009).
 - Variables del Environment `production` en GitHub (OIDC/WIF y Artifact Registry) para que `release-web` publique.
 - CORS en `bff-web` para el origen de la web (tarea del backend).

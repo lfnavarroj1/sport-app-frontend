@@ -10,14 +10,22 @@ describe('BffWebUrl', () => {
   }
 
   it('une la URL base y la ruta sin duplicar barras', () => {
-    const bff = setup({ environment: 'development', bffWebBaseUrl: 'https://bff.example.test/' });
+    const bff = setup({
+      environment: 'development',
+      bffWebBaseUrl: 'https://bff.example.test/',
+      registrationPoliciesVersion: null,
+    });
 
     expect(bff.isConfigured).toBeTrue();
     expect(bff.resolve('/v1/recurso')).toBe('https://bff.example.test/v1/recurso');
   });
 
   it('falla de forma explícita cuando el BFF no está configurado', () => {
-    const bff = setup({ environment: 'local', bffWebBaseUrl: null });
+    const bff = setup({
+      environment: 'local',
+      bffWebBaseUrl: null,
+      registrationPoliciesVersion: null,
+    });
 
     expect(bff.isConfigured).toBeFalse();
     expect(() => bff.resolve('v1/recurso')).toThrowError(BffNotConfiguredError);

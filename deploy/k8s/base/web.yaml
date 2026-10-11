@@ -38,6 +38,10 @@ spec:
             - name: BFF_WEB_BASE_URL
               valueFrom:
                 configMapKeyRef: { name: sportapp-runtime, key: BFF_WEB_BASE_URL }
+            # Misma clave que lee users-management: una sola versión por ambiente (HU001).
+            - name: REGISTRATION_POLICIES_VERSION
+              valueFrom:
+                configMapKeyRef: { name: sportapp-runtime, key: REGISTRATION_POLICIES_VERSION }
           readinessProbe:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 10
