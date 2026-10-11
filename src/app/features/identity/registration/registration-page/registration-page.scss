@@ -1,11 +1,12 @@
 .registration {
   max-width: 32rem;
-  margin: 2rem auto;
+  margin: 0 auto;
 }
 
 h1 {
-  margin: 0 0 1rem;
-  font: var(--mat-sys-headline-small);
+  margin: 0 0 0.25rem;
+  font: var(--mat-sys-headline-medium);
+  font-weight: 700;
 }
 
 .registration__success h2 {

@@ -93,7 +93,12 @@
   "home": {
     "greeting": "Hola, {{name}}",
     "accountType": "Tipo de cuenta",
-    "email": "Correo electrónico"
+    "email": "Correo electrónico",
+    "subtitle": "Este es tu espacio en SportApp."
+  },
+  "authShell": {
+    "headline": "Entrena, compite y conecta",
+    "tagline": "Planes de entrenamiento, eventos deportivos y servicios para tu rendimiento, en un solo lugar."
   },
   "technicalStatus": {
     "title": "Estado técnico",

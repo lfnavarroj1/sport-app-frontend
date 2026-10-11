@@ -1,39 +1,84 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// Tema de SportApp: dirección visual «Energía deportiva» (decisión del responsable,
+// 2026-10-11). Paleta Material 3 generada desde los colores de marca con
+// `ng generate @angular/material:theme-color` (src/styles/_theme-colors.scss).
 @use '@angular/material' as mat;
+@use './styles/theme-colors' as brand;
 
 html {
   height: 100%;
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: brand.$primary-palette,
+        tertiary: brand.$tertiary-palette,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: Roboto,
+        brand-family: Barlow,
+      ),
       density: 0,
     )
   );
+
+  // Colores de marca para fondos y acentos. El naranja vivo no se usa como color
+  // de texto sobre claro: Material ya aplica a botones y textos el tono accesible.
+  --sa-brand-orange: #f26b1d;
+  --sa-brand-petrol: #0e5e6f;
+  --sa-night: #0b1b2b;
+  --sa-night-2: #12324a;
+  --sa-on-night: #ffffff;
+  --sa-on-night-muted: rgb(255 255 255 / 78%);
+  --sa-radius-lg: 1.25rem;
+  --sa-shadow-card: 0 1.5rem 3rem rgb(11 27 43 / 28%);
+
+  @media (prefers-contrast: more) {
+    @include brand.high-contrast-overrides(light);
+  }
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
+  background-color: var(--mat-sys-surface-container-low);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
   margin: 0;
   height: 100%;
 }
-/* You can add global styles to this file, and also import other style files */
+
+// Títulos de página con la tipografía de marca.
+h1,
+h2 {
+  font-family: Barlow, Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+// Foco siempre visible al navegar con teclado.
+:focus-visible {
+  outline: 3px solid var(--sa-brand-orange);
+  outline-offset: 2px;
+}
+
+// Tarjeta de formulario sobre el fondo de marca (<app-auth-shell>).
+.sa-auth-card.mat-mdc-card {
+  width: 100%;
+  color: var(--mat-sys-on-surface);
+  border: 0;
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-card);
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+// Las páginas enrutadas ocupan el alto disponible bajo la barra superior.
+app-root main > :not(router-outlet) {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+// Enlaces de texto con el color de marca accesible.
+a:not(.mat-mdc-button-base) {
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+  text-underline-offset: 0.2em;
+}

@@ -17,6 +17,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { toApiError } from '../../../../core/api/api-error';
 import { SessionStore } from '../../../../core/session/session.store';
+import { AuthShell } from '../../../../shared/ui/auth-shell/auth-shell';
 import { FieldError } from '../../../../shared/forms/field-error/field-error';
 import { LoginGateway } from '../login.gateway';
 import { HOME_BY_ACTOR_TYPE, LoginOutcome } from '../login.model';
@@ -28,6 +29,7 @@ const LIMITS = { emailMax: 254, passwordMax: 128 } as const;
 @Component({
   selector: 'app-login-page',
   imports: [
+    AuthShell,
     FieldError,
     MatButtonModule,
     MatCardModule,

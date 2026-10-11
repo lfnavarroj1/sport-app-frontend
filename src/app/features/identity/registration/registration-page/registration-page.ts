@@ -15,6 +15,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { toApiError } from '../../../../core/api/api-error';
 import { REGISTER_USER_ERROR_CODES } from '../../../../core/api/bff-web/users.api';
+import { AuthShell } from '../../../../shared/ui/auth-shell/auth-shell';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
 import { RegistrationForm } from '../registration-form/registration-form';
@@ -38,6 +39,7 @@ type SubmissionState =
   selector: 'app-registration-page',
   imports: [
     AsyncState,
+    AuthShell,
     MatButtonModule,
     MatCardModule,
     RegistrationForm,

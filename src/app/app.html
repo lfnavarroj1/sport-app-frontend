@@ -2,8 +2,11 @@
   {{ 'app.skipToContent' | translate }}
 </a>
 
-<mat-toolbar role="banner">
-  <span class="app-name">{{ 'app.name' | translate }}</span>
+<mat-toolbar role="banner" class="app-bar">
+  <span class="app-brand">
+    <mat-icon class="app-brand__mark" aria-hidden="true">bolt</mat-icon>
+    <span class="app-name">{{ 'app.name' | translate }}</span>
+  </span>
   <nav class="app-nav" [attr.aria-label]="'app.navigation' | translate">
     @if (user(); as user) {
       <a

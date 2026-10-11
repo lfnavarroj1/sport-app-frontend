@@ -1,0 +1,74 @@
+:host {
+  display: flex;
+  flex: 1;
+}
+
+// Fondo: azul noche con degradado, resplandor naranja y trazos diagonales tipo
+// pista. Solo CSS: sin imágenes externas ni licencias.
+.auth-shell {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 2rem;
+  padding: 2.5rem 1rem 3rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 15%, rgb(242 107 29 / 45%), transparent 40%),
+    radial-gradient(circle at 10% 90%, rgb(14 94 111 / 70%), transparent 45%),
+    linear-gradient(160deg, var(--sa-night) 0%, var(--sa-night-2) 100%);
+  color: var(--sa-on-night);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: repeating-linear-gradient(
+      -35deg,
+      transparent 0 3.5rem,
+      rgb(255 255 255 / 4%) 3.5rem 3.75rem
+    );
+    pointer-events: none;
+  }
+
+  @media (min-width: 960px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
+    gap: 4rem;
+    padding: 3rem clamp(2rem, 6vw, 6rem);
+  }
+}
+
+.auth-shell__intro,
+.auth-shell__panel {
+  position: relative;
+}
+
+.auth-shell__intro {
+  max-width: 34rem;
+}
+
+.auth-shell__headline {
+  margin: 0 0 1rem;
+  font-family: Barlow, Roboto, sans-serif;
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.05;
+  text-transform: uppercase;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 4rem;
+    height: 0.35rem;
+    margin-top: 1rem;
+    border-radius: 1rem;
+    background: var(--sa-brand-orange);
+  }
+}
+
+.auth-shell__tagline {
+  margin: 0;
+  color: var(--sa-on-night-muted);
+  font: var(--mat-sys-body-large);
+}
