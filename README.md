@@ -104,9 +104,11 @@ Dirección «Energía deportiva» (decisión del responsable, 2026-10-11): naran
 
 - `/iniciar-sesion` es la página inicial; desde ella se llega al registro (`/registro`).
 - **Inicio por tipo de usuario (ADR-025, HU003 CA7–CA10):** tras ingresar, `athlete` va a `/deportista/inicio`, `organizer` a `/organizador/inicio` y `service_provider` a `/profesional/inicio`. Cada área tiene un menú lateral izquierdo (`shell/actor-shell`) y la guarda `requireActor`: la URL de otro actor lleva a `/acceso-no-autorizado`. Un `actor_type` ausente o desconocido no inicia sesión ni asume un rol.
-- **Registro de navegación** (`shell/navigation/navigation.registry.ts`): fuente única de opciones por actor, con grupo, orden, icono, ruta documentada, permiso y HU. Solo incluye HU aprobadas para web. Las opciones cuya HU aún no existe se muestran deshabilitadas como «Próximamente» (decisión del responsable, 2026-10-11): se activan con `available: true` y su ruta cuando se implemente la HU. Para el deportista, las opciones del plan esperan el contrato de capacidades (ADR-024).
-- La sesión vive **solo en memoria** (`core/session/session.store.ts`): el access token nunca se escribe en `localStorage`, `sessionStorage`, cookies accesibles ni logs. Al vencer (`expires_in`) la sesión termina y se pide ingresar de nuevo; al recargar la pestaña también.
-- El refresh token debe viajar en una cookie HttpOnly que fija el BFF (decisión del 2026-10-10). El contrato 0.3.0 aún lo devuelve en el cuerpo; la web lo descarta sin guardarlo. La renovación automática y la recuperación de la sesión al recargar esperan el contrato con la cookie.
+- **Registro de navegación** (`shell/navigation/navigation.registry.ts`): fuente única de opciones por actor, con grupo, orden, icono, ruta documentada, permiso (`actor-permissions.v1`) o capacidad del plan (ADR-024) y HU. Solo incluye HU aprobadas para web. Las opciones cuya HU aún no existe se muestran deshabilitadas como «Próximamente» (decisión del responsable, 2026-10-11): se activan con `available: true` y su ruta cuando se implemente la HU.
+- **Permisos y capacidades** (`core/session/session-access.store.ts`, `GET /v1/me/capabilities` con `Authorization: Bearer`): una opción con permiso o capacidad solo aparece si el BFF la confirma; mientras carga o si falla, no se asume. Durante `PROVISIONING` el deportista ve el aviso de activación sin opciones del plan y la web vuelve a consultar. `401` termina la sesión como vencida; `403 unsupported_actor_type` lleva a `/acceso-no-autorizado`.
+- El access token vive **solo en memoria** (`core/session/session.store.ts`): nunca se escribe en `localStorage`, `sessionStorage`, cookies accesibles ni logs.
+- El refresh token viaja en la cookie `HttpOnly` `__Secure-sportapp_refresh` que fija el BFF web (contrato 0.4.0+, decisión del 2026-10-10); la aplicación no lo recibe ni puede leerlo. Las operaciones de sesión van con `withCredentials`.
+- **Mantener la sesión** (`core/session/http-session-refresher.ts`, `POST /v1/sessions/refresh`): el access token se renueva 60 s antes de vencer; si el BFF no responde se reintenta cada 15 s mientras siga vigente, y si rechaza la cookie la sesión termina con «Tu sesión expiró». Al recargar o abrir la aplicación, las guardas intentan una vez recuperar la sesión con la cookie antes de decidir. Las renovaciones de varias pestañas se serializan con la Web Locks API, porque la cookie rota en cada uso y reutilizar una rotada revoca la sesión.
 - Los errores de credenciales usan siempre el mismo mensaje genérico; `429 too_many_attempts` muestra la espera indicada por `Retry-After`.
 
 ## Contenedor y Kubernetes
@@ -182,7 +184,8 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 
 - Nombre de la cabecera de correlación en el contrato (el backend usa `X-Correlation-ID`).
 - Documentos de políticas de uso y privacidad (texto y URL) para enlazarlos desde el registro.
-- Contrato bff-web con el refresh token en cookie HttpOnly (backend): renovación de sesión y recuperación al recargar.
+- Producción: con `SameSite=Strict`, la cookie de sesión solo viaja si la web y `bff-web` comparten sitio (decisión de la capa de borde en la plataforma).
+- Evidencia integrada del deportista con plan `ACTIVE`: en la composición local el consumidor del alta gratuita de Afiliación no activa el plan `FREE` (backend/plataforma).
 - Variables del Environment `production` en GitHub (OIDC/WIF y Artifact Registry) para que `release-web` publique.
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.

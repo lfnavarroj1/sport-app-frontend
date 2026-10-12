@@ -94,6 +94,11 @@
   }
 }
 
+.actor-shell__access {
+  margin: 0.5rem 0.75rem 0;
+  font: var(--mat-sys-body-small);
+}
+
 .actor-shell__content {
   display: flex;
   flex-direction: column;

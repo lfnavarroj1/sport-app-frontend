@@ -1,5 +1,5 @@
 /**
- * Simulador de `POST /v1/sessions` derivado del contrato bff-web 0.3.0
+ * Simulador de `POST /v1/sessions` derivado del contrato bff-web 0.6.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`). Lo usan las pruebas
  * unitarias y Playwright; `sessions.contract.spec.ts` valida cada respuesta contra
  * el esquema del contrato. Datos y tokens sintéticos: no son JWT válidos.
@@ -18,7 +18,6 @@ export const VALID_LOGIN_REQUEST = {
 const CORRELATION_ID = '7a2d3b6f-9c0e-4d1f-8a21-3b4c5d6e7f80';
 
 export const SIMULATED_ACCESS_TOKEN = 'token-de-acceso-sintetico';
-export const SIMULATED_REFRESH_TOKEN = 'token-de-renovacion-sintetico-0123456789';
 /** `Retry-After` simulado (segundos) para `too_many_attempts`. */
 export const SIMULATED_RETRY_AFTER = 600;
 
@@ -29,7 +28,6 @@ export const CREATE_SESSION_RESPONSES = {
       token_type: 'Bearer',
       access_token: SIMULATED_ACCESS_TOKEN,
       expires_in: 900,
-      refresh_token: SIMULATED_REFRESH_TOKEN,
       refresh_expires_in: 604800,
       user: {
         user_id: '0b9f6c1e-3d2a-4f5b-8c7d-1e2f3a4b5c6d',
@@ -44,6 +42,15 @@ export const CREATE_SESSION_RESPONSES = {
     body: {
       code: 'invalid_credentials',
       message: 'Credenciales inválidas.',
+      correlation_id: CORRELATION_ID,
+      details: [],
+    },
+  },
+  originNotAllowed: {
+    status: 403,
+    body: {
+      code: 'origin_not_allowed',
+      message: 'Origen no permitido.',
       correlation_id: CORRELATION_ID,
       details: [],
     },

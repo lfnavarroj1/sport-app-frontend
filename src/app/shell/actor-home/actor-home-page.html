@@ -9,14 +9,16 @@
     </div>
 
     <div class="actor-home__body">
-      @if (planCapabilities()) {
+      @if (planStatus(); as planStatus) {
         <mat-card appearance="outlined" class="actor-home__card" data-testid="home-plan">
           <mat-card-content>
             <h2>
               <mat-icon aria-hidden="true">workspace_premium</mat-icon>
               {{ 'home.plan.title' | translate }}
             </h2>
-            <p>{{ 'home.plan.pending' | translate }}</p>
+            <p role="status" [attr.data-plan-status]="planStatus">
+              {{ 'home.plan.' + planStatus | translate }}
+            </p>
           </mat-card-content>
         </mat-card>
       }

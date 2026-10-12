@@ -6,6 +6,7 @@ import {
   SIMULATED_CORRELATION_ID,
   SimulatedResponse,
 } from '../src/testing/bff-web/register-user.fixtures';
+import { simulateNoSession } from './support/session-simulator';
 
 /**
  * HU001 con el BFF reemplazado por el simulador derivado del contrato bff-web
@@ -44,6 +45,7 @@ async function fillForm(page: Page, email = 'persona@example.com'): Promise<void
 
 test.describe('HU001 Registrar usuario (simulador del contrato) @simulado', () => {
   test('se llega al registro desde el inicio de sesión', async ({ page }) => {
+    await simulateNoSession(page);
     await page.goto('/');
     await expect(page).toHaveURL(/\/iniciar-sesion$/);
 

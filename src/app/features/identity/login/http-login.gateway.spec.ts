@@ -5,7 +5,6 @@ import { TestBed } from '@angular/core/testing';
 import {
   CREATE_SESSION_RESPONSES,
   SIMULATED_ACCESS_TOKEN,
-  SIMULATED_REFRESH_TOKEN,
   SIMULATED_RETRY_AFTER,
   SIMULATED_SESSION_CORRELATION_ID,
   VALID_LOGIN_REQUEST,
@@ -18,7 +17,7 @@ import { LoginOutcome } from './login.model';
 const BFF = 'http://bff.example.com';
 const NOW = new Date('2026-10-10T12:00:00Z').getTime();
 
-describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
+describe('HttpLoginGateway (HU003, contrato bff-web 0.6.0)', () => {
   let http: HttpTestingController;
   let gateway: HttpLoginGateway;
 
@@ -59,7 +58,7 @@ describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
     return outcome;
   }
 
-  it('envía las credenciales a POST /v1/sessions del BFF', async () => {
+  it('envía las credenciales a POST /v1/sessions con credenciales, para recibir la cookie', async () => {
     const outcome = gateway.login(VALID_LOGIN_REQUEST);
     const request = http.expectOne(`${BFF}/v1/sessions`);
     request.flush(CREATE_SESSION_RESPONSES.authenticated.body);
@@ -67,6 +66,7 @@ describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
 
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(VALID_LOGIN_REQUEST);
+    expect(request.request.withCredentials).toBeTrue();
   });
 
   it('CA1: devuelve la identidad, el access token y su vencimiento verificable', async () => {
@@ -85,12 +85,6 @@ describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
         expiresAt: NOW + 900_000,
       },
     });
-  });
-
-  it('descarta el refresh token del cuerpo: no queda en la sesión de la web', async () => {
-    const outcome = await loginWith(CREATE_SESSION_RESPONSES.authenticated);
-
-    expect(JSON.stringify(outcome)).not.toContain(SIMULATED_REFRESH_TOKEN);
   });
 
   it('CA2/CA3: 401 invalid_credentials → mensaje genérico, sin sesión', async () => {
@@ -119,6 +113,7 @@ describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
   });
 
   const technicalFailures: [string, SimulatedResponse, string][] = [
+    ['403 origin_not_allowed', CREATE_SESSION_RESPONSES.originNotAllowed, 'forbidden'],
     ['422 validation_error', CREATE_SESSION_RESPONSES.validationError, 'validation'],
     ['503 upstream_unavailable', CREATE_SESSION_RESPONSES.upstreamUnavailable, 'server'],
     ['504 upstream_timeout', CREATE_SESSION_RESPONSES.upstreamTimeout, 'server'],
@@ -128,7 +123,7 @@ describe('HttpLoginGateway (HU003, contrato bff-web 0.3.0)', () => {
       expect(await loginWith(response)).toEqual({
         kind: 'failed',
         error: {
-          kind: kind as 'validation' | 'server',
+          kind: kind as 'forbidden' | 'validation' | 'server',
           status: response.status,
           code: (response.body as { code: string }).code,
           correlationId: SIMULATED_SESSION_CORRELATION_ID,

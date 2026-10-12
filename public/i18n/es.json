@@ -101,7 +101,10 @@
     },
     "plan": {
       "title": "Tu plan",
-      "pending": "Tu plan y sus opciones aparecerán aquí cuando estén confirmados."
+      "loading": "Consultando el estado de tu plan…",
+      "provisioning": "Estamos activando tu plan. Sus opciones aparecerán en cuanto esté confirmado.",
+      "active": "Tu plan está activo. Sus opciones disponibles en la web aparecen en tu menú.",
+      "unavailable": "No pudimos consultar tu plan. Reintenta desde el menú."
     }
   },
   "shell": {
@@ -134,11 +137,14 @@
       "training-history": "Historial de entrenamiento",
       "health-history": "Historial de molestias o lesiones",
       "nutrition-history": "Historial de alimentación",
-      "nutrition-plans": "Crear planes de alimentación"
+      "nutrition-plans": "Crear planes de alimentación",
+      "athlete-training-plans": "Planes de entrenamiento",
+      "sport-calendar": "Calendario deportivo",
+      "sports-medicine": "Servicios médicos y deportivos"
     },
     "plan": {
       "title": "Opciones de tu plan",
-      "pending": "Las opciones de tu plan aparecerán cuando tu plan esté confirmado."
+      "provisioning": "Estamos activando tu plan. Sus opciones aparecerán en cuanto esté confirmado."
     }
   },
   "unauthorized": {

@@ -15,9 +15,15 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
+import { SessionAccessStore } from '../../core/session/session-access.store';
 import { LOGIN_PATH } from '../../core/session/session.guards';
 import { ActorType, SessionStore } from '../../core/session/session.store';
-import { NAVIGATION, navigationSections } from '../navigation/navigation.registry';
+import { AsyncState } from '../../shared/ui/async-state/async-state';
+import {
+  NAVIGATION,
+  UNAUTHORIZED_PATH,
+  navigationSections,
+} from '../navigation/navigation.registry';
 
 /** Ancho a partir del cual el menú lateral queda fijo. */
 const WIDE_LAYOUT = '(min-width: 960px)';
@@ -25,11 +31,14 @@ const WIDE_LAYOUT = '(min-width: 960px)';
 /**
  * Área autenticada de un actor (ADR-025): menú lateral izquierdo con las opciones
  * de su rol y el contenido de la ruta hija. El actor sale de los datos de la ruta;
- * la guarda `requireActor` ya comprobó que coincide con la sesión.
+ * la guarda `requireActor` ya comprobó que coincide con la sesión. Las opciones
+ * que exigen un permiso o una capacidad aparecen solo cuando
+ * `GET /v1/me/capabilities` las confirma (ADR-024).
  */
 @Component({
   selector: 'app-actor-shell',
   imports: [
+    AsyncState,
     MatButtonModule,
     MatIconModule,
     MatListModule,
@@ -45,10 +54,19 @@ const WIDE_LAYOUT = '(min-width: 960px)';
 })
 export class ActorShell {
   private readonly session = inject(SessionStore);
+  private readonly access = inject(SessionAccessStore);
 
   protected readonly actor = inject(ActivatedRoute).snapshot.data['actor'] as ActorType;
-  protected readonly sections = navigationSections(this.actor);
   protected readonly planCapabilities = NAVIGATION[this.actor].planCapabilities;
+  protected readonly accessState = this.access.view;
+  protected readonly sections = computed(() => {
+    const state = this.accessState();
+    return navigationSections(this.actor, state?.status === 'success' ? state.data : null);
+  });
+  protected readonly provisioning = computed(() => {
+    const state = this.accessState();
+    return state?.status === 'success' && state.data.subscriptionStatus === 'PROVISIONING';
+  });
 
   protected readonly wide = toSignal(
     inject(BreakpointObserver)
@@ -60,11 +78,18 @@ export class ActorShell {
 
   constructor() {
     const router = inject(Router);
-    // Si la sesión termina (por ejemplo, vence el access token) se vuelve al acceso.
+    this.access.ensureLoaded();
+    // Si la sesión termina se sale del área: al acceso, o al acceso no autorizado
+    // cuando el BFF no admite el tipo de actor (CA10).
     effect(() => {
       if (this.session.user() === null) {
-        void router.navigateByUrl(LOGIN_PATH);
+        const unauthorized = this.session.lastEndReason() === 'unauthorized_actor';
+        void router.navigateByUrl(unauthorized ? UNAUTHORIZED_PATH : LOGIN_PATH);
       }
     });
+  }
+
+  protected retry(): void {
+    this.access.reload();
   }
 }

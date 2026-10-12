@@ -3,17 +3,20 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { toApiError } from '../../../core/api/api-error';
-import { ACTOR_TYPES, readErrorResponse } from '../../../core/api/bff-web/contract';
+import { readErrorResponse } from '../../../core/api/bff-web/contract';
 import {
   BffWebSessionsApi,
   CREATE_SESSION_ERROR_CODES,
-  SessionResponseDto,
 } from '../../../core/api/bff-web/sessions.api';
-import { ActorType, Session } from '../../../core/session/session.store';
+import { sessionFromResponse } from '../../../core/session/session-response';
 import { LoginGateway } from './login.gateway';
 import { LoginCredentials, LoginOutcome } from './login.model';
 
-/** Implementación de HU003 sobre `POST /v1/sessions` del BFF web (contrato 0.3.0). */
+/**
+ * Implementación de HU003 sobre `POST /v1/sessions` del BFF web (contrato 0.6.0).
+ * El refresh token queda en la cookie HttpOnly que fija el BFF; la aplicación no
+ * lo recibe.
+ */
 @Injectable()
 export class HttpLoginGateway extends LoginGateway {
   private readonly api = inject(BffWebSessionsApi);
@@ -23,37 +26,14 @@ export class HttpLoginGateway extends LoginGateway {
       const response = await firstValueFrom(
         this.api.createSession({ email: credentials.email, password: credentials.password }),
       );
+      const session = sessionFromResponse(response, Date.now());
       // CA10: un actor ausente o fuera del catálogo no inicia sesión ni recibe
       // un rol predeterminado.
-      if (!isKnownActor(response.user?.actor_type)) {
-        return { kind: 'unauthorized_actor' };
-      }
-      return { kind: 'authenticated', session: toSession(response, Date.now()) };
+      return session ? { kind: 'authenticated', session } : { kind: 'unauthorized_actor' };
     } catch (error) {
       return outcomeFromError(error);
     }
   }
-}
-
-function isKnownActor(value: unknown): value is ActorType {
-  return (ACTOR_TYPES as readonly unknown[]).includes(value);
-}
-
-/**
- * Conserva solo identidad, access token y su vencimiento. `refresh_token` se
- * descarta a propósito: no debe quedar en memoria accesible a scripts.
- */
-function toSession(response: SessionResponseDto, receivedAt: number): Session {
-  return {
-    user: {
-      id: response.user.user_id,
-      fullName: response.user.full_name,
-      email: response.user.email,
-      actorType: response.user.actor_type,
-    },
-    accessToken: response.access_token,
-    expiresAt: receivedAt + response.expires_in * 1000,
-  };
 }
 
 function outcomeFromError(error: unknown): LoginOutcome {
@@ -66,8 +46,9 @@ function outcomeFromError(error: unknown): LoginOutcome {
       return { kind: 'too_many_attempts', retryAfterSeconds: retryAfter(error) };
     }
   }
-  // Incluye `validation_error`, `upstream_unavailable`, `upstream_timeout`, sin
-  // conexión y cualquier respuesta no prevista: nunca se interpreta como sesión.
+  // Incluye `origin_not_allowed`, `validation_error`, `upstream_unavailable`,
+  // `upstream_timeout`, sin conexión y cualquier respuesta no prevista: nunca se
+  // interpreta como sesión.
   return { kind: 'failed', error: toApiError(error) };
 }
 
