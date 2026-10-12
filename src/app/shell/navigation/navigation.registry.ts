@@ -1,3 +1,4 @@
+import { SessionAccess } from '../../core/session/session-access.store';
 import { ActorType } from '../../core/session/session.store';
 
 /**
@@ -5,7 +6,12 @@ import { ActorType } from '../../core/session/session.store';
  * Fuentes: `navegacion/README.md` y `planes/05-menu-lateral-por-plan.md`.
  *
  * Solo incluye opciones de HU aprobadas para el canal web; las de canal móvil
- * (HU026–HU040) no aparecen. Una opción cuya HU todavía no está implementada en
+ * (HU026–HU040) no aparecen, aunque el plan del deportista incluya su capacidad
+ * (`navegacion/README.md`: cada canal muestra solo sus HU aprobadas).
+ *
+ * Opciones visibles = actor ∩ canal ∩ permisos/capacidades vigentes: una opción
+ * con `permission` o `capability` solo aparece si `GET /v1/me/capabilities` la
+ * confirma (ADR-024, ADR-025). Una opción cuya HU todavía no está implementada en
  * la web se muestra como «Próximamente», deshabilitada y sin navegación
  * (decisión del responsable, 2026-10-11): nunca como función disponible.
  *
@@ -27,8 +33,10 @@ export interface NavItem {
    * la documentación aún no define la ruta (no se inventa).
    */
   readonly route: string | null;
-  /** Permiso estable o capacidad requerida, cuando la documentación lo define. */
+  /** Permiso estable del actor (`actor-permissions.v1`), si la opción lo exige. */
   readonly permission: string | null;
+  /** Capacidad del plan del deportista (ADR-024), si la opción la exige. */
+  readonly capability: string | null;
   /** HU que implementa la opción. */
   readonly hu: string;
   /** La HU ya está implementada en la web. */
@@ -40,10 +48,7 @@ export interface ActorNavigation {
   /** Ruta inicial del actor tras iniciar sesión. */
   readonly home: string;
   readonly items: readonly NavItem[];
-  /**
-   * El actor recibe además opciones según las capacidades de su plan (ADR-024).
-   * Mientras el BFF no exponga las capacidades, no se asumen permisos.
-   */
+  /** El actor tiene un plan cuyas capacidades amplían su menú (solo `athlete`). */
   readonly planCapabilities: boolean;
 }
 
@@ -54,6 +59,7 @@ const home = (route: string): NavItem => ({
   icon: 'home',
   route,
   permission: null,
+  capability: null,
   hu: 'HU003',
   available: true,
 });
@@ -66,6 +72,7 @@ const account = (): NavItem[] => [
     icon: 'person',
     route: null,
     permission: null,
+    capability: null,
     hu: 'HU002',
     available: false,
   },
@@ -76,6 +83,7 @@ const account = (): NavItem[] => [
     icon: 'logout',
     route: null,
     permission: null,
+    capability: null,
     hu: 'HU004',
     available: false,
   },
@@ -89,7 +97,42 @@ const upcoming = (
   route: string | null,
   permission: string | null,
   hu: string,
-): NavItem => ({ id, group, order, icon, route, permission, hu, available: false });
+): NavItem => ({
+  id,
+  group,
+  order,
+  icon,
+  route,
+  permission,
+  capability: null,
+  hu,
+  available: false,
+});
+
+/**
+ * Opción que aporta una capacidad del plan del deportista
+ * (`planes/05-menu-lateral-por-plan.md`); la ruta lógica se ubica en el área
+ * `/deportista`. Ninguna de estas HU está implementada aún en la web.
+ */
+const planOption = (
+  id: string,
+  group: NavGroup,
+  order: number,
+  icon: string,
+  route: string,
+  capability: string,
+  hu: string,
+): NavItem => ({
+  id,
+  group,
+  order,
+  icon,
+  route,
+  permission: null,
+  capability,
+  hu,
+  available: false,
+});
 
 export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
   athlete: {
@@ -101,6 +144,34 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
       ...account(),
       // «Mi plan» solo existe para el deportista (navegacion/README.md).
       upcoming('plan', 'account', 30, 'workspace_premium', null, null, 'HU016'),
+      // Capacidades del plan con HU aprobada para la web (ADR-024).
+      planOption(
+        'athlete-training-plans',
+        'training',
+        100,
+        'fitness_center',
+        '/deportista/entrenamientos/planes',
+        'training.plan.manage',
+        'HU010',
+      ),
+      planOption(
+        'sport-calendar',
+        'calendar',
+        200,
+        'calendar_month',
+        '/deportista/calendario',
+        'calendar.sport.view',
+        'HU023',
+      ),
+      planOption(
+        'sports-medicine',
+        'services',
+        240,
+        'medical_services',
+        '/deportista/servicios/medico-deportivos',
+        'services.sports_medicine.access',
+        'HU017',
+      ),
     ],
   },
   organizer: {
@@ -266,9 +337,26 @@ export interface NavSection {
   readonly items: readonly NavItem[];
 }
 
-/** Agrupa y ordena las opciones del actor para el menú lateral. */
-export function navigationSections(actor: ActorType): NavSection[] {
-  const items = [...NAVIGATION[actor].items].sort((a, b) => a.order - b.order);
+/**
+ * Opciones que la sesión puede ver. Sin la vista del BFF (`null`: cargando o
+ * con error) solo quedan las que no exigen permiso ni capacidad: nunca se
+ * asumen. Las capacidades solo cuentan con la suscripción `ACTIVE`.
+ */
+export function visibleItems(actor: ActorType, access: SessionAccess | null): NavItem[] {
+  return NAVIGATION[actor].items.filter((item) => {
+    if (item.permission !== null) {
+      return access?.permissions.has(item.permission) ?? false;
+    }
+    if (item.capability !== null) {
+      return access?.subscriptionStatus === 'ACTIVE' && access.capabilities.has(item.capability);
+    }
+    return true;
+  });
+}
+
+/** Agrupa y ordena las opciones visibles del actor para el menú lateral. */
+export function navigationSections(actor: ActorType, access: SessionAccess | null): NavSection[] {
+  const items = visibleItems(actor, access).sort((a, b) => a.order - b.order);
   return GROUP_ORDER.map((group) => ({
     group,
     items: items.filter((item) => item.group === group),

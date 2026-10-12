@@ -29,26 +29,33 @@ describe('requireActor (ADR-025, HU003 CA10)', () => {
     });
   }
 
-  function run(actor: ActorType): boolean | UrlTree {
+  function run(actor: ActorType): Promise<boolean | UrlTree> {
     return TestBed.runInInjectionContext(
-      () => requireActor(actor)({} as never, {} as never) as boolean | UrlTree,
+      () => requireActor(actor)({} as never, {} as never) as Promise<boolean | UrlTree>,
     );
   }
 
-  it('sin sesión lleva al inicio de sesión', () => {
-    expect(run('organizer')).toEqual(router.parseUrl('/iniciar-sesion'));
+  it('sin sesión lleva al inicio de sesión', async () => {
+    expect(await run('organizer')).toEqual(router.parseUrl('/iniciar-sesion'));
   });
 
-  it('permite el área del propio actor', () => {
+  it('permite el área del propio actor', async () => {
     signIn('organizer');
 
-    expect(run('organizer')).toBeTrue();
+    expect(await run('organizer')).toBeTrue();
   });
 
-  it('bloquea la URL de otro actor y lleva al acceso no autorizado', () => {
+  it('bloquea la URL de otro actor y lleva al acceso no autorizado', async () => {
     signIn('athlete');
 
-    expect(run('organizer')).toEqual(router.parseUrl('/acceso-no-autorizado'));
-    expect(run('service_provider')).toEqual(router.parseUrl('/acceso-no-autorizado'));
+    expect(await run('organizer')).toEqual(router.parseUrl('/acceso-no-autorizado'));
+    expect(await run('service_provider')).toEqual(router.parseUrl('/acceso-no-autorizado'));
+  });
+
+  it('antes de decidir intenta recuperar la sesión con la cookie (recarga)', async () => {
+    const restore = spyOn(session, 'restore').and.callFake(async () => signIn('organizer'));
+
+    expect(await run('organizer')).toBeTrue();
+    expect(restore).toHaveBeenCalled();
   });
 });

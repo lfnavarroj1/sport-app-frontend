@@ -5,7 +5,7 @@
     </p>
 
     <div class="actor-shell__nav">
-      @for (section of sections; track section.group) {
+      @for (section of sections(); track section.group) {
         @if (section.group !== 'main') {
           <h2 class="actor-shell__group" [id]="'menu-group-' + section.group">
             {{ 'shell.groups.' + section.group | translate }}
@@ -42,11 +42,18 @@
         </mat-nav-list>
       }
 
-      @if (planCapabilities) {
-        <section class="actor-shell__plan" data-testid="shell-plan-pending">
-          <h2 class="actor-shell__group">{{ 'shell.plan.title' | translate }}</h2>
-          <p>{{ 'shell.plan.pending' | translate }}</p>
-        </section>
+      @if (accessState(); as state) {
+        @if (state.status !== 'success') {
+          <!-- Sin la vista del BFF no se muestran opciones que exijan permiso o capacidad. -->
+          <div class="actor-shell__access" data-testid="shell-access">
+            <app-async-state [state]="state" (retry)="retry()" />
+          </div>
+        } @else if (planCapabilities && provisioning()) {
+          <section class="actor-shell__plan" role="status" data-testid="shell-plan-provisioning">
+            <h2 class="actor-shell__group">{{ 'shell.plan.title' | translate }}</h2>
+            <p>{{ 'shell.plan.provisioning' | translate }}</p>
+          </section>
+        }
       }
     </div>
   </mat-sidenav>

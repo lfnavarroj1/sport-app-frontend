@@ -1,32 +1,113 @@
 import { Page, expect, test } from '@playwright/test';
 
-import { login, sessionFor, simulateSession } from './support/session-simulator';
+import { GET_CAPABILITIES_RESPONSES } from '../src/testing/bff-web/capabilities.fixtures';
+import { SimulatedResponse } from '../src/testing/bff-web/register-user.fixtures';
+import { SessionSimulation, login, sessionFor, simulateSession } from './support/session-simulator';
 
 /**
- * HU003 CA7–CA10 y ADR-025: inicio y menú lateral por tipo de actor, con el BFF
- * reemplazado por el simulador del contrato bff-web 0.3.0. NO es E2E integrado.
+ * HU003 CA7–CA10 y ADR-025/ADR-024: inicio y menú lateral por tipo de actor, con
+ * permisos y capacidades de `GET /v1/me/capabilities`. El BFF está reemplazado
+ * por el simulador del contrato bff-web 0.6.0. NO es E2E integrado.
  */
 
-async function loginAs(page: Page, actorType: string): Promise<void> {
-  await simulateSession(page, sessionFor(actorType));
+async function loginAs(
+  page: Page,
+  actorType: string,
+  capabilities: SimulatedResponse | null = null,
+): Promise<SessionSimulation> {
+  const simulation = await simulateSession(page, sessionFor(actorType));
+  simulation.capabilities = capabilities;
   await login(page);
+  return simulation;
 }
 
 const menu = (page: Page) => page.locator('mat-sidenav');
 const menuItem = (page: Page, id: string) => page.locator(`[data-menu-item="${id}"]`);
+const planStatus = (page: Page) => page.getByTestId('home-plan').getByRole('status');
 
 test.describe('HU003 Inicio y navegación por actor (simulador del contrato) @simulado', () => {
-  test('CA7: el deportista entra a su inicio con sus opciones base y el aviso del plan', async ({
+  test('CA7: el deportista FREE ve sus opciones base y las de su plan aprobadas para la web', async ({
     page,
   }) => {
-    await loginAs(page, 'athlete');
+    const simulation = await loginAs(page, 'athlete');
 
     await expect(page).toHaveURL(/\/deportista\/inicio$/);
     await expect(page.getByTestId('shell-role')).toHaveText('Deportista');
     await expect(menuItem(page, 'plan')).toContainText('Mi plan');
-    await expect(page.getByTestId('shell-plan-pending')).toBeVisible();
+    await expect(menu(page).locator('[data-menu-item="athlete-training-plans"]')).toContainText(
+      'Planes de entrenamiento',
+    );
+    await expect(menu(page).locator('[data-menu-item="sport-calendar"]')).toContainText(
+      'Próximamente',
+    );
+    await expect(menuItem(page, 'sports-medicine')).toHaveCount(0);
+    await expect(planStatus(page)).toHaveText(
+      'Tu plan está activo. Sus opciones disponibles en la web aparecen en tu menú.',
+    );
     await expect(menuItem(page, 'event-create')).toHaveCount(0);
     await expect(menuItem(page, 'service-create')).toHaveCount(0);
+    expect(await simulation.capabilityRequests[0].headerValue('authorization')).toMatch(
+      /^Bearer \S+$/,
+    );
+  });
+
+  test('deportista PREMIUM: suma «Servicios médicos y deportivos»', async ({ page }) => {
+    await loginAs(page, 'athlete', GET_CAPABILITIES_RESPONSES.athletePremium);
+
+    await expect(menu(page).locator('[data-menu-item="sports-medicine"]')).toContainText(
+      'Servicios médicos y deportivos',
+    );
+  });
+
+  test('PROVISIONING: informa la activación sin opciones del plan y las muestra al activarse', async ({
+    page,
+  }) => {
+    const simulation = await loginAs(
+      page,
+      'athlete',
+      GET_CAPABILITIES_RESPONSES.athleteProvisioning,
+    );
+
+    await expect(page.getByTestId('shell-plan-provisioning')).toContainText(
+      'Estamos activando tu plan',
+    );
+    await expect(menuItem(page, 'athlete-training-plans')).toHaveCount(0);
+
+    simulation.capabilities = GET_CAPABILITIES_RESPONSES.athleteFree;
+
+    await expect(menu(page).locator('[data-menu-item="athlete-training-plans"]')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByTestId('shell-plan-provisioning')).toHaveCount(0);
+  });
+
+  test('si el BFF no puede evaluar el plan: error trazable, sin opciones asumidas, y reintento', async ({
+    page,
+  }) => {
+    const simulation = await loginAs(
+      page,
+      'athlete',
+      GET_CAPABILITIES_RESPONSES.upstreamUnavailable,
+    );
+
+    const error = page.getByTestId('shell-access').getByRole('alert');
+    await expect(error).toContainText('El servicio no está disponible');
+    await expect(error).toContainText('Código de referencia');
+    await expect(menuItem(page, 'athlete-training-plans')).toHaveCount(0);
+
+    simulation.capabilities = null;
+    await error.getByRole('button', { name: 'Reintentar' }).click();
+
+    await expect(menu(page).locator('[data-menu-item="athlete-training-plans"]')).toBeVisible();
+  });
+
+  test('CA10: si el BFF no admite el actor, la sesión termina en el acceso no autorizado', async ({
+    page,
+  }) => {
+    await loginAs(page, 'athlete', GET_CAPABILITIES_RESPONSES.unsupportedActorType);
+
+    await expect(page).toHaveURL(/\/acceso-no-autorizado$/);
+    await expect(page.locator('mat-sidenav, [data-menu-item]')).toHaveCount(0);
   });
 
   test('CA8: el organizador entra a su inicio y ve Crear evento, sin opciones de servicios ni plan', async ({
