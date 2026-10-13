@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 /**
- * Entrada del profesional al historial (HU011). El contrato bff-web 0.8.0 consulta
+ * Entrada del profesional al historial (HU011). El contrato bff-web 0.10.0 consulta
  * el historial por `athlete_id` pero no ofrece una lista de los deportistas que
  * autorizaron al profesional; por decisión del responsable (2026-10-13) se llega
  * desde el plan de HU010, que trae el `athlete_id`. La selección directa queda

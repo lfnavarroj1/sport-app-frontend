@@ -48,7 +48,6 @@ function parameter(operation: OpenApiOperation, name: string) {
 describe('Contrato bff-web: consultas de HU011', () => {
   it('usa la versión del contrato y sus operationId', () => {
     expect(contract.info.version).toBe(BFF_WEB_CONTRACT_VERSION);
-    expect(BFF_WEB_CONTRACT_VERSION).toBe('0.8.0');
     expect(operations.own.operationId).toBe('own_history_v1_training_history_get');
     expect(operations.athlete.operationId).toBe(
       'athlete_history_v1_athletes__athlete_id__training_history_get',

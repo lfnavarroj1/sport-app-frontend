@@ -51,7 +51,10 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
     ]);
-    expect(navigable('organizer')).toEqual([['home', homeFor('organizer'), 'HU003']]);
+    expect(navigable('organizer')).toEqual([
+      ['home', homeFor('organizer'), 'HU003'],
+      ['event-create', '/organizador/eventos/nuevo', 'HU021'],
+    ]);
     expect(navigable('service_provider')).toEqual([
       ['home', homeFor('service_provider'), 'HU003'],
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],

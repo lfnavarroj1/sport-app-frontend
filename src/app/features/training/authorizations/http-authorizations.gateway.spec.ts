@@ -20,7 +20,7 @@ const EMAIL = 'profesional@example.com';
 const GRANT_URL = `${BFF}/v1/me/training-authorizations`;
 const REVOKE_URL = `${GRANT_URL}/${SIMULATED_PROFESSIONAL_ID}`;
 
-describe('HttpAuthorizationsGateway (HU010, contrato bff-web 0.8.0)', () => {
+describe('HttpAuthorizationsGateway (HU010, contrato bff-web 0.10.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpAuthorizationsGateway;

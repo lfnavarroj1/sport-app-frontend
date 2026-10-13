@@ -374,5 +374,80 @@
     "bffNotConfigured": "No configurado",
     "language": "Idioma",
     "diagnosticId": "Identificador de diagnóstico"
+  },
+  "events": {
+    "create": {
+      "title": "Crear evento",
+      "intro": "Prepara un evento deportivo como borrador. Podrás publicarlo más adelante.",
+      "sections": {
+        "event": "Evento",
+        "location": "Ubicación",
+        "schedule": "Fecha y duración",
+        "capacity": "Capacidad"
+      },
+      "fields": {
+        "name": "Nombre del evento",
+        "description": "Descripción",
+        "discipline": "Disciplina",
+        "locationName": "Nombre del lugar",
+        "address": "Dirección",
+        "city": "Ciudad",
+        "countryCode": "País (código)",
+        "startDate": "Fecha de inicio",
+        "startTime": "Hora de inicio",
+        "startsAt": "Fecha y hora de inicio",
+        "timeZone": "Zona horaria",
+        "durationMinutes": "Duración (min)",
+        "capacity": "Capacidad (personas)"
+      },
+      "hints": {
+        "discipline": "Por ejemplo: Running, Ciclismo, Triatlón.",
+        "description": "Entre {{min}} y {{max}} caracteres.",
+        "countryCode": "Código ISO de 2 letras, por ejemplo CO o MX.",
+        "timeZone": "Zona horaria del lugar del evento; la fecha y la hora se interpretan en ella.",
+        "durationMinutes": "De {{min}} a {{max}} minutos.",
+        "capacity": "De {{min}} a {{max}} personas."
+      },
+      "actions": {
+        "create": "Crear borrador",
+        "creating": "Creando…",
+        "createAnother": "Crear otro evento"
+      },
+      "retrying": "El servicio no respondió. Reintentando ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "El evento no se creó porque no cumple estas reglas:",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa los datos y vuelve a crear el borrador.",
+        "retryHint": "Puedes volver a intentarlo: si el evento ya se había guardado, no se creará otro."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "fieldRequest": "Solicitud",
+        "required": "es obligatorio.",
+        "field_not_allowed": "no está permitido.",
+        "invalid_length": "la longitud no es válida.",
+        "unknown_value": "el valor no es válido.",
+        "not_in_future": "debe ser una fecha futura.",
+        "out_of_range": "está fuera del rango permitido.",
+        "time_zone_unknown": "la zona horaria no es válida.",
+        "time_zone_offset_mismatch": "la hora no existe o no coincide con la zona horaria en esa fecha.",
+        "unknown": "no cumple las reglas del evento."
+      },
+      "created": {
+        "title": "Borrador creado",
+        "message": "El evento «{{name}}» quedó guardado como borrador.",
+        "replayed": "Este borrador ya se había creado con esta misma solicitud; no se creó otro.",
+        "draftNote": "Los borradores no aparecen en el catálogo ni en el calendario públicos."
+      },
+      "summary": {
+        "status": "Estado",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "minutes": "{{value}} min",
+        "version": "Versión"
+      },
+      "status": {
+        "DRAFT": "Borrador"
+      }
+    }
   }
 }

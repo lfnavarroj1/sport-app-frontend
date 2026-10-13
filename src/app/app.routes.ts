@@ -63,7 +63,16 @@ export const routes: Routes = [
         ),
     },
   ]),
-  actorArea('organizador', 'organizer'),
+  actorArea('organizador', 'organizer', [
+    {
+      // HU021: el organizador crea un evento en borrador (ADR-028).
+      path: 'eventos/nuevo',
+      loadChildren: () =>
+        import('./features/events/create-event/create-event.routes').then(
+          (module) => module.CREATE_EVENT_ROUTES,
+        ),
+    },
+  ]),
   actorArea('profesional', 'service_provider', [
     {
       // HU010: el profesional crea, asigna y consulta planes de entrenamiento.

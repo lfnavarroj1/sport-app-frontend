@@ -1,0 +1,87 @@
+// Disposición de las pantallas de eventos (HU021) dentro del área del organizador.
+:host {
+  display: block;
+}
+
+.events-page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+}
+
+.events-page__header {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  p {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-large);
+  }
+}
+
+.events-page__card {
+  border: 0;
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-card);
+}
+
+.events-page__step {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-large);
+  font-weight: 700;
+}
+
+.events-page__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 1rem 0;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.events-page__note {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.events-page__error {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+
+  p {
+    margin: 0;
+  }
+}
+
+.events-page__reference {
+  margin-top: 0.25rem !important;
+  font: var(--mat-sys-body-small);
+}
+
+.events-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}

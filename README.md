@@ -126,6 +126,15 @@ Feature `src/app/features/training/history`, contrato `bff-web` 0.8.0 (`core/api
 - **Profesional** (`/profesional/historial/entrenamientos/:athleteId`, permiso `training.history.view_assigned`): historial de un deportista que lo autorizó, con `GET /v1/athletes/{athlete_id}/training-history`. Se llega desde el resultado o la consulta de un plan (HU010), porque el contrato no ofrece una lista de deportistas autorizados; la opción del menú explica ese camino. `403 athlete_authorization_required` se muestra sin datos.
 - Filtros por fecha de fin (día UTC, inclusiva) y deporte (los que informa el backend en `filters.sports`). Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo (codificado con `encodeURIComponent`) y agrega la página tal como llega. Cada fila abre su detalle.
 
+## Crear evento (HU021)
+
+Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core/api/bff-web/events.api.ts`) y ADR-028.
+
+- `/organizador/eventos/nuevo` (permiso `events.create`): exactamente los campos de ADR-028. La fecha y la hora se capturan en la hora local del lugar y la zona IANA (por defecto, la del navegador; sugerencias de `Intl.supportedValuesOf`); la web compone `starts_at` con el desfase de esa zona en ese instante (`event-time.ts`). El país es el código ISO de 2 letras y se muestra su nombre.
+- En la web solo se validan las restricciones del contrato (longitudes tras recortar, patrón del país, rangos y enteros). Fecha futura, país existente y coherencia de la zona los decide el backend y se listan desde `details[{field, issue}]`.
+- `Idempotency-Key` por intento lógico: se reintenta automáticamente hasta tres veces (1, 2 y 4 s) solo ante falta de red, `502`, `503` o `504`; nunca ante `4xx`. Al agotar los reintentos, volver a crear usa la misma clave.
+- Se presenta el borrador devuelto por `201` en la hora local del evento, sin consultar la proyección.
+
 ## Contenedor y Kubernetes
 
 Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.

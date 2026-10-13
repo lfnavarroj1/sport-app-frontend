@@ -17,7 +17,7 @@ const TOKEN = 'token-sintetico';
 const OWN_URL = `${BFF}/v1/training-history`;
 const ATHLETE_URL = `${BFF}/v1/athletes/${SIMULATED_HISTORY_ATHLETE_ID}/training-history`;
 
-describe('HttpHistoryGateway (HU011, contrato bff-web 0.8.0)', () => {
+describe('HttpHistoryGateway (HU011, contrato bff-web 0.10.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpHistoryGateway;
