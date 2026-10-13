@@ -43,7 +43,7 @@ const CAPABILITY_REQUIRED = GRANT_AUTHORIZATION_ERROR_CODES.capabilityRequired;
  * «Planes de entrenamiento» del deportista (HU010, capacidad
  * `training.plan.manage`): autoriza por correo exacto a un profesional para que
  * le cree y asigne planes, y revoca esa autorización. Solo se muestran las
- * autorizaciones confirmadas por el BFF en esta visita: el contrato 0.6.0 no
+ * autorizaciones confirmadas por el BFF en esta visita: el contrato 0.8.0 no
  * ofrece una consulta de las autorizaciones existentes, y no se inventa.
  */
 @Component({

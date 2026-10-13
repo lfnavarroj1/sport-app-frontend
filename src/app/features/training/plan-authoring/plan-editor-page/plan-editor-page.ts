@@ -16,6 +16,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiError, toApiError } from '../../../../core/api/api-error';
 import { CREATE_TRAINING_PLAN_ERROR_CODES } from '../../../../core/api/bff-web/training.api';
+import {
+  PROFESSIONAL_HISTORY_ROUTE,
+  assignedHistoryAllowed,
+} from '../../history/assigned-history-link';
 import { PlanSummary } from '../../plan-summary/plan-summary';
 import { PlanAuthoringGateway } from '../plan-authoring.gateway';
 import { CreatePlanOutcome, PlanDraft } from '../plan-authoring.model';
@@ -50,6 +54,10 @@ export type EditorStep = 'edit' | 'review' | 'done';
 })
 export class PlanEditorPage {
   private readonly gateway = inject(PlanAuthoringGateway);
+
+  /** HU011: enlace al historial del deportista asignado, si el BFF confirma el permiso. */
+  protected readonly historyAllowed = assignedHistoryAllowed();
+  protected readonly historyRoute = PROFESSIONAL_HISTORY_ROUTE;
 
   /**
    * Clave de idempotencia del intento lógico en curso: se conserva en los

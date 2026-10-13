@@ -30,6 +30,13 @@
       }
 
       <div class="training-page__actions">
+        @if (plan(); as plan) {
+          @if (historyAllowed()) {
+            <a mat-stroked-button [routerLink]="[historyRoute, plan.athleteId]">
+              {{ 'training.plan.actions.viewHistory' | translate }}
+            </a>
+          }
+        }
         <a mat-stroked-button routerLink="..">
           {{ 'training.plan.actions.createAnother' | translate }}
         </a>

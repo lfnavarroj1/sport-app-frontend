@@ -18,7 +18,7 @@ import {
 
 /**
  * HU003 con el BFF reemplazado por el simulador derivado del contrato bff-web
- * 0.6.0. NO es E2E integrado: el recorrido real está en `login.integrated.spec.ts`.
+ * 0.8.0. NO es E2E integrado: el recorrido real está en `login.integrated.spec.ts`.
  * Los inicios y menús por actor (CA7–CA10) están en `actor-navigation.spec.ts`.
  */
 

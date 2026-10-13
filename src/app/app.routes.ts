@@ -54,6 +54,14 @@ export const routes: Routes = [
           (module) => module.AUTHORIZATIONS_ROUTES,
         ),
     },
+    {
+      // HU011: historial propio de entrenamiento.
+      path: 'historial/entrenamientos',
+      loadChildren: () =>
+        import('./features/training/history/history.routes').then(
+          (module) => module.ATHLETE_HISTORY_ROUTES,
+        ),
+    },
   ]),
   actorArea('organizador', 'organizer'),
   actorArea('profesional', 'service_provider', [
@@ -63,6 +71,14 @@ export const routes: Routes = [
       loadChildren: () =>
         import('./features/training/plan-authoring/plan-authoring.routes').then(
           (module) => module.PLAN_AUTHORING_ROUTES,
+        ),
+    },
+    {
+      // HU011: historial de un deportista que autorizó al profesional.
+      path: 'historial/entrenamientos',
+      loadChildren: () =>
+        import('./features/training/history/history.routes').then(
+          (module) => module.PROFESSIONAL_HISTORY_ROUTES,
         ),
     },
   ]),

@@ -18,7 +18,7 @@ const CODES = GRANT_AUTHORIZATION_ERROR_CODES;
 /**
  * Implementación de HU010 para el deportista sobre
  * `POST /v1/me/training-authorizations` y
- * `DELETE /v1/me/training-authorizations/{professional_id}` (contrato 0.6.0).
+ * `DELETE /v1/me/training-authorizations/{professional_id}` (contrato 0.8.0).
  */
 @Injectable()
 export class HttpAuthorizationsGateway extends AuthorizationsGateway {

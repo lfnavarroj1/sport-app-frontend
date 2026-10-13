@@ -7,6 +7,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
+import {
+  PROFESSIONAL_HISTORY_ROUTE,
+  assignedHistoryAllowed,
+} from '../../history/assigned-history-link';
 import { PlanSummary } from '../../plan-summary/plan-summary';
 import { TrainingPlan } from '../../training-plan.model';
 import { PlanAuthoringGateway } from '../plan-authoring.gateway';
@@ -34,6 +38,10 @@ import { PlanAuthoringGateway } from '../plan-authoring.gateway';
 })
 export class PlanDetailPage {
   private readonly gateway = inject(PlanAuthoringGateway);
+
+  /** HU011: enlace al historial del deportista asignado, si el BFF confirma el permiso. */
+  protected readonly historyAllowed = assignedHistoryAllowed();
+  protected readonly historyRoute = PROFESSIONAL_HISTORY_ROUTE;
   private readonly planId = inject(ActivatedRoute).snapshot.paramMap.get('planId') ?? '';
 
   protected readonly state = signal<ViewState<TrainingPlan>>(viewState.loading());

@@ -20,7 +20,7 @@ const CODES = CREATE_TRAINING_PLAN_ERROR_CODES;
 
 /**
  * Implementación de HU010 sobre `POST /v1/training-plans` y
- * `GET /v1/training-plans/{plan_id}` del BFF web (contrato 0.6.0).
+ * `GET /v1/training-plans/{plan_id}` del BFF web (contrato 0.8.0).
  */
 @Injectable()
 export class HttpPlanAuthoringGateway extends PlanAuthoringGateway {

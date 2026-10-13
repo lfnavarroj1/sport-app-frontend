@@ -2,6 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
+import {
+  FakeSessionAccess,
+  accessReady,
+  provideFakeSessionAccess,
+} from '../../../../../testing/session-access-testing';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { TrainingPlan } from '../../training-plan.model';
 import { PlanAuthoringGateway } from '../plan-authoring.gateway';
@@ -35,6 +40,7 @@ function httpError(status: number, code: string): HttpErrorResponse {
 describe('PlanDetailPage (HU010 CA4)', () => {
   let fixture: ComponentFixture<PlanDetailPage>;
   let getPlan: jasmine.Spy;
+  let access: FakeSessionAccess;
 
   async function create(): Promise<HTMLElement> {
     fixture = TestBed.createComponent(PlanDetailPage);
@@ -44,11 +50,16 @@ describe('PlanDetailPage (HU010 CA4)', () => {
 
   beforeEach(async () => {
     getPlan = jasmine.createSpy('getPlan').and.resolveTo(PLAN);
+    const fakeAccess = provideFakeSessionAccess(
+      accessReady('service_provider', 'NOT_APPLICABLE', ['training.history.view_assigned']),
+    );
+    access = fakeAccess.fake;
     await TestBed.configureTestingModule({
       imports: [PlanDetailPage],
       providers: [
         provideRouter([]),
         provideTranslateTesting(),
+        fakeAccess.provider,
         { provide: PlanAuthoringGateway, useValue: { getPlan, createPlan: jasmine.createSpy() } },
         {
           provide: ActivatedRoute,
@@ -117,5 +128,30 @@ describe('PlanDetailPage (HU010 CA4)', () => {
     await fixture.whenStable();
 
     expect(element.querySelector('[data-testid="plan-summary"]')).not.toBeNull();
+  });
+
+  it('HU011: enlaza el historial del deportista del plan si el permiso está confirmado', async () => {
+    const element = await create();
+
+    const link = [...element.querySelectorAll('a')].find((a) =>
+      a.textContent?.includes('Ver historial de entrenamiento'),
+    );
+    expect(link?.getAttribute('href')).toBe(
+      `/profesional/historial/entrenamientos/${PLAN.athleteId}`,
+    );
+  });
+
+  it('HU011: sin permiso confirmado o sin plan cargado no enlaza el historial', async () => {
+    access.view.set({ status: 'loading' });
+    const element = await create();
+    expect(element.textContent).not.toContain('Ver historial de entrenamiento');
+
+    access.view.set(
+      accessReady('service_provider', 'NOT_APPLICABLE', ['training.history.view_assigned']),
+    );
+    getPlan.and.rejectWith(httpError(404, 'training_plan_not_found'));
+    await fixture.componentInstance['load']();
+    await fixture.whenStable();
+    expect(element.textContent).not.toContain('Ver historial de entrenamiento');
   });
 });

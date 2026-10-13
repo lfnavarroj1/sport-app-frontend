@@ -4,7 +4,7 @@ import { CreatePlanOutcome, PlanDraft } from './plan-authoring.model';
 /**
  * Puerto hacia el BFF web para la creación y consulta de planes (HU010). Las
  * pantallas dependen solo de esta abstracción; `HttpPlanAuthoringGateway`
- * traduce el contrato bff-web 0.6.0.
+ * traduce el contrato bff-web 0.8.0.
  */
 export abstract class PlanAuthoringGateway {
   /**
