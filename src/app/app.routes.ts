@@ -3,8 +3,11 @@ import { Routes } from '@angular/router';
 import { ActorType } from './core/session/session.store';
 import { requireActor } from './shell/navigation/actor.guards';
 
-/** Área autenticada de un actor (ADR-025): menú lateral y su inicio. */
-function actorArea(path: string, actor: ActorType): Routes[number] {
+/**
+ * Área autenticada de un actor (ADR-025): menú lateral, su inicio y las features
+ * de dominio del actor, cada una con carga diferida.
+ */
+function actorArea(path: string, actor: ActorType, features: Routes = []): Routes[number] {
   return {
     path,
     canActivate: [requireActor(actor)],
@@ -17,6 +20,7 @@ function actorArea(path: string, actor: ActorType): Routes[number] {
         loadComponent: () =>
           import('./shell/actor-home/actor-home-page').then((module) => module.ActorHomePage),
       },
+      ...features,
       { path: '', pathMatch: 'full', redirectTo: 'inicio' },
     ],
   };
@@ -41,9 +45,27 @@ export const routes: Routes = [
       ),
   },
   // HU003 (CA7–CA10) y ADR-025: un inicio y un menú por tipo de actor.
-  actorArea('deportista', 'athlete'),
+  actorArea('deportista', 'athlete', [
+    {
+      // HU010: el deportista autoriza a profesionales a asignarle planes.
+      path: 'entrenamientos/planes',
+      loadChildren: () =>
+        import('./features/training/authorizations/authorizations.routes').then(
+          (module) => module.AUTHORIZATIONS_ROUTES,
+        ),
+    },
+  ]),
   actorArea('organizador', 'organizer'),
-  actorArea('profesional', 'service_provider'),
+  actorArea('profesional', 'service_provider', [
+    {
+      // HU010: el profesional crea, asigna y consulta planes de entrenamiento.
+      path: 'entrenamientos/planes',
+      loadChildren: () =>
+        import('./features/training/plan-authoring/plan-authoring.routes').then(
+          (module) => module.PLAN_AUTHORING_ROUTES,
+        ),
+    },
+  ]),
   {
     path: 'acceso-no-autorizado',
     loadComponent: () =>

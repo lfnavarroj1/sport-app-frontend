@@ -1,0 +1,204 @@
+<form [formGroup]="form" (ngSubmit)="review()" novalidate class="plan-form">
+  @if (summary().length > 0) {
+    <div class="plan-form__errors" role="alert" tabindex="-1" data-testid="plan-errors">
+      <p>{{ 'training.plan.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (message of summary(); track $index) {
+          <li>
+            {{
+              'training.plan.rules.item'
+                | translate
+                  : {
+                      field: (message.field.key | translate: message.field.params),
+                      rule: (message.rule.key | translate),
+                    }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <fieldset class="plan-form__section">
+    <legend>{{ 'training.plan.sections.athlete' | translate }}</legend>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'training.plan.fields.athleteEmail' | translate }}</mat-label>
+      <input matInput type="email" formControlName="athleteEmail" autocomplete="off" required />
+      <mat-hint>{{ 'training.plan.hints.athleteEmail' | translate }}</mat-hint>
+      <mat-error><app-plan-field-error [control]="form.controls.athleteEmail" /></mat-error>
+    </mat-form-field>
+  </fieldset>
+
+  <fieldset class="plan-form__section">
+    <legend>{{ 'training.plan.sections.plan' | translate }}</legend>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.plan.fields.title' | translate }}</mat-label>
+      <input matInput formControlName="title" [maxlength]="limits.titleMax" required />
+      <mat-error><app-plan-field-error [control]="form.controls.title" /></mat-error>
+    </mat-form-field>
+
+    <div class="plan-form__dates">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.plan.fields.startDate' | translate }}</mat-label>
+        <input matInput type="date" formControlName="startDate" required />
+        <mat-error><app-plan-field-error [control]="form.controls.startDate" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.plan.fields.endDate' | translate }}</mat-label>
+        <input matInput type="date" formControlName="endDate" required />
+        <mat-error><app-plan-field-error [control]="form.controls.endDate" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="plan-form__section" formArrayName="objectives">
+    <legend>{{ 'training.plan.fields.objectives' | translate }}</legend>
+    <p class="plan-form__hint">
+      {{
+        'training.plan.hints.objectives'
+          | translate: { min: limits.objectivesMin, max: limits.objectivesMax }
+      }}
+    </p>
+    @for (objective of objectives.controls; track $index; let i = $index) {
+      <div class="plan-form__row">
+        <mat-form-field appearance="outline" class="plan-form__grow">
+          <mat-label>{{ 'training.plan.fields.objectiveN' | translate: { n: i + 1 } }}</mat-label>
+          <input
+            matInput
+            [formControlName]="i"
+            [maxlength]="limits.objectiveMax"
+            data-focus="objective"
+            required
+          />
+          <mat-error><app-plan-field-error [control]="objective" /></mat-error>
+        </mat-form-field>
+        <button
+          mat-icon-button
+          type="button"
+          [disabled]="objectiveCount() <= limits.objectivesMin"
+          [attr.aria-label]="'training.plan.actions.removeObjective' | translate: { n: i + 1 }"
+          (click)="removeObjective(i)"
+        >
+          <mat-icon aria-hidden="true">delete</mat-icon>
+        </button>
+      </div>
+    }
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="objectiveCount() >= limits.objectivesMax"
+      (click)="addObjective()"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+      {{ 'training.plan.actions.addObjective' | translate }}
+    </button>
+  </fieldset>
+
+  <fieldset class="plan-form__section" formArrayName="sessions">
+    <legend>{{ 'training.plan.fields.sessions' | translate }}</legend>
+    <p class="plan-form__hint">
+      {{
+        'training.plan.hints.sessions'
+          | translate: { min: limits.sessionsMin, max: limits.sessionsMax }
+      }}
+    </p>
+    @for (session of sessions.controls; track $index; let i = $index) {
+      <fieldset class="plan-form__session" [formGroupName]="i" [attr.data-session]="i">
+        <legend>{{ 'training.plan.fields.sessionN' | translate: { n: i + 1 } }}</legend>
+        <div class="plan-form__session-fields">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'training.plan.fields.scheduledDate' | translate }}</mat-label>
+            <input
+              matInput
+              type="date"
+              formControlName="scheduledDate"
+              data-focus="session"
+              required
+            />
+            <mat-error>
+              <app-plan-field-error [control]="session.controls.scheduledDate" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'training.plan.fields.sport' | translate }}</mat-label>
+            <mat-select formControlName="sport" required>
+              @for (sport of sports; track sport) {
+                <mat-option [value]="sport">{{
+                  'training.sports.' + sport | translate
+                }}</mat-option>
+              }
+            </mat-select>
+            <mat-error><app-plan-field-error [control]="session.controls.sport" /></mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'training.plan.fields.durationMinutes' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="durationMinutes"
+              [min]="limits.durationMin"
+              [max]="limits.durationMax"
+              step="1"
+              required
+            />
+            <mat-hint>
+              {{
+                'training.plan.hints.durationMinutes'
+                  | translate: { min: limits.durationMin, max: limits.durationMax }
+              }}
+            </mat-hint>
+            <mat-error>
+              <app-plan-field-error [control]="session.controls.durationMinutes" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'training.plan.fields.intensityRpe' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="intensityRpe"
+              [min]="limits.intensityMin"
+              [max]="limits.intensityMax"
+              step="1"
+              required
+            />
+            <mat-hint>
+              {{
+                'training.plan.hints.intensityRpe'
+                  | translate: { min: limits.intensityMin, max: limits.intensityMax }
+              }}
+            </mat-hint>
+            <mat-error>
+              <app-plan-field-error [control]="session.controls.intensityRpe" />
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <button
+          mat-button
+          type="button"
+          [disabled]="sessionCount() <= limits.sessionsMin"
+          [attr.aria-label]="'training.plan.actions.removeSession' | translate: { n: i + 1 }"
+          (click)="removeSession(i)"
+        >
+          <mat-icon aria-hidden="true">delete</mat-icon>
+          {{ 'training.plan.actions.remove' | translate }}
+        </button>
+      </fieldset>
+    }
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="sessionCount() >= limits.sessionsMax"
+      (click)="addSession()"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+      {{ 'training.plan.actions.addSession' | translate }}
+    </button>
+  </fieldset>
+
+  <button mat-flat-button type="submit" class="plan-form__submit">
+    {{ 'training.plan.actions.review' | translate }}
+  </button>
+</form>

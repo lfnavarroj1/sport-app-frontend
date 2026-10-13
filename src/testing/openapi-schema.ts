@@ -2,7 +2,8 @@
  * Validador mínimo de esquemas OpenAPI 3.1 para pruebas de contrato. Cubre solo
  * las construcciones que usan los contratos consumidos ($ref local, type, enum,
  * const, anyOf, properties, required, additionalProperties: false, items,
- * minLength, maxLength y los formatos uuid, date-time y email).
+ * minItems, maxItems, minLength, maxLength, minimum, maximum y los formatos
+ * uuid, date, date-time y email).
  * Solo para pruebas: no forma parte de la aplicación.
  */
 
@@ -39,6 +40,7 @@ export interface OpenApiOperation {
 
 const FORMATS: Readonly<Record<string, RegExp>> = {
   uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  date: /^\d{4}-\d{2}-\d{2}$/,
   'date-time': /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/,
   email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
 };
@@ -70,14 +72,11 @@ export function validateAgainstSchema(
     case 'object':
       return validateObject(document, resolved, value, path);
     case 'array':
-      if (!Array.isArray(value)) return [`${path}: se esperaba un arreglo`];
-      return value.flatMap((item, index) =>
-        validateAgainstSchema(document, resolved['items'] as Schema, item, `${path}[${index}]`),
-      );
+      return validateArray(document, resolved, value, path);
     case 'string':
       return validateString(resolved, value, path);
     case 'integer':
-      return Number.isInteger(value) ? [] : [`${path}: se esperaba un entero`];
+      return validateInteger(resolved, value, path);
     case 'null':
       return value === null ? [] : [`${path}: se esperaba null`];
     default:
@@ -134,6 +133,46 @@ function validateObject(
     problems.push(...validateAgainstSchema(document, propertySchema, item, `${path}.${name}`));
   }
   return problems;
+}
+
+function validateArray(
+  document: OpenApiDocument,
+  schema: Schema,
+  value: unknown,
+  path: string,
+): string[] {
+  if (!Array.isArray(value)) {
+    return [`${path}: se esperaba un arreglo`];
+  }
+  const problems: string[] = [];
+  const minItems = schema['minItems'];
+  const maxItems = schema['maxItems'];
+  if (typeof minItems === 'number' && value.length < minItems) {
+    problems.push(`${path}: menos de ${minItems} elementos`);
+  }
+  if (typeof maxItems === 'number' && value.length > maxItems) {
+    problems.push(`${path}: más de ${maxItems} elementos`);
+  }
+  return problems.concat(
+    value.flatMap((item, index) =>
+      validateAgainstSchema(document, schema['items'] as Schema, item, `${path}[${index}]`),
+    ),
+  );
+}
+
+function validateInteger(schema: Schema, value: unknown, path: string): string[] {
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    return [`${path}: se esperaba un entero`];
+  }
+  const minimum = schema['minimum'];
+  const maximum = schema['maximum'];
+  if (typeof minimum === 'number' && value < minimum) {
+    return [`${path}: menor que ${minimum}`];
+  }
+  if (typeof maximum === 'number' && value > maximum) {
+    return [`${path}: mayor que ${maximum}`];
+  }
+  return [];
 }
 
 function validateString(schema: Schema, value: unknown, path: string): string[] {

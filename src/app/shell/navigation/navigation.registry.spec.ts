@@ -39,12 +39,31 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(homeFor('service_provider')).toBe('/profesional/inicio');
   });
 
-  it('solo «Inicio» es navegable; el resto es «Próximamente» hasta que exista su HU', () => {
-    for (const actor of Object.keys(NAVIGATION) as ActorType[]) {
-      const available = NAVIGATION[actor].items.filter((item) => item.available);
-      expect(available.map((item) => item.id)).toEqual(['home']);
-      expect(available[0].route).toBe(homeFor(actor));
-    }
+  it('solo «Inicio» y las HU implementadas son navegables; el resto es «Próximamente»', () => {
+    const navigable = (actor: ActorType) =>
+      NAVIGATION[actor].items
+        .filter((item) => item.available)
+        .map((item) => [item.id, item.route, item.hu]);
+
+    expect(navigable('athlete')).toEqual([
+      ['home', homeFor('athlete'), 'HU003'],
+      ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
+    ]);
+    expect(navigable('organizer')).toEqual([['home', homeFor('organizer'), 'HU003']]);
+    expect(navigable('service_provider')).toEqual([
+      ['home', homeFor('service_provider'), 'HU003'],
+      ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
+    ]);
+  });
+
+  it('HU010 sigue condicionada: capacidad del deportista y permiso del profesional', () => {
+    const find = (actor: ActorType, id: string) =>
+      NAVIGATION[actor].items.find((item) => item.id === id)!;
+
+    expect(find('athlete', 'athlete-training-plans').capability).toBe('training.plan.manage');
+    expect(find('service_provider', 'training-plans').permission).toBe('training.plan.author');
+    expect(visibleIds('service_provider', null)).not.toContain('training-plans');
+    expect(visibleIds('athlete', null)).not.toContain('athlete-training-plans');
   });
 
   it('no incluye opciones de HU aprobadas solo para móvil', () => {

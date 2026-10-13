@@ -1,0 +1,53 @@
+.plan-summary__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 0 0 1.25rem;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.plan-summary__heading {
+  margin: 1rem 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+  font-weight: 700;
+}
+
+.plan-summary__objectives {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    overflow-wrap: anywhere;
+  }
+}
+
+.plan-summary__table-wrapper {
+  overflow-x: auto;
+}
+
+.plan-summary__sessions {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+}

@@ -107,6 +107,149 @@
       "unavailable": "No pudimos consultar tu plan. Reintenta desde el menú."
     }
   },
+  "training": {
+    "sports": {
+      "running": "Carrera",
+      "cycling": "Ciclismo",
+      "swimming": "Natación",
+      "strength": "Fuerza",
+      "other": "Otro"
+    },
+    "plan": {
+      "title": "Crear plan de entrenamiento",
+      "intro": "Diseña un plan personalizado y asígnalo a un deportista que te haya autorizado.",
+      "steps": {
+        "edit": "Datos del plan",
+        "review": "Confirma la asignación"
+      },
+      "sections": {
+        "athlete": "Deportista",
+        "plan": "Plan y periodo"
+      },
+      "fields": {
+        "athleteEmail": "Correo del deportista",
+        "title": "Título",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "objectives": "Objetivos",
+        "objectiveN": "Objetivo {{n}}",
+        "sessions": "Sesiones",
+        "sessionN": "Sesión {{n}}",
+        "scheduledDate": "Fecha",
+        "sport": "Deporte",
+        "durationMinutes": "Duración (min)",
+        "intensityRpe": "Intensidad (RPE)"
+      },
+      "hints": {
+        "athleteEmail": "Correo exacto con el que el deportista se registró en SportApp.",
+        "objectives": "Entre {{min}} y {{max}} objetivos.",
+        "sessions": "Entre {{min}} y {{max}} sesiones dentro del periodo del plan.",
+        "durationMinutes": "De {{min}} a {{max}} minutos.",
+        "intensityRpe": "Esfuerzo percibido de {{min}} (muy suave) a {{max}} (máximo)."
+      },
+      "actions": {
+        "addObjective": "Agregar objetivo",
+        "removeObjective": "Quitar el objetivo {{n}}",
+        "addSession": "Agregar sesión",
+        "removeSession": "Quitar la sesión {{n}}",
+        "remove": "Quitar",
+        "review": "Revisar plan",
+        "backToEdit": "Volver a editar",
+        "assign": "Confirmar y asignar",
+        "assigning": "Asignando…",
+        "viewPlan": "Consultar el plan",
+        "createAnother": "Crear otro plan"
+      },
+      "errors": {
+        "rulesTitle": "El plan no se guardó porque no cumple estas reglas:",
+        "athleteNotAuthorized": "No puedes asignar planes a este correo: no corresponde a un deportista que te haya autorizado.",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa el plan y vuelve a confirmarlo."
+      },
+      "rules": {
+        "item": "{{field}}: {{rule}}",
+        "fieldPlan": "Plan",
+        "fieldObjective": "Objetivo {{n}}",
+        "fieldSession": {
+          "scheduledDate": "Fecha de la sesión {{n}}",
+          "sport": "Deporte de la sesión {{n}}",
+          "durationMinutes": "Duración de la sesión {{n}}",
+          "intensityRpe": "Intensidad de la sesión {{n}}"
+        },
+        "invalid_length": "la longitud no es válida.",
+        "invalid_count": "la cantidad no es válida.",
+        "end_date_before_start_date": "la fecha de fin es anterior a la de inicio.",
+        "period_too_long": "el periodo supera la duración máxima permitida.",
+        "outside_plan_period": "está fuera del periodo del plan.",
+        "out_of_range": "el valor está fuera del rango permitido.",
+        "too_many_sessions_per_day": "hay más sesiones de las permitidas en el mismo día.",
+        "unknown": "no cumple las reglas del plan."
+      },
+      "review": {
+        "message": "Revisa el plan antes de asignarlo a {{email}}. Al confirmar, el deportista podrá consultarlo."
+      },
+      "summary": {
+        "period": "Periodo",
+        "periodValue": "Del {{start}} al {{end}}",
+        "sessions": "Sesiones ({{count}})",
+        "sessionsCaption": "Sesiones del plan",
+        "minutes": "{{value}} min",
+        "rpe": "RPE {{value}}",
+        "status": "Estado",
+        "version": "Versión",
+        "createdAt": "Creado"
+      },
+      "status": {
+        "ASSIGNED": "Asignado"
+      },
+      "created": {
+        "title": "Plan asignado",
+        "message": "El plan «{{title}}» quedó asignado a {{email}}.",
+        "replayed": "Este plan ya se había registrado con esta misma confirmación; no se creó otro."
+      },
+      "detail": {
+        "title": "Plan de entrenamiento",
+        "notFound": "El plan aún no está disponible para consulta o no tienes acceso a él. Si acabas de crearlo, espera unos segundos y vuelve a intentarlo."
+      }
+    },
+    "authorizations": {
+      "title": "Planes de entrenamiento",
+      "intro": "Autoriza a un profesional para que pueda crearte y asignarte planes de entrenamiento. Puedes revocar la autorización cuando quieras.",
+      "grantTitle": "Autorizar a un profesional",
+      "fields": {
+        "professionalEmail": "Correo del profesional"
+      },
+      "hints": {
+        "professionalEmail": "Correo exacto con el que el profesional se registró en SportApp."
+      },
+      "errors": {
+        "professionalNotFound": "Este correo no corresponde a un profesional de servicios registrado.",
+        "capabilityRequired": "Tu plan actual no incluye esta opción."
+      },
+      "actions": {
+        "grant": "Autorizar",
+        "granting": "Autorizando…",
+        "revoke": "Revocar",
+        "cancel": "Cancelar",
+        "confirmRevoke": "Revocar autorización",
+        "revoking": "Revocando…"
+      },
+      "notice": {
+        "granted": "Autorizaste a {{email}}. Ya puede asignarte planes de entrenamiento.",
+        "alreadyActive": "{{email}} ya tenía tu autorización."
+      },
+      "listTitle": "Autorizaciones gestionadas",
+      "listHint": "Aquí aparecen las autorizaciones que gestionas en esta visita. Si ya autorizaste a un profesional, ingresa su correo para verlo aquí y poder revocarlo.",
+      "empty": "Aún no has gestionado autorizaciones en esta visita.",
+      "status": {
+        "active": "Autorizado · {{date}}",
+        "revoked": "Autorización revocada"
+      },
+      "confirm": {
+        "label": "Confirmar revocación",
+        "message": "¿Revocar la autorización de {{email}}? Ya no podrá asignarte planes nuevos."
+      }
+    }
+  },
   "shell": {
     "menuLabel": "Menú principal",
     "openMenu": "Menú",
