@@ -1,0 +1,78 @@
+@let summary = plan();
+<div class="plan-summary" data-testid="plan-summary">
+  <dl class="plan-summary__facts">
+    <dt>{{ 'training.plan.fields.title' | translate }}</dt>
+    <dd data-testid="plan-summary-title">{{ summary.title }}</dd>
+    <dt>{{ 'training.plan.summary.period' | translate }}</dt>
+    <dd data-testid="plan-summary-period">
+      {{
+        'training.plan.summary.periodValue'
+          | translate
+            : {
+                start: summary.startDate | date: 'longDate' : 'UTC',
+                end: summary.endDate | date: 'longDate' : 'UTC',
+              }
+      }}
+    </dd>
+    <ng-content />
+  </dl>
+
+  <ng-container
+    *ngTemplateOutlet="
+      heading;
+      context: { $implicit: 'training.plan.fields.objectives' | translate }
+    "
+  />
+  <ul class="plan-summary__objectives">
+    @for (objective of summary.objectives; track $index) {
+      <li>{{ objective }}</li>
+    }
+  </ul>
+
+  <ng-container
+    *ngTemplateOutlet="
+      heading;
+      context: {
+        $implicit: 'training.plan.summary.sessions' | translate: { count: summary.sessions.length },
+      }
+    "
+  />
+  <div class="plan-summary__table-wrapper">
+    <table
+      class="plan-summary__sessions"
+      data-testid="plan-summary-sessions"
+      [attr.aria-label]="'training.plan.summary.sessionsCaption' | translate"
+    >
+      <thead>
+        <tr>
+          <th scope="col">{{ 'training.plan.fields.scheduledDate' | translate }}</th>
+          <th scope="col">{{ 'training.plan.fields.sport' | translate }}</th>
+          <th scope="col">{{ 'training.plan.fields.durationMinutes' | translate }}</th>
+          <th scope="col">{{ 'training.plan.fields.intensityRpe' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (session of summary.sessions; track $index) {
+          <tr>
+            <td>{{ session.scheduledDate | date: 'EEE d MMM y' : 'UTC' }}</td>
+            <td>{{ 'training.sports.' + session.sport | translate }}</td>
+            <td>
+              {{ 'training.plan.summary.minutes' | translate: { value: session.durationMinutes } }}
+            </td>
+            <td>
+              {{ 'training.plan.summary.rpe' | translate: { value: session.intensityRpe } }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<ng-template #heading let-text>
+  @if (headingLevel() === 2) {
+    <h2 class="plan-summary__heading">{{ text }}</h2>
+  } @else {
+    <h3 class="plan-summary__heading">{{ text }}</h3>
+  }
+</ng-template>

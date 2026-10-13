@@ -151,6 +151,11 @@ describe('ActorShell (ADR-025, HU003)', () => {
       expect(item(element, 'athlete-training-plans')?.textContent).toContain(
         'Planes de entrenamiento',
       );
+      // HU010 ya está implementada en la web: es un enlace, no «Próximamente».
+      expect(item(element, 'athlete-training-plans')?.getAttribute('href')).toBe(
+        '/deportista/entrenamientos/planes',
+      );
+      expect(item(element, 'athlete-training-plans')?.textContent).not.toContain('Próximamente');
       expect(item(element, 'sport-calendar')?.textContent).toContain('Próximamente');
       expect(item(element, 'sports-medicine')).toBeNull();
       expect(element.querySelector('[data-testid="shell-plan-provisioning"]')).toBeNull();

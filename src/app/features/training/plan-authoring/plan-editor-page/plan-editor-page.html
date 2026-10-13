@@ -1,0 +1,104 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.plan.title' | translate }}</h1>
+    <p>{{ 'training.plan.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <!-- El formulario se conserva oculto para volver a editar sin perder datos. -->
+      <div [hidden]="step() !== 'edit'">
+        @if (step() === 'edit') {
+          <h2 #stepHeading tabindex="-1" class="training-page__step">
+            {{ 'training.plan.steps.edit' | translate }}
+          </h2>
+        }
+        <app-plan-form
+          [serverErrors]="serverErrors()"
+          (reviewed)="toReview($event)"
+          (edited)="onEdited()"
+        />
+      </div>
+
+      @if (step() === 'review') {
+        @if (draft(); as draft) {
+          <section data-testid="plan-review">
+            <h2 #stepHeading tabindex="-1" class="training-page__step">
+              {{ 'training.plan.steps.review' | translate }}
+            </h2>
+            <p>{{ 'training.plan.review.message' | translate: { email: draft.athleteEmail } }}</p>
+            <app-plan-summary [plan]="draft" [headingLevel]="3">
+              <dt>{{ 'training.plan.fields.athleteEmail' | translate }}</dt>
+              <dd data-testid="plan-review-athlete">{{ draft.athleteEmail }}</dd>
+            </app-plan-summary>
+
+            @if (failure(); as error) {
+              <div class="training-page__error" role="alert" data-testid="plan-error">
+                <p>{{ failureMessage(error) | translate }}</p>
+                @if (error.correlationId) {
+                  <p class="training-page__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+              </div>
+            }
+
+            <div class="training-page__actions">
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="submitting()"
+                (click)="backToEdit()"
+              >
+                {{ 'training.plan.actions.backToEdit' | translate }}
+              </button>
+              <button mat-flat-button type="button" [disabled]="submitting()" (click)="confirm()">
+                {{
+                  (submitting()
+                    ? 'training.plan.actions.assigning'
+                    : 'training.plan.actions.assign'
+                  ) | translate
+                }}
+              </button>
+            </div>
+          </section>
+        }
+      }
+
+      @if (step() === 'done') {
+        @if (created(); as result) {
+          <section role="status" data-testid="plan-created">
+            <h2 #stepHeading tabindex="-1" class="training-page__step">
+              {{ 'training.plan.created.title' | translate }}
+            </h2>
+            <p>
+              {{
+                'training.plan.created.message'
+                  | translate: { title: result.plan.title, email: draft()?.athleteEmail }
+              }}
+            </p>
+            @if (result.replayed) {
+              <p data-testid="plan-replayed">{{ 'training.plan.created.replayed' | translate }}</p>
+            }
+            <app-plan-summary [plan]="result.plan" [headingLevel]="3">
+              <dt>{{ 'training.plan.summary.status' | translate }}</dt>
+              <dd>{{ 'training.plan.status.' + result.plan.status | translate }}</dd>
+              <dt>{{ 'training.plan.summary.version' | translate }}</dt>
+              <dd>{{ result.plan.version }}</dd>
+              <dt>{{ 'training.plan.summary.createdAt' | translate }}</dt>
+              <dd>{{ result.plan.createdAt | date: 'medium' }}</dd>
+            </app-plan-summary>
+            <div class="training-page__actions">
+              <a mat-stroked-button [routerLink]="[result.plan.id]">
+                {{ 'training.plan.actions.viewPlan' | translate }}
+              </a>
+              <button mat-flat-button type="button" (click)="createAnother()">
+                {{ 'training.plan.actions.createAnother' | translate }}
+              </button>
+            </div>
+          </section>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

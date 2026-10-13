@@ -111,6 +111,13 @@ Dirección «Energía deportiva» (decisión del responsable, 2026-10-11): naran
 - **Mantener la sesión** (`core/session/http-session-refresher.ts`, `POST /v1/sessions/refresh`): el access token se renueva 60 s antes de vencer; si el BFF no responde se reintenta cada 15 s mientras siga vigente, y si rechaza la cookie la sesión termina con «Tu sesión expiró». Al recargar o abrir la aplicación, las guardas intentan una vez recuperar la sesión con la cookie antes de decidir. Las renovaciones de varias pestañas se serializan con la Web Locks API, porque la cookie rota en cada uso y reutilizar una rotada revoca la sesión.
 - Los errores de credenciales usan siempre el mismo mensaje genérico; `429 too_many_attempts` muestra la espera indicada por `Retry-After`.
 
+## Planes de entrenamiento (HU010)
+
+Feature `src/app/features/training`, contrato `bff-web` 0.6.0 (`core/api/bff-web/training.api.ts`).
+
+- **Deportista** (`/deportista/entrenamientos/planes`, capacidad `training.plan.manage`): autoriza por correo exacto a un profesional (`POST /v1/me/training-authorizations`) y revoca la autorización tras confirmarla (`DELETE …/{professional_id}`). Solo muestra las autorizaciones gestionadas en la visita: el contrato no ofrece una consulta de las existentes.
+- **Profesional** (`/profesional/entrenamientos/planes`, permiso `training.plan.author`): editor con correo del deportista, título, 1–5 objetivos, periodo y 1–100 sesiones (fecha, deporte, minutos y RPE 1–10); el plan se revisa y se confirma antes de `POST /v1/training-plans`. La clave `Idempotency-Key` se conserva en los reintentos y se renueva si cambian los datos. Las reglas de coherencia (fechas, periodo, sesiones por día) las decide el backend y se listan desde `details`. `/profesional/entrenamientos/planes/:planId` consulta el plan (`GET /v1/training-plans/{plan_id}`); un `404` justo después de crearlo significa que aún se proyecta.
+
 ## Contenedor y Kubernetes
 
 Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.

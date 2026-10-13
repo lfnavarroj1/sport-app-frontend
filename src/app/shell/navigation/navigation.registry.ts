@@ -112,7 +112,7 @@ const upcoming = (
 /**
  * Opción que aporta una capacidad del plan del deportista
  * (`planes/05-menu-lateral-por-plan.md`); la ruta lógica se ubica en el área
- * `/deportista`. Ninguna de estas HU está implementada aún en la web.
+ * `/deportista`. `available` indica si su HU ya está implementada en la web.
  */
 const planOption = (
   id: string,
@@ -122,6 +122,7 @@ const planOption = (
   route: string,
   capability: string,
   hu: string,
+  available = false,
 ): NavItem => ({
   id,
   group,
@@ -131,8 +132,19 @@ const planOption = (
   permission: null,
   capability,
   hu,
-  available: false,
+  available,
 });
+
+/** Opción del actor exigida por un permiso estable, con su HU ya implementada en la web. */
+const permissionOption = (
+  id: string,
+  group: NavGroup,
+  order: number,
+  icon: string,
+  route: string,
+  permission: string,
+  hu: string,
+): NavItem => ({ ...upcoming(id, group, order, icon, route, permission, hu), available: true });
 
 export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
   athlete: {
@@ -153,6 +165,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         '/deportista/entrenamientos/planes',
         'training.plan.manage',
         'HU010',
+        true,
       ),
       planOption(
         'sport-calendar',
@@ -261,7 +274,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'services.publish',
         'HU019',
       ),
-      upcoming(
+      permissionOption(
         'training-plans',
         'training',
         120,
