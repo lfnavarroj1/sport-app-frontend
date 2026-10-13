@@ -156,6 +156,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
       ...account(),
       // «Mi plan» solo existe para el deportista (navegacion/README.md).
       upcoming('plan', 'account', 30, 'workspace_premium', null, null, 'HU016'),
+      // HU011: historial propio, sin capacidad de plan (ADR-024 no define una);
+      // decisión del responsable del 2026-10-12.
+      {
+        id: 'athlete-training-history',
+        group: 'training',
+        order: 110,
+        icon: 'history',
+        route: '/deportista/historial/entrenamientos',
+        permission: null,
+        capability: null,
+        hu: 'HU011',
+        available: true,
+      },
       // Capacidades del plan con HU aprobada para la web (ADR-024).
       planOption(
         'athlete-training-plans',
@@ -283,7 +296,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'training.plan.author',
         'HU010',
       ),
-      upcoming(
+      permissionOption(
         'training-history',
         'training',
         130,

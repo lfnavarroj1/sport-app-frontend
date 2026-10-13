@@ -99,14 +99,19 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     expect(planText(element)).toBe(
       'Tu plan está activo. Sus opciones disponibles en la web aparecen en tu menú.',
     );
-    expect(features(element)).toEqual(['athlete-training-plans', 'sport-calendar']);
+    expect(features(element)).toEqual([
+      'athlete-training-history',
+      'athlete-training-plans',
+      'sport-calendar',
+    ]);
   });
 
   it('PROVISIONING: informa la activación sin funciones asumidas', async () => {
     const element = await render('athlete', accessReady('athlete', 'PROVISIONING'));
 
     expect(planText(element)).toContain('Estamos activando tu plan');
-    expect(element.querySelector('[data-testid="home-features"]')).toBeNull();
+    // Solo las funciones que no dependen del plan (HU011).
+    expect(features(element)).toEqual(['athlete-training-history']);
   });
 
   it('mientras consulta y ante un fallo no asume ningún plan', async () => {
@@ -120,6 +125,6 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
       error: { kind: 'server', status: 503, code: 'upstream_unavailable', correlationId: null },
     });
     expect(planText(failed)).toBe('No pudimos consultar tu plan. Reintenta desde el menú.');
-    expect(failed.querySelector('[data-testid="home-features"]')).toBeNull();
+    expect(features(failed)).toEqual(['athlete-training-history']);
   });
 });

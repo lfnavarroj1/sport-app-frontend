@@ -30,7 +30,8 @@ function accessOf(
 const visibleIds = (actor: ActorType, access: SessionAccess | null): string[] =>
   visibleItems(actor, access).map((item) => item.id);
 
-const ATHLETE_BASE = ['home', 'profile', 'logout', 'plan'];
+/** Opciones del deportista sin permiso ni capacidad; HU011 no exige capacidad de plan. */
+const ATHLETE_BASE = ['home', 'profile', 'logout', 'plan', 'athlete-training-history'];
 
 describe('Registro de navegación por actor (ADR-025, HU003)', () => {
   it('CA7–CA9: cada actor tiene su propio inicio', () => {
@@ -47,12 +48,14 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
 
     expect(navigable('athlete')).toEqual([
       ['home', homeFor('athlete'), 'HU003'],
+      ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
     ]);
     expect(navigable('organizer')).toEqual([['home', homeFor('organizer'), 'HU003']]);
     expect(navigable('service_provider')).toEqual([
       ['home', homeFor('service_provider'), 'HU003'],
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
+      ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
     ]);
   });
 
@@ -219,7 +222,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
   it('el deportista conserva «Mi plan» en su cuenta y no tiene grupos vacíos', () => {
     const sections = navigationSections('athlete', null);
 
-    expect(sections.map((section) => section.group)).toEqual(['main', 'account']);
+    expect(sections.map((section) => section.group)).toEqual(['main', 'training', 'account']);
     expect(ids('athlete')).toContain('plan');
   });
 });

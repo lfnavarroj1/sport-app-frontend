@@ -1,5 +1,5 @@
 /**
- * Simulador de las operaciones de HU010 derivado del contrato bff-web 0.6.0
+ * Simulador de las operaciones de HU010 derivado del contrato bff-web 0.8.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`):
  * `POST /v1/me/training-authorizations`,
  * `DELETE /v1/me/training-authorizations/{professional_id}`,

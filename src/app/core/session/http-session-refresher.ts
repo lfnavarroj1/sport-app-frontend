@@ -13,7 +13,7 @@ import { RefreshOutcome, SessionRefresher } from './session-refresher';
  */
 const REFRESH_LOCK = 'sportapp-session-refresh';
 
-/** Implementación de la renovación sobre `POST /v1/sessions/refresh` (bff-web 0.6.0). */
+/** Implementación de la renovación sobre `POST /v1/sessions/refresh` (bff-web 0.8.0). */
 @Injectable()
 export class HttpSessionRefresher extends SessionRefresher {
   private readonly api = inject(BffWebSessionsApi);

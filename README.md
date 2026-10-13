@@ -118,6 +118,14 @@ Feature `src/app/features/training`, contrato `bff-web` 0.6.0 (`core/api/bff-web
 - **Deportista** (`/deportista/entrenamientos/planes`, capacidad `training.plan.manage`): autoriza por correo exacto a un profesional (`POST /v1/me/training-authorizations`) y revoca la autorización tras confirmarla (`DELETE …/{professional_id}`). Solo muestra las autorizaciones gestionadas en la visita: el contrato no ofrece una consulta de las existentes.
 - **Profesional** (`/profesional/entrenamientos/planes`, permiso `training.plan.author`): editor con correo del deportista, título, 1–5 objetivos, periodo y 1–100 sesiones (fecha, deporte, minutos y RPE 1–10); el plan se revisa y se confirma antes de `POST /v1/training-plans`. La clave `Idempotency-Key` se conserva en los reintentos y se renueva si cambian los datos. Las reglas de coherencia (fechas, periodo, sesiones por día) las decide el backend y se listan desde `details`. `/profesional/entrenamientos/planes/:planId` consulta el plan (`GET /v1/training-plans/{plan_id}`); un `404` justo después de crearlo significa que aún se proyecta.
 
+## Historial de entrenamiento (HU011)
+
+Feature `src/app/features/training/history`, contrato `bff-web` 0.8.0 (`core/api/bff-web/training-history.api.ts`).
+
+- **Deportista** (`/deportista/historial/entrenamientos`, sin capacidad de plan): su historial con `GET /v1/training-history`.
+- **Profesional** (`/profesional/historial/entrenamientos/:athleteId`, permiso `training.history.view_assigned`): historial de un deportista que lo autorizó, con `GET /v1/athletes/{athlete_id}/training-history`. Se llega desde el resultado o la consulta de un plan (HU010), porque el contrato no ofrece una lista de deportistas autorizados; la opción del menú explica ese camino. `403 athlete_authorization_required` se muestra sin datos.
+- Filtros por fecha de fin (día UTC, inclusiva) y deporte (los que informa el backend en `filters.sports`). Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo (codificado con `encodeURIComponent`) y agrega la página tal como llega. Cada fila abre su detalle.
+
 ## Contenedor y Kubernetes
 
 Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.

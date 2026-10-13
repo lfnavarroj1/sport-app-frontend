@@ -17,7 +17,7 @@ import { LoginOutcome } from './login.model';
 const BFF = 'http://bff.example.com';
 const NOW = new Date('2026-10-10T12:00:00Z').getTime();
 
-describe('HttpLoginGateway (HU003, contrato bff-web 0.6.0)', () => {
+describe('HttpLoginGateway (HU003, contrato bff-web 0.8.0)', () => {
   let http: HttpTestingController;
   let gateway: HttpLoginGateway;
 

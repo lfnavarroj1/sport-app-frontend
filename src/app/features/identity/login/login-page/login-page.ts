@@ -23,7 +23,7 @@ import { LoginGateway } from '../login.gateway';
 import { homeFor, UNAUTHORIZED_PATH } from '../../../../shell/navigation/navigation.registry';
 import { LoginOutcome } from '../login.model';
 
-/** Límites de `LoginRequest` en el contrato bff-web 0.6.0. */
+/** Límites de `LoginRequest` en el contrato bff-web 0.8.0. */
 const LIMITS = { emailMax: 254, passwordMax: 128 } as const;
 
 /** Pantalla de inicio de sesión (HU003). */

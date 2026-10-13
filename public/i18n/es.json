@@ -158,7 +158,8 @@
         "assign": "Confirmar y asignar",
         "assigning": "Asignando…",
         "viewPlan": "Consultar el plan",
-        "createAnother": "Crear otro plan"
+        "createAnother": "Crear otro plan",
+        "viewHistory": "Ver historial de entrenamiento"
       },
       "errors": {
         "rulesTitle": "El plan no se guardó porque no cumple estas reglas:",
@@ -248,6 +249,69 @@
         "label": "Confirmar revocación",
         "message": "¿Revocar la autorización de {{email}}? Ya no podrá asignarte planes nuevos."
       }
+    },
+    "history": {
+      "title": {
+        "own": "Mi historial de entrenamiento",
+        "athlete": "Historial de entrenamiento del deportista"
+      },
+      "intro": {
+        "own": "Consulta tus sesiones de entrenamiento terminadas, de la más reciente a la más antigua.",
+        "athlete": "Sesiones terminadas de un deportista que te autorizó, de la más reciente a la más antigua."
+      },
+      "filters": {
+        "label": "Filtros del historial",
+        "from": "Terminadas desde",
+        "to": "Terminadas hasta",
+        "sport": "Deporte",
+        "allSports": "Todos los deportes",
+        "apply": "Aplicar filtros",
+        "clear": "Limpiar",
+        "hint": "Las fechas filtran por el día en que terminó la sesión, en hora UTC."
+      },
+      "errors": {
+        "athleteNotAuthorized": "No puedes consultar este historial: el deportista no te ha autorizado o revocó la autorización."
+      },
+      "empty": {
+        "own": "Aún no tienes entrenamientos terminados.",
+        "athlete": "Este deportista aún no tiene entrenamientos terminados.",
+        "filtered": "No hay entrenamientos terminados con estos filtros."
+      },
+      "tableLabel": "Sesiones de entrenamiento terminadas",
+      "columns": {
+        "endedAt": "Terminó",
+        "sport": "Deporte",
+        "duration": "Duración",
+        "plan": "Plan",
+        "detail": "Detalle"
+      },
+      "plan": {
+        "yes": "Parte de un plan",
+        "no": "Sin plan"
+      },
+      "actions": {
+        "showDetail": "Ver detalle",
+        "hideDetail": "Ocultar detalle",
+        "loadMore": "Cargar más"
+      },
+      "countMore": "Sesiones mostradas: {{count}}. Hay más disponibles.",
+      "countAll": "Sesiones mostradas: {{count}}.",
+      "duration": {
+        "seconds": "{{s}} s",
+        "minutes": "{{m}} min",
+        "hoursMinutes": "{{h}} h {{m}} min"
+      },
+      "detail": {
+        "title": "Detalle de la sesión",
+        "startedAt": "Inicio",
+        "endedAt": "Fin",
+        "viewPlan": "Consultar el plan"
+      },
+      "professionalIntro": {
+        "message": "Consulta el historial de un deportista que te autorizó.",
+        "howTo": "Abre el historial desde el plan que le asignaste: en el resultado o en la consulta del plan encontrarás «Ver historial de entrenamiento». Por ahora no hay un listado de tus deportistas autorizados.",
+        "goToPlans": "Ir a planes de entrenamiento"
+      }
     }
   },
   "shell": {
@@ -282,6 +346,7 @@
       "nutrition-history": "Historial de alimentación",
       "nutrition-plans": "Crear planes de alimentación",
       "athlete-training-plans": "Planes de entrenamiento",
+      "athlete-training-history": "Mi historial de entrenamiento",
       "sport-calendar": "Calendario deportivo",
       "sports-medicine": "Servicios médicos y deportivos"
     },

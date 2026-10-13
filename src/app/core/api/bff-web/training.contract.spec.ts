@@ -79,7 +79,7 @@ function headerNames(operation: OpenApiOperation): string[][] {
 }
 
 describe('Contrato bff-web: operaciones de HU010', () => {
-  it('usa la versión 0.6.0 y los operationId del contrato', () => {
+  it('usa la versión del contrato y sus operationId', () => {
     expect(contract.info.version).toBe(BFF_WEB_CONTRACT_VERSION);
     expect(operations.grant.operationId).toBe(
       'grant_authorization_v1_me_training_authorizations_post',

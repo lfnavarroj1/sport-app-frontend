@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import {
+  FakeSessionAccess,
+  accessReady,
+  provideFakeSessionAccess,
+} from '../../../../../testing/session-access-testing';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { ApiError } from '../../../../core/api/api-error';
 import { TrainingPlan } from '../../training-plan.model';
@@ -53,6 +58,7 @@ describe('PlanEditorPage (HU010)', () => {
   let fixture: ComponentFixture<PlanEditorPage>;
   let gateway: FakePlanAuthoringGateway;
   let element: HTMLElement;
+  let access: FakeSessionAccess;
 
   function form(): PlanForm {
     return fixture.debugElement.query((el) => el.componentInstance instanceof PlanForm)
@@ -85,12 +91,17 @@ describe('PlanEditorPage (HU010)', () => {
 
   beforeEach(async () => {
     gateway = new FakePlanAuthoringGateway();
+    const fakeAccess = provideFakeSessionAccess(
+      accessReady('service_provider', 'NOT_APPLICABLE', ['training.history.view_assigned']),
+    );
+    access = fakeAccess.fake;
     await TestBed.configureTestingModule({
       imports: [PlanEditorPage],
       providers: [
         provideRouter([]),
         provideTranslateTesting(),
         { provide: PlanAuthoringGateway, useValue: gateway },
+        fakeAccess.provider,
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(PlanEditorPage);
@@ -262,5 +273,25 @@ describe('PlanEditorPage (HU010)', () => {
     await review();
     await confirm();
     expect(keysUsed()[1]).not.toBe(keysUsed()[0]);
+  });
+
+  it('HU011: ofrece el historial del deportista asignado si el BFF confirma el permiso', async () => {
+    await review();
+    await confirm();
+
+    const link = [...element.querySelectorAll('a')].find((a) =>
+      a.textContent?.includes('Ver historial de entrenamiento'),
+    );
+    expect(link?.getAttribute('href')).toBe(
+      `/profesional/historial/entrenamientos/${PLAN.athleteId}`,
+    );
+  });
+
+  it('HU011: sin el permiso confirmado no ofrece el historial', async () => {
+    access.view.set(accessReady('service_provider', 'NOT_APPLICABLE', []));
+    await review();
+    await confirm();
+
+    expect(element.textContent).not.toContain('Ver historial de entrenamiento');
   });
 });
