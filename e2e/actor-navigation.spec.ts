@@ -7,7 +7,7 @@ import { SessionSimulation, login, sessionFor, simulateSession } from './support
 /**
  * HU003 CA7–CA10 y ADR-025/ADR-024: inicio y menú lateral por tipo de actor, con
  * permisos y capacidades de `GET /v1/me/capabilities`. El BFF está reemplazado
- * por el simulador del contrato bff-web 0.8.0. NO es E2E integrado.
+ * por el simulador del contrato bff-web 0.10.0. NO es E2E integrado.
  */
 
 async function loginAs(
@@ -118,7 +118,12 @@ test.describe('HU003 Inicio y navegación por actor (simulador del contrato) @si
     await expect(page).toHaveURL(/\/organizador\/inicio$/);
     await expect(page.getByTestId('shell-role')).toHaveText('Organizador de eventos');
     await expect(menuItem(page, 'event-create')).toContainText('Crear evento');
-    await expect(menuItem(page, 'event-create')).toContainText('Próximamente');
+    // HU021 ya está implementada en la web: «Crear evento» es un enlace.
+    await expect(menuItem(page, 'event-create')).toHaveAttribute(
+      'href',
+      '/organizador/eventos/nuevo',
+    );
+    await expect(menuItem(page, 'event-create')).not.toContainText('Próximamente');
     await expect(menuItem(page, 'service-create')).toHaveCount(0);
     await expect(menuItem(page, 'plan')).toHaveCount(0);
   });

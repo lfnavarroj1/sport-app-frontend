@@ -2,7 +2,7 @@
  * Validador mínimo de esquemas OpenAPI 3.1 para pruebas de contrato. Cubre solo
  * las construcciones que usan los contratos consumidos ($ref local, type, enum,
  * const, anyOf, properties, required, additionalProperties: false, items,
- * minItems, maxItems, minLength, maxLength, minimum, maximum y los formatos
+ * minItems, maxItems, minLength, maxLength, pattern, minimum, maximum y los formatos
  * uuid, date, date-time y email).
  * Solo para pruebas: no forma parte de la aplicación.
  */
@@ -187,6 +187,10 @@ function validateString(schema: Schema, value: unknown, path: string): string[] 
   }
   if (typeof maxLength === 'number' && value.length > maxLength) {
     problems.push(`${path}: más de ${maxLength} caracteres`);
+  }
+  const pattern = schema['pattern'];
+  if (typeof pattern === 'string' && !new RegExp(pattern).test(value)) {
+    problems.push(`${path}: no cumple el patrón ${pattern}`);
   }
   const format = FORMATS[schema['format'] as string];
   if (format && !format.test(value)) {

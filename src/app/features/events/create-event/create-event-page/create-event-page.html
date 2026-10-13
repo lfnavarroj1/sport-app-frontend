@@ -1,0 +1,83 @@
+<section class="events-page">
+  <header class="events-page__header">
+    <h1>{{ 'events.create.title' | translate }}</h1>
+    <p>{{ 'events.create.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="events-page__card">
+    <mat-card-content>
+      @if (created(); as result) {
+        @let event = result.event;
+        <section role="status" data-testid="event-created">
+          <h2 #createdHeading tabindex="-1" class="events-page__step">
+            {{ 'events.create.created.title' | translate }}
+          </h2>
+          <p>{{ 'events.create.created.message' | translate: { name: event.name } }}</p>
+          @if (result.replayed) {
+            <p data-testid="event-replayed">{{ 'events.create.created.replayed' | translate }}</p>
+          }
+          <dl class="events-page__facts" data-testid="event-summary">
+            <dt>{{ 'events.create.summary.status' | translate }}</dt>
+            <dd>{{ 'events.create.status.' + event.status | translate }}</dd>
+            <dt>{{ 'events.create.fields.name' | translate }}</dt>
+            <dd>{{ event.name }}</dd>
+            <dt>{{ 'events.create.fields.discipline' | translate }}</dt>
+            <dd>{{ event.discipline }}</dd>
+            <dt>{{ 'events.create.fields.description' | translate }}</dt>
+            <dd>{{ event.description }}</dd>
+            <dt>{{ 'events.create.sections.location' | translate }}</dt>
+            <dd>
+              {{ event.location.name }} · {{ event.location.address }} ·
+              {{ event.location.city }} ({{ country(event) }})
+            </dd>
+            <dt>{{ 'events.create.summary.startsAt' | translate }}</dt>
+            <dd data-testid="event-starts-at">{{ inZone(event.startsAt, event) }}</dd>
+            <dt>{{ 'events.create.summary.endsAt' | translate }}</dt>
+            <dd data-testid="event-ends-at">{{ inZone(event.endsAt, event) }}</dd>
+            <dt>{{ 'events.create.fields.timeZone' | translate }}</dt>
+            <dd>{{ event.timeZone }}</dd>
+            <dt>{{ 'events.create.fields.durationMinutes' | translate }}</dt>
+            <dd>
+              {{ 'events.create.summary.minutes' | translate: { value: event.durationMinutes } }}
+            </dd>
+            <dt>{{ 'events.create.fields.capacity' | translate }}</dt>
+            <dd>{{ event.capacity | number }}</dd>
+            <dt>{{ 'events.create.summary.version' | translate }}</dt>
+            <dd>{{ event.version }}</dd>
+          </dl>
+          <p class="events-page__note">{{ 'events.create.created.draftNote' | translate }}</p>
+          <div class="events-page__actions">
+            <button mat-flat-button type="button" (click)="createAnother()">
+              {{ 'events.create.actions.createAnother' | translate }}
+            </button>
+          </div>
+        </section>
+      } @else {
+        @if (retryAttempt(); as attempt) {
+          <p class="events-page__note" role="status" data-testid="event-retrying">
+            {{ 'events.create.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+          </p>
+        }
+        @if (failure(); as error) {
+          <div class="events-page__error" role="alert" data-testid="event-error">
+            <p>{{ failureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'events.create.errors.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="events-page__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        <app-create-event-form
+          [submitting]="submitting()"
+          [serverErrors]="violations()"
+          (submitted)="create($event)"
+          (edited)="onEdited()"
+        />
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

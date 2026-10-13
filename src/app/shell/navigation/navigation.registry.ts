@@ -206,7 +206,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     planCapabilities: false,
     items: [
       home('/organizador/inicio'),
-      upcoming(
+      permissionOption(
         'event-create',
         'events',
         100,

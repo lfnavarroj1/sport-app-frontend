@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { BffWebUrl } from '../bff-web-url';
 
 /**
- * Transporte de las operaciones de HU010 del contrato bff-web 0.8.0 (ver
+ * Transporte de las operaciones de HU010 del contrato bff-web 0.10.0 (ver
  * `contract.ts`): autorización del deportista a un profesional y creación y
  * consulta de planes de entrenamiento. Todas se autentican con el access token
  * (`Authorization: Bearer`). Estos tipos son del transporte: la interfaz los
