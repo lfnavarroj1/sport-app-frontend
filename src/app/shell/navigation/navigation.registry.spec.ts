@@ -30,8 +30,15 @@ function accessOf(
 const visibleIds = (actor: ActorType, access: SessionAccess | null): string[] =>
   visibleItems(actor, access).map((item) => item.id);
 
-/** Opciones del deportista sin permiso ni capacidad; HU011 no exige capacidad de plan. */
-const ATHLETE_BASE = ['home', 'profile', 'logout', 'plan', 'athlete-training-history'];
+/** Opciones del deportista sin permiso ni capacidad; HU011 y HU020 no exigen capacidad de plan. */
+const ATHLETE_BASE = [
+  'home',
+  'profile',
+  'logout',
+  'plan',
+  'athlete-training-history',
+  'athlete-services',
+];
 
 describe('Registro de navegación por actor (ADR-025, HU003)', () => {
   it('CA7–CA9: cada actor tiene su propio inicio', () => {
@@ -49,7 +56,9 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(navigable('athlete')).toEqual([
       ['home', homeFor('athlete'), 'HU003'],
       ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
+      ['athlete-services', '/deportista/servicios', 'HU020'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
+      ['sports-medicine', '/deportista/servicios/medico-deportivos', 'HU017'],
     ]);
     expect(navigable('organizer')).toEqual([
       ['home', homeFor('organizer'), 'HU003'],
@@ -70,6 +79,17 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(find('service_provider', 'training-plans').permission).toBe('training.plan.author');
     expect(visibleIds('service_provider', null)).not.toContain('training-plans');
     expect(visibleIds('athlete', null)).not.toContain('athlete-training-plans');
+  });
+
+  it('HU020: «Servicios» es opción base; medicina deportiva sigue exigiendo su capacidad', () => {
+    const find = (id: string) => NAVIGATION.athlete.items.find((item) => item.id === id)!;
+
+    expect(find('athlete-services')).toEqual(
+      jasmine.objectContaining({ group: 'services', permission: null, capability: null }),
+    );
+    expect(find('sports-medicine').capability).toBe('services.sports_medicine.access');
+    expect(visibleIds('athlete', null)).toContain('athlete-services');
+    expect(visibleIds('athlete', null)).not.toContain('sports-medicine');
   });
 
   it('no incluye opciones de HU aprobadas solo para móvil', () => {
@@ -225,7 +245,12 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
   it('el deportista conserva «Mi plan» en su cuenta y no tiene grupos vacíos', () => {
     const sections = navigationSections('athlete', null);
 
-    expect(sections.map((section) => section.group)).toEqual(['main', 'training', 'account']);
+    expect(sections.map((section) => section.group)).toEqual([
+      'main',
+      'services',
+      'training',
+      'account',
+    ]);
     expect(ids('athlete')).toContain('plan');
   });
 });

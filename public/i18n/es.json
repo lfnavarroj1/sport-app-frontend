@@ -347,6 +347,7 @@
       "nutrition-plans": "Crear planes de alimentación",
       "athlete-training-plans": "Planes de entrenamiento",
       "athlete-training-history": "Mi historial de entrenamiento",
+      "athlete-services": "Servicios",
       "sport-calendar": "Calendario deportivo",
       "sports-medicine": "Servicios médicos y deportivos"
     },
@@ -448,6 +449,64 @@
       "status": {
         "DRAFT": "Borrador"
       }
+    }
+  },
+  "services": {
+    "availability": {
+      "title": "Servicios",
+      "titleMedical": "Servicios médicos y deportivos",
+      "intro": "Explora los servicios publicados por profesionales y sus horarios disponibles. Consultar no reserva ningún cupo.",
+      "filters": {
+        "label": "Filtros de servicios",
+        "from": "Desde",
+        "to": "Hasta",
+        "category": "Categoría",
+        "modality": "Modalidad",
+        "includeUnavailable": "Mostrar también servicios sin espacios en el periodo",
+        "apply": "Buscar",
+        "clear": "Limpiar",
+        "hint": "Periodo de hasta {{max}} días. Los horarios se muestran en tu zona horaria ({{zone}}).",
+        "periodTooLong": "El periodo no puede superar {{max}} días.",
+        "toBeforeFrom": "La fecha final no puede ser anterior a la inicial."
+      },
+      "categories": {
+        "SPORTS_MEDICINE": "Medicina deportiva",
+        "COACHING": "Entrenamiento",
+        "NUTRITION": "Nutrición",
+        "TRANSPORT": "Transporte",
+        "ACCOMPANIMENT": "Acompañamiento"
+      },
+      "modalities": {
+        "IN_PERSON": "Presencial",
+        "VIRTUAL": "Virtual",
+        "HYBRID": "Híbrida"
+      },
+      "billingUnits": {
+        "SERVICE": "por servicio",
+        "SESSION": "por sesión",
+        "HOUR": "por hora",
+        "DAY": "por día"
+      },
+      "price": {
+        "label": "Tarifa",
+        "value": "{{amount}} {{unit}}",
+        "note": "Tarifa informativa: no está incluida en tu plan y consultarla no reserva ni cobra nada."
+      },
+      "intervals": {
+        "title": "Horarios disponibles",
+        "range": "{{start}} – {{end}}",
+        "capacity": "Cupo: {{count}}",
+        "serviceZone": "Zona horaria del servicio: {{zone}}"
+      },
+      "unavailable": "Sin espacios en el periodo",
+      "restricted": {
+        "SPORTS_MEDICINE": "La categoría Medicina deportiva está disponible con el plan Premium. Podrás comparar los planes en «Mi plan» (Próximamente)."
+      },
+      "listLabel": "Servicios disponibles",
+      "empty": "No hay servicios disponibles para este periodo y estos filtros.",
+      "countAll": "Servicios mostrados: {{count}}.",
+      "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
+      "loadMore": "Cargar más"
     }
   }
 }

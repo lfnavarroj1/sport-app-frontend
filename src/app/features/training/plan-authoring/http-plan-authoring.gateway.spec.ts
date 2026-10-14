@@ -33,7 +33,7 @@ const DRAFT: PlanDraft = {
   ],
 };
 
-describe('HttpPlanAuthoringGateway (HU010, contrato bff-web 0.10.0)', () => {
+describe('HttpPlanAuthoringGateway (HU010, contrato bff-web 0.12.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpPlanAuthoringGateway;

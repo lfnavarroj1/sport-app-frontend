@@ -17,7 +17,7 @@ export interface TrainingHistorySimulation {
 
 /**
  * Reemplaza `GET /v1/training-history` y `GET /v1/athletes/{id}/training-history`
- * con el simulador del contrato bff-web 0.10.0. Como el BFF: sin `Bearer` responde
+ * con el simulador del contrato bff-web 0.12.0. Como el BFF: sin `Bearer` responde
  * `401`; filtra por deporte y por fecha de fin inclusiva (día UTC); pagina con
  * `limit` (20 por defecto) y un cursor opaco; `filters.sports` lista los
  * deportes del historial completo.

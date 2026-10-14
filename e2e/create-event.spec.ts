@@ -7,7 +7,7 @@ import { login, sessionFor, simulateSession } from './support/session-simulator'
 /**
  * HU021 Crear evento masivo: el organizador crea un borrador en
  * `/organizador/eventos/nuevo`. El BFF está reemplazado por el simulador del
- * contrato bff-web 0.10.0 (ADR-028). NO es E2E integrado.
+ * contrato bff-web 0.12.0 (ADR-028). NO es E2E integrado.
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;

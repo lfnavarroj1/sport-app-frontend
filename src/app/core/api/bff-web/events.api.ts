@@ -6,7 +6,7 @@ import { BffWebUrl } from '../bff-web-url';
 
 /**
  * Transporte de `POST /v1/events` (operationId `create_v1_events_post`) del
- * contrato bff-web 0.10.0 (ver `contract.ts`), conforme a ADR-028 (HU021). Se
+ * contrato bff-web 0.12.0 (ver `contract.ts`), conforme a ADR-028 (HU021). Se
  * autentica con el access token; `organizer_id` sale del token y nunca viaja en
  * el cuerpo. Estos tipos son del transporte: la interfaz los transforma antes de
  * usarlos.

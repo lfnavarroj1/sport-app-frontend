@@ -157,6 +157,9 @@ describe('ActorShell (ADR-025, HU003)', () => {
       );
       expect(item(element, 'athlete-training-plans')?.textContent).not.toContain('Próximamente');
       expect(item(element, 'sport-calendar')?.textContent).toContain('Próximamente');
+      // HU020: «Servicios» es una opción base y ya navega.
+      expect(item(element, 'athlete-services')?.getAttribute('href')).toBe('/deportista/servicios');
+      expect(item(element, 'athlete-services')?.textContent).not.toContain('Próximamente');
       expect(item(element, 'sports-medicine')).toBeNull();
       expect(element.querySelector('[data-testid="shell-plan-provisioning"]')).toBeNull();
     });
@@ -169,6 +172,10 @@ describe('ActorShell (ADR-025, HU003)', () => {
 
       expect(item(element, 'sports-medicine')?.textContent).toContain(
         'Servicios médicos y deportivos',
+      );
+      // Abre la pantalla de HU020 filtrada por medicina deportiva.
+      expect(item(element, 'sports-medicine')?.getAttribute('href')).toBe(
+        '/deportista/servicios/medico-deportivos',
       );
     });
 

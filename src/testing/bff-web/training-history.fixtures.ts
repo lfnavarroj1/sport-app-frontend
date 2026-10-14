@@ -1,5 +1,5 @@
 /**
- * Simulador de las consultas de HU011 derivado del contrato bff-web 0.10.0
+ * Simulador de las consultas de HU011 derivado del contrato bff-web 0.12.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`): `GET /v1/training-history`
  * y `GET /v1/athletes/{athlete_id}/training-history`. Lo usan las pruebas
  * unitarias y Playwright; `training-history.contract.spec.ts` valida cada

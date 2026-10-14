@@ -15,7 +15,7 @@ import { HistoryFilters, HistoryPage, HistoryScope } from './history.model';
 
 /**
  * Implementación de HU011 sobre `GET /v1/training-history` y
- * `GET /v1/athletes/{athlete_id}/training-history` (contrato bff-web 0.10.0).
+ * `GET /v1/athletes/{athlete_id}/training-history` (contrato bff-web 0.12.0).
  * Usa el tamaño de página por defecto del contrato.
  */
 @Injectable()

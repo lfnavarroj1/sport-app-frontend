@@ -38,7 +38,7 @@ const DRAFT: EventDraft = {
   capacity: 5000,
 };
 
-describe('HttpCreateEventGateway (HU021, contrato bff-web 0.10.0)', () => {
+describe('HttpCreateEventGateway (HU021, contrato bff-web 0.12.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpCreateEventGateway;
