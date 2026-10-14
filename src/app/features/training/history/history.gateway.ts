@@ -2,7 +2,7 @@ import { HistoryFilters, HistoryPage, HistoryScope } from './history.model';
 
 /**
  * Puerto hacia el BFF web para el historial de entrenamiento (HU011).
- * `HttpHistoryGateway` traduce el contrato bff-web 0.10.0.
+ * `HttpHistoryGateway` traduce el contrato bff-web 0.12.0.
  */
 export abstract class HistoryGateway {
   /**

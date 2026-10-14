@@ -33,7 +33,7 @@ export const CREATE_EVENT_RETRY_DELAYS_MS = new InjectionToken<readonly number[]
   { factory: () => [1_000, 2_000, 4_000] },
 );
 
-/** Implementación de HU021 sobre `POST /v1/events` del BFF web (contrato 0.10.0). */
+/** Implementación de HU021 sobre `POST /v1/events` del BFF web (contrato 0.12.0). */
 @Injectable()
 export class HttpCreateEventGateway extends CreateEventGateway {
   private readonly api = inject(BffWebEventsApi);

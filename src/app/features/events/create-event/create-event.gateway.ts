@@ -2,7 +2,7 @@ import { CreateEventOutcome, EventDraft } from './create-event.model';
 
 /**
  * Puerto hacia el BFF web para crear el borrador de un evento (HU021).
- * `HttpCreateEventGateway` traduce el contrato bff-web 0.10.0.
+ * `HttpCreateEventGateway` traduce el contrato bff-web 0.12.0.
  */
 export abstract class CreateEventGateway {
   /**

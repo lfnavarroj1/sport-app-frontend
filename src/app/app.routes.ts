@@ -62,6 +62,24 @@ export const routes: Routes = [
           (module) => module.ATHLETE_HISTORY_ROUTES,
         ),
     },
+    {
+      // HU020: la opción PREMIUM abre la misma pantalla de disponibilidad,
+      // filtrada por medicina deportiva (ADR-038). Va antes de `servicios`.
+      path: 'servicios/medico-deportivos',
+      data: { presetCategory: 'SPORTS_MEDICINE' },
+      loadChildren: () =>
+        import('./features/services/availability/availability.routes').then(
+          (module) => module.AVAILABILITY_ROUTES,
+        ),
+    },
+    {
+      // HU020: catálogo de servicios publicados y su disponibilidad.
+      path: 'servicios',
+      loadChildren: () =>
+        import('./features/services/availability/availability.routes').then(
+          (module) => module.AVAILABILITY_ROUTES,
+        ),
+    },
   ]),
   actorArea('organizador', 'organizer', [
     {

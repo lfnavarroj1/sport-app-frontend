@@ -135,6 +135,16 @@ Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core
 - `Idempotency-Key` por intento lógico: se reintenta automáticamente hasta tres veces (1, 2 y 4 s) solo ante falta de red, `502`, `503` o `504`; nunca ante `4xx`. Al agotar los reintentos, volver a crear usa la misma clave.
 - Se presenta el borrador devuelto por `201` en la hora local del evento, sin consultar la proyección.
 
+## Disponibilidad de servicios (HU020)
+
+Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`core/api/bff-web/services-availability.api.ts`) y ADR-038.
+
+- **Deportista** (`/deportista/servicios`, opción base «Servicios», sin capacidad de plan): consulta los servicios publicados y sus horarios con `GET /v1/services/availability`. Consultar no reserva ni cobra nada; la tarifa en COP es informativa.
+- **Medicina deportiva** (`/deportista/servicios/medico-deportivos`, capacidad `services.sports_medicine.access` del plan `PREMIUM`): la misma pantalla con la categoría `SPORTS_MEDICINE` preseleccionada. Sin la capacidad, el BFF omite esa categoría y la declara en `restricted_categories`; la web muestra el aviso como texto, sin enlace (comparar planes es HU016).
+- Filtros: periodo por días locales (por defecto hoy y los 6 días siguientes; hasta 31 días), que se envía como `[from, to)` con el desfase del navegador; categorías y modalidades repetibles; «servicios sin espacios» envía `availability=all` y marca los que no tienen horarios. En la web solo se validan obligatorios, el orden de las fechas y el máximo del periodo; el resto lo decide el backend.
+- Los horarios llegan en UTC con la zona del servicio: se muestran en la zona del navegador sin alterar el instante y, si difiere, se indica la zona del servicio. Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo.
+- Ningún error se presenta como catálogo vacío: `401` termina la sesión como vencida; `403`, `422`, `503` y `504` muestran el error con su código de referencia.
+
 ## Contenedor y Kubernetes
 
 Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.

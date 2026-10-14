@@ -15,7 +15,7 @@ import { simulateTraining } from './support/training-simulator';
 /**
  * HU011 Ver historial de entrenamiento: el deportista consulta el suyo y el
  * profesional el de un deportista que lo autorizó, al que llega desde el plan
- * (HU010). El BFF está reemplazado por el simulador del contrato bff-web 0.10.0.
+ * (HU010). El BFF está reemplazado por el simulador del contrato bff-web 0.12.0.
  * NO es E2E integrado.
  */
 

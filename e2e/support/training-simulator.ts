@@ -24,7 +24,7 @@ export interface TrainingSimulation {
 
 /**
  * Reemplaza las operaciones de HU010 del BFF con el simulador derivado del
- * contrato bff-web 0.10.0. Como el BFF real: sin `Authorization: Bearer` responde
+ * contrato bff-web 0.12.0. Como el BFF real: sin `Authorization: Bearer` responde
  * `401 invalid_access_token`; `POST /v1/training-plans` exige `Idempotency-Key`
  * y, si la clave se repite, devuelve el mismo plan con `Idempotent-Replayed: true`;
  * el plan creado se puede consultar por su identificador.

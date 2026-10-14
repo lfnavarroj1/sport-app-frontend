@@ -15,7 +15,7 @@ const BFF = 'http://bff.example.com';
 const REFRESH_URL = `${BFF}/v1/sessions/refresh`;
 const NOW = new Date('2026-10-12T12:00:00Z').getTime();
 
-describe('HttpSessionRefresher (HU003, contrato bff-web 0.10.0)', () => {
+describe('HttpSessionRefresher (HU003, contrato bff-web 0.12.0)', () => {
   let http: HttpTestingController;
   let refresher: HttpSessionRefresher;
 

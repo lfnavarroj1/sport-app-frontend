@@ -169,6 +169,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         hu: 'HU011',
         available: true,
       },
+      // HU020: catálogo de servicios y su disponibilidad; opción base del deportista,
+      // sin capacidad de plan (ADR-038). Medicina deportiva la filtra el BFF.
+      {
+        id: 'athlete-services',
+        group: 'services',
+        order: 40,
+        icon: 'storefront',
+        route: '/deportista/servicios',
+        permission: null,
+        capability: null,
+        hu: 'HU020',
+        available: true,
+      },
       // Capacidades del plan con HU aprobada para la web (ADR-024).
       planOption(
         'athlete-training-plans',
@@ -189,6 +202,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar.sport.view',
         'HU023',
       ),
+      // Abre la pantalla de HU020 filtrada por medicina deportiva (ADR-038); la
+      // búsqueda y asociación de servicios médicos sigue siendo HU017.
       planOption(
         'sports-medicine',
         'services',
@@ -197,6 +212,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         '/deportista/servicios/medico-deportivos',
         'services.sports_medicine.access',
         'HU017',
+        true,
       ),
     ],
   },
