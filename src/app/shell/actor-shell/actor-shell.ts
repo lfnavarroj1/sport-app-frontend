@@ -18,6 +18,7 @@ import { map } from 'rxjs';
 import { SessionAccessStore } from '../../core/session/session-access.store';
 import { LOGIN_PATH } from '../../core/session/session.guards';
 import { ActorType, SessionStore } from '../../core/session/session.store';
+import { LogoutButton } from '../../features/identity/logout/logout-button/logout-button';
 import { AsyncState } from '../../shared/ui/async-state/async-state';
 import {
   NAVIGATION,
@@ -39,6 +40,7 @@ const WIDE_LAYOUT = '(min-width: 960px)';
   selector: 'app-actor-shell',
   imports: [
     AsyncState,
+    LogoutButton,
     MatButtonModule,
     MatIconModule,
     MatListModule,
@@ -80,11 +82,14 @@ export class ActorShell {
     const router = inject(Router);
     this.access.ensureLoaded();
     // Si la sesión termina se sale del área: al acceso, o al acceso no autorizado
-    // cuando el BFF no admite el tipo de actor (CA10).
+    // cuando el BFF no admite el tipo de actor (CA10). Se reemplaza la entrada del
+    // historial: tras cerrar sesión (HU004), «Atrás» no vuelve al área protegida.
     effect(() => {
       if (this.session.user() === null) {
         const unauthorized = this.session.lastEndReason() === 'unauthorized_actor';
-        void router.navigateByUrl(unauthorized ? UNAUTHORIZED_PATH : LOGIN_PATH);
+        void router.navigateByUrl(unauthorized ? UNAUTHORIZED_PATH : LOGIN_PATH, {
+          replaceUrl: true,
+        });
       }
     });
   }

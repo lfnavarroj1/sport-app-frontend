@@ -224,6 +224,35 @@ describe('LoginPage (HU003)', () => {
     expect(session.lastEndReason()).toBeNull();
   });
 
+  it('HU004: confirma una sola vez que el usuario cerró sesión', async () => {
+    session.start({ ...SESSION, expiresAt: Date.now() + 60_000 });
+    session.end('logged_out');
+    await create();
+
+    const notice = element.querySelector('[data-testid="login-logged-out"]');
+    expect(notice?.getAttribute('role')).toBe('status');
+    expect(notice?.textContent?.trim()).toBe('Cerraste sesión.');
+    expect(element.querySelector('[data-testid="login-session-expired"]')).toBeNull();
+    expect(session.lastEndReason()).toBeNull();
+  });
+
+  it('HU004: aclara cuando el servidor no pudo confirmar el cierre (503/504)', async () => {
+    session.start({ ...SESSION, expiresAt: Date.now() + 60_000 });
+    session.end('logged_out_unconfirmed');
+    await create();
+
+    expect(element.querySelector('[data-testid="login-logged-out"]')?.textContent).toContain(
+      'el servidor no pudo confirmarlo',
+    );
+  });
+
+  it('sin un cierre previo no muestra avisos de sesión', async () => {
+    await create();
+
+    expect(element.querySelector('[data-testid="login-logged-out"]')).toBeNull();
+    expect(element.querySelector('[data-testid="login-session-expired"]')).toBeNull();
+  });
+
   it('permite mostrar la contraseña con un control accesible', async () => {
     await create();
     const toggle = await loader.getHarness(

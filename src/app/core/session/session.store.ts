@@ -20,10 +20,13 @@ export interface Session {
 
 /**
  * Motivo por el que terminó la última sesión, para informarlo al usuario:
- * `expired` (vencida o rechazada por el BFF) o `unauthorized_actor` (el BFF no
- * admite el tipo de actor, CA10).
+ * `expired` (vencida o rechazada por el BFF), `unauthorized_actor` (el BFF no
+ * admite el tipo de actor, HU003 CA10), `logged_out` (el usuario cerró sesión y
+ * el BFF confirmó la revocación, HU004) o `logged_out_unconfirmed` (el BFF borró
+ * la cookie, pero no pudo confirmar la revocación remota: `503`/`504`, HU004).
  */
-export type SessionEndReason = 'expired' | 'unauthorized_actor';
+export type SessionEndReason =
+  'expired' | 'unauthorized_actor' | 'logged_out' | 'logged_out_unconfirmed';
 
 /** Anticipación con que se renueva el access token antes de su vencimiento. */
 export const RENEWAL_LEAD_MS = 60_000;

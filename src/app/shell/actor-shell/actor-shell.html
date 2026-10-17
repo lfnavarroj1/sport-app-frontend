@@ -16,7 +16,10 @@
           [attr.aria-labelledby]="section.group === 'main' ? null : 'menu-group-' + section.group"
         >
           @for (item of section.items; track item.id) {
-            @if (item.available && item.route) {
+            @if (item.action === 'logout') {
+              <!-- HU004: acción, no ruta. -->
+              <app-logout-button />
+            } @else if (item.available && item.route) {
               <a
                 mat-list-item
                 [routerLink]="item.route"
