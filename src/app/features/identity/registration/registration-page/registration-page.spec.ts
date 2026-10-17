@@ -167,7 +167,7 @@ describe('RegistrationPage (HU001)', () => {
     await submitDraft();
 
     expect(element.querySelector('[data-testid="registration-success"]')).toBeNull();
-    expect(element.textContent).toContain('La versión de las políticas ya no está vigente.');
+    expect(element.textContent).toContain('La versión del aviso que aceptaste ya no está vigente.');
   });
 
   it('CA3: entrega al formulario los campos rechazados por el backend', async () => {

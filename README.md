@@ -76,21 +76,21 @@ La aplicación lee `app-config.json` al arrancar, de modo que el mismo artefacto
 {
   "environment": "local",
   "bffWebBaseUrl": "http://localhost:18080",
-  "registrationPoliciesVersion": "local-dev",
+  "registrationPoliciesVersion": "sportapp-c108-c108plus.v1",
   "healthDataConsentVersion": "local-dev"
 }
 ```
 
-| Campo                         | Obligatorio | Valores                                                                                                                                                                                                                                   |
-| ----------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `environment`                 | Sí          | `local`, `development`, `staging`, `production`                                                                                                                                                                                           |
-| `bffWebBaseUrl`               | Sí          | URL http(s) absoluta del BFF web, o `null` si aún no está definida                                                                                                                                                                        |
-| `registrationPoliciesVersion` | Sí          | Versión vigente de las políticas de registro (HU001), de 1 a 32 caracteres; debe coincidir con `REGISTRATION_POLICIES_VERSION` de users-management en el mismo ambiente. `null` deja el registro no disponible                            |
-| `healthDataConsentVersion`    | Sí          | Versión vigente del consentimiento de datos de salud (HU005, ADR-034), de 1 a 64 caracteres; debe coincidir con `HEALTH_DATA_CONSENT_VERSION` de users-management en el mismo ambiente. `null` deja el registro fisiológico no disponible |
+| Campo                         | Obligatorio | Valores                                                                                                                                                                                                                                                                                                    |
+| ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environment`                 | Sí          | `local`, `development`, `staging`, `production`                                                                                                                                                                                                                                                            |
+| `bffWebBaseUrl`               | Sí          | URL http(s) absoluta del BFF web, o `null` si aún no está definida                                                                                                                                                                                                                                         |
+| `registrationPoliciesVersion` | Sí          | Versión vigente de las políticas de registro (HU001), de 1 a 32 caracteres; debe coincidir con `REGISTRATION_POLICIES_VERSION` de users-management en el mismo ambiente y con la versión del aviso que muestra la web (`sportapp-c108-c108plus.v1`). `null` u otra versión dejan el registro no disponible |
+| `healthDataConsentVersion`    | Sí          | Versión vigente del consentimiento de datos de salud (HU005, ADR-034), de 1 a 64 caracteres; debe coincidir con `HEALTH_DATA_CONSENT_VERSION` de users-management en el mismo ambiente. `null` deja el registro fisiológico no disponible                                                                  |
 
 Si el archivo falta o es inválido, la aplicación **no arranca** y muestra un mensaje de error. Con `bffWebBaseUrl: null`, cualquier llamada al BFF falla con `BffNotConfiguredError` y la interfaz muestra el estado "servicio no disponible".
 
-Con `npm start` se usa `public/app-config.json`, que apunta al BFF de la composición local (`http://localhost:18080`) y a las versiones `local-dev` de las políticas y del consentimiento de datos de salud, los valores por defecto de la plataforma. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
+Con `npm start` se usa `public/app-config.json`, que apunta al BFF de la composición local (`http://localhost:18080`) a la versión aprobada de las políticas de registro (`sportapp-c108-c108plus.v1`) y a la versión `local-dev` del consentimiento de datos de salud. La plataforma aún publica `local-dev` como versión de las políticas: hasta que la cambie, users-management rechaza el registro con `422 policies_version_mismatch`. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
 
 ## Estilo visual
 
@@ -101,6 +101,26 @@ Dirección «Energía deportiva» (decisión del responsable, 2026-10-11): naran
 - **Tipografía:** Roboto para el texto y Barlow (600–800) para títulos y marca, ambas desde Google Fonts.
 - **Fondos:** `<app-auth-shell>` (`shared/ui/auth-shell`) envuelve las pantallas sin sesión con el degradado de marca y trazos diagonales, solo con CSS. La tarjeta proyectada usa la clase `sa-auth-card`.
 - **Barra superior:** sus colores se definen con `mat.toolbar-overrides`, que también dan color a los botones de navegación.
+
+## Registro y aviso de tratamiento de datos (HU001)
+
+Features `src/app/features/identity/registration` y `src/app/features/identity/privacy-notice`. Contrato `POST /v1/users` y `GET /v1/me/capabilities` de `bff-web` 0.13.0.
+
+- **El aviso** está en `/aviso-de-privacidad` (pública) y también puede leerse dentro del formulario («Leer el aviso aquí»). Su versión, `sportapp-c108-c108plus.v1`, es la versión compartida de las políticas que aprobó el responsable. Explica, con la información aprobada del proyecto:
+  - qué datos se recopilan y para qué;
+  - minimización y calidad;
+  - conservación;
+  - seguridad;
+  - destinatarios y transferencias;
+  - datos sensibles y de salud;
+  - derechos de acceso, rectificación, supresión y oposición, y cómo ejercerlos.
+- **Lo que no se inventa:** lo que el proyecto aún no definió figura como pendiente (ver «Pendiente»).
+- **Referencias:** los Convenios 108 y 108+ del Consejo de Europa son referencias del aviso, no una certificación. Sus enlaces oficiales se abren en una pestaña nueva con `rel="noopener noreferrer"`.
+- **Consentimiento:** es explícito y no está premarcado. La etiqueta enlaza al aviso (pestaña nueva, sin perder lo capturado), muestra la versión y envía exactamente esa versión en `accepted_policies_version`.
+- **Versión configurada:** la web solo ofrece aceptar la versión del aviso que muestra. Si `registrationPoliciesVersion` indica otra, el registro no se habilita.
+- **Versión rechazada:** ante `422 policies_version_mismatch`, la casilla se desmarca y se ofrece «Recargar y leer la versión vigente».
+- **La contraseña** solo vive durante el envío: no se guarda en el navegador ni queda en la pantalla del resultado.
+- **Pruebas:** `e2e/privacy-notice.spec.ts` y `e2e/registration.spec.ts` (`@simulado`). `e2e/registration.integrated.spec.ts` (`@integrado`) cubre registro, `PROVISIONING` → `FREE` `ACTIVE` con capacidades, y `organizer`/`service_provider` en `NOT_APPLICABLE`.
 
 ## Sesión (HU003)
 
@@ -180,7 +200,7 @@ Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Deskto
 ```bash
 npm run container:build                 # docker build -t sportapp/web:local .
 docker run --rm -p 18082:8080 -e APP_ENV=local -e BFF_WEB_BASE_URL=http://localhost:18080 \
-  -e REGISTRATION_POLICIES_VERSION=local-dev -e HEALTH_DATA_CONSENT_VERSION=local-dev sportapp/web:local
+  -e REGISTRATION_POLICIES_VERSION=sportapp-c108-c108plus.v1 -e HEALTH_DATA_CONSENT_VERSION=local-dev sportapp/web:local
 bash deploy/docker/smoke-test.sh sportapp/web:local   # Git Bash, Linux o macOS
 ```
 
@@ -203,10 +223,10 @@ Si `APP_ENV`, `BFF_WEB_BASE_URL`, `REGISTRATION_POLICIES_VERSION` o `HEALTH_DATA
 
 `deploy/k8s/base` (`kubectl kustomize deploy/k8s/base`) define el `Deployment` y el `Service` `web` (puerto `80` → `http`). Lee `APP_ENV`, `BFF_WEB_BASE_URL`, `REGISTRATION_POLICIES_VERSION` y `HEALTH_DATA_CONSENT_VERSION` del ConfigMap `sportapp-runtime`; las dos últimas son las mismas claves que usa users-management. `HEALTH_DATA_CONSENT_VERSION` es opcional (`optional: true`) mientras la plataforma la agrega al ConfigMap: sin ella la web publica `null` y el registro fisiológico queda no disponible. La imagen va sin tag, y el namespace, el ConfigMap, el tag y el acceso en `localhost:18082` los aporta `sport-app-platform`.
 
-| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           | `REGISTRATION_POLICIES_VERSION`                                     | `HEALTH_DATA_CONSENT_VERSION`               |
-| ----------------------------- | ------------ | -------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------- |
-| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     | `local-dev` (variable de Terraform `registration_policies_version`) | `local-dev`                                 |
-| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` | La misma que users-management en producción                         | La misma que users-management en producción |
+| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           | `REGISTRATION_POLICIES_VERSION`                                                                                               | `HEALTH_DATA_CONSENT_VERSION`               |
+| ----------------------------- | ------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     | `sportapp-c108-c108plus.v1` (variable de Terraform `registration_policies_version`; hoy `local-dev`, pendiente de plataforma) | `local-dev`                                 |
+| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` | La misma que users-management en producción                                                                                   | La misma que users-management en producción |
 
 Para que el navegador pueda llamar al BFF, `bff-web` debe permitir CORS para el origen de la web (`localhost:18082`, `localhost:4200` y la URL de producción). Es una tarea del backend.
 
@@ -247,7 +267,8 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 ## Pendiente
 
 - Nombre de la cabecera de correlación en el contrato (el backend usa `X-Correlation-ID`).
-- Documentos de políticas de uso y privacidad (texto y URL) para enlazarlos desde el registro.
+- Aviso de tratamiento de datos (HU001): datos que el proyecto aún no definió y que el aviso declara pendientes. Son la identificación y el contacto del responsable, la fecha de vigencia, el plazo de conservación, el país de tratamiento y las transferencias, la autoridad de control y el canal para ejercer la supresión, la oposición y la rectificación del nombre y el correo.
+- Plataforma: `REGISTRATION_POLICIES_VERSION=sportapp-c108-c108plus.v1` en `sportapp-runtime` y las suscripciones `sportapp.afiliacion.alta-gratuita.v1` y `proyector-usuarios-v1` en el emulador local (`T-HU001-PLAT`).
 - Producción: con `SameSite=Strict`, la cookie de sesión solo viaja si la web y `bff-web` comparten sitio (decisión de la capa de borde en la plataforma).
 - Evidencia integrada del deportista con plan `ACTIVE`: en la composición local el consumidor del alta gratuita de Afiliación no activa el plan `FREE` (backend/plataforma).
 - HU005: `HEALTH_DATA_CONSENT_VERSION` en el ConfigMap `sportapp-runtime` (plataforma) y el recorrido integrado del perfil, que espera el despliegue de `users-management` 0.6.0 y `usuarios-read-projector`. El texto y la URL de la política de datos de salud.

@@ -53,13 +53,20 @@
       "service_provider": "Profesional de servicios"
     },
     "policies": {
-      "legend": "Políticas",
-      "accept": "Acepto las políticas de uso y privacidad de SportApp (versión {{version}})."
+      "legend": "Tratamiento de datos",
+      "summary": "Antes de aceptar, lee cómo trata SportApp tus datos personales.",
+      "showNotice": "Leer el aviso aquí",
+      "hideNotice": "Ocultar el aviso",
+      "noticeRegion": "Aviso de tratamiento de datos",
+      "acceptBefore": "Acepto las políticas de tratamiento de datos descritas en el",
+      "noticeLink": "aviso de tratamiento de datos",
+      "acceptAfter": "(versión {{version}})."
     },
     "errors": {
       "emailTaken": "Ya existe una cuenta con este correo electrónico.",
       "policyRequired": "Debes aceptar las políticas para registrarte.",
-      "policiesOutdated": "La versión de las políticas ya no está vigente. Recarga la página para revisar la versión actual."
+      "policiesOutdated": "La versión del aviso que aceptaste ya no está vigente. Recarga la página para leer la versión vigente y acéptala de nuevo.",
+      "reloadPolicies": "Recargar y leer la versión vigente"
     },
     "optionsEmpty": "El registro no está disponible en este momento.",
     "submit": "Registrarme",
@@ -71,6 +78,129 @@
     },
     "haveAccount": "¿Ya tienes una cuenta?",
     "goToLogin": "Inicia sesión"
+  },
+  "privacyNotice": {
+    "title": "Aviso de tratamiento de datos personales de SportApp",
+    "meta": {
+      "version": "Versión",
+      "effectiveDate": "Fecha de vigencia"
+    },
+    "pending": "Pendiente de definir por el responsable del proyecto.",
+    "intro": "Este aviso explica, en lenguaje claro, qué datos personales trata SportApp, para qué los usa, cómo los protege y qué derechos tienes sobre ellos. Debes leerlo y aceptarlo para crear tu cuenta.",
+    "referencesNote": "Para redactarlo se tomaron como referencia el Convenio 108 del Consejo de Europa y su versión modernizada (Convenio 108+). Son referencias de buenas prácticas: este aviso no es una certificación de cumplimiento de esos convenios.",
+    "sections": {
+      "controller": {
+        "title": "Quién trata tus datos",
+        "paragraphs": {
+          "0": "Tus datos los trata SportApp, la plataforma en la que te registras. La identificación del responsable del tratamiento (razón social y domicilio) y su dato de contacto aún no están definidos: se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "data": {
+        "title": "Qué datos recopilamos",
+        "paragraphs": {
+          "0": "Pedimos solo los datos que necesita cada función:"
+        },
+        "items": {
+          "0": "Al registrarte: tu nombre completo, tu correo electrónico, una contraseña y tu tipo de usuario (deportista, organizador de eventos o profesional de servicios).",
+          "1": "Si eres deportista y decides completar tu perfil: fecha de nacimiento, género, país y ciudad de residencia y, si quieres, estado civil, ocupación y rango de ingresos.",
+          "2": "Si eres deportista y das tu consentimiento específico: datos fisiológicos y de salud, como peso, altura, frecuencia cardíaca en reposo, presión arterial y temperatura corporal.",
+          "3": "Mientras usas SportApp: tu actividad y tus hábitos deportivos, tus planes de entrenamiento y los datos técnicos necesarios para mantener tu sesión."
+        }
+      },
+      "purposes": {
+        "title": "Para qué usamos tus datos",
+        "paragraphs": {
+          "0": "Usamos tus datos solo para estas finalidades:"
+        },
+        "items": {
+          "0": "Crear y administrar tu cuenta, y comprobar que tu correo no esté registrado dos veces.",
+          "1": "Autenticarte y mantener tu sesión de forma segura.",
+          "2": "Si te registras como deportista, asignarte automáticamente el plan gratuito y habilitar las opciones que incluye tu plan.",
+          "3": "Personalizar tu experiencia deportiva con los datos de tu perfil.",
+          "4": "Permitir que los profesionales que tú autorices te asignen planes de entrenamiento y consulten tu historial.",
+          "5": "Gestionar los eventos y servicios en los que participes."
+        }
+      },
+      "minimization": {
+        "title": "Minimización y calidad de los datos",
+        "items": {
+          "0": "Solo son obligatorios los datos indispensables para cada función; los demás son opcionales.",
+          "1": "No te pedimos datos de raza, etnia ni religión.",
+          "2": "Validamos el formato de los datos al capturarlos, y puedes corregir los de tu perfil para mantenerlos exactos y actualizados."
+        }
+      },
+      "retention": {
+        "title": "Cuánto tiempo conservamos tus datos",
+        "paragraphs": {
+          "0": "El plazo de conservación de tus datos y la forma de eliminarlos aún no están definidos: se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "security": {
+        "title": "Cómo protegemos tus datos",
+        "items": {
+          "0": "Tu contraseña nunca se guarda en texto claro: se almacena protegida con un algoritmo de hash seguro.",
+          "1": "En la aplicación web, el token de acceso de tu sesión se guarda solo en la memoria de la pestaña, y la renovación usa una cookie protegida que la aplicación no puede leer.",
+          "2": "Cada persona solo accede a la información que le corresponde según su rol y sus autorizaciones.",
+          "3": "Tus valores de salud no se escriben en los registros técnicos ni en las métricas del sistema."
+        }
+      },
+      "recipients": {
+        "title": "Quién puede ver tus datos",
+        "items": {
+          "0": "Los profesionales de servicios solo acceden a tus datos de entrenamiento si tú los autorizas, y puedes revocar esa autorización.",
+          "1": "Los organizadores ven solo los datos mínimos necesarios de las personas inscritas en sus eventos.",
+          "2": "Las integraciones con servicios de terceros requieren tu consentimiento específico, y puedes revocarlo.",
+          "3": "SportApp funciona sobre servicios de infraestructura en la nube. El país donde se tratan los datos y las posibles transferencias internacionales aún no están definidos: se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "sensitive": {
+        "title": "Datos sensibles y de salud",
+        "items": {
+          "0": "Tratamos tus datos fisiológicos y de salud como datos sensibles.",
+          "1": "Solo los registramos con tu consentimiento explícito y específico, distinto de este aviso, que se te pide cada vez que guardas esos datos.",
+          "2": "SportApp no clasifica ni diagnostica tu salud: valores como el índice de masa corporal se muestran como estimaciones.",
+          "3": "Estos datos no se comparten con otras partes de SportApp que no los necesiten."
+        }
+      },
+      "rights": {
+        "title": "Tus derechos",
+        "paragraphs": {
+          "0": "Sobre tus datos personales tienes derecho a:"
+        },
+        "items": {
+          "0": "Acceder a ellos y saber cómo se tratan.",
+          "1": "Rectificarlos si son inexactos o están incompletos.",
+          "2": "Solicitar su supresión.",
+          "3": "Oponerte a su tratamiento."
+        }
+      },
+      "exercise": {
+        "title": "Cómo ejercer tus derechos",
+        "paragraphs": {
+          "0": "Hoy, si eres deportista, puedes consultar y corregir tus datos demográficos y fisiológicos en «Mi perfil». La corrección del nombre y del correo, la supresión de la cuenta y la oposición al tratamiento aún no tienen un canal en SportApp: ese canal, el dato de contacto y la autoridad ante la que puedes presentar una reclamación se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "references": {
+        "title": "Referencias",
+        "paragraphs": {
+          "0": "Estos documentos oficiales del Consejo de Europa orientan el aviso:"
+        }
+      },
+      "changes": {
+        "title": "Versión de este aviso",
+        "paragraphs": {
+          "0": "Estás leyendo la versión {{version}}. Si el aviso cambia, publicaremos una nueva versión con otro identificador; al registrarte aceptas la versión que se muestra en el formulario."
+        }
+      }
+    },
+    "references": {
+      "convention108": "Convenio 108 y sus protocolos (Consejo de Europa, en inglés)",
+      "convention108plus": "Convenio 108 modernizado o Convenio 108+ (Consejo de Europa, en inglés)"
+    },
+    "opensInNewTab": "(se abre en una pestaña nueva)",
+    "actionsLabel": "Acciones del aviso",
+    "goToRegistration": "Ir al registro",
+    "goToLogin": "Iniciar sesión"
   },
   "login": {
     "title": "Iniciar sesión",

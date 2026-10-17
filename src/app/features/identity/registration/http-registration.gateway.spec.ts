@@ -20,7 +20,7 @@ const DRAFT: RegistrationDraft = {
   email: 'persona@example.com',
   password: 'clave-sintetica-123',
   actorType: 'athlete',
-  acceptedPoliciesVersion: 'local-dev',
+  acceptedPoliciesVersion: 'sportapp-c108-c108plus.v1',
 };
 
 describe('HttpRegistrationGateway (HU001, contrato bff-web 0.2.0)', () => {
@@ -37,7 +37,7 @@ describe('HttpRegistrationGateway (HU001, contrato bff-web 0.2.0)', () => {
           useValue: {
             environment: 'local',
             bffWebBaseUrl: BFF,
-            registrationPoliciesVersion: 'local-dev',
+            registrationPoliciesVersion: 'sportapp-c108-c108plus.v1',
             healthDataConsentVersion: null,
             ...config,
           } satisfies AppConfig,
@@ -66,7 +66,7 @@ describe('HttpRegistrationGateway (HU001, contrato bff-web 0.2.0)', () => {
 
       expect(options).toEqual({
         actorTypes: [{ code: 'athlete' }, { code: 'organizer' }, { code: 'service_provider' }],
-        policiesVersion: 'local-dev',
+        policiesVersion: 'sportapp-c108-c108plus.v1',
       });
     });
 
@@ -74,6 +74,12 @@ describe('HttpRegistrationGateway (HU001, contrato bff-web 0.2.0)', () => {
       await expectAsync(setup({ bffWebBaseUrl: null }).loadOptions()).toBeRejectedWithError(
         BffNotConfiguredError,
       );
+    });
+
+    it('no ofrece aceptar una versión distinta de la del aviso que muestra la web', async () => {
+      await expectAsync(
+        setup({ registrationPoliciesVersion: 'local-dev' }).loadOptions(),
+      ).toBeRejectedWithError(ConfigValueMissingError);
     });
 
     it('falla si la versión de políticas no está configurada en el ambiente', async () => {
@@ -99,7 +105,7 @@ describe('HttpRegistrationGateway (HU001, contrato bff-web 0.2.0)', () => {
         email: 'persona@example.com',
         password: 'clave-sintetica-123',
         actor_type: 'athlete',
-        accepted_policies_version: 'local-dev',
+        accepted_policies_version: 'sportapp-c108-c108plus.v1',
       });
       expect(request.request.headers.get('Idempotency-Key')).toBe(KEY);
       expect(await outcome).toEqual({

@@ -62,19 +62,74 @@
 
   <fieldset class="registration-form__policies">
     <legend>{{ 'registration.policies.legend' | translate }}</legend>
+    <p class="registration-form__policy-summary">
+      {{ 'registration.policies.summary' | translate }}
+    </p>
+    <button
+      mat-stroked-button
+      type="button"
+      class="registration-form__notice-toggle"
+      aria-controls="registration-notice"
+      [attr.aria-expanded]="noticeVisible()"
+      data-testid="registration-notice-toggle"
+      (click)="toggleNotice()"
+    >
+      <mat-icon aria-hidden="true">{{ noticeVisible() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      {{
+        (noticeVisible() ? 'registration.policies.hideNotice' : 'registration.policies.showNotice')
+          | translate
+      }}
+    </button>
+    <div
+      id="registration-notice"
+      class="registration-form__notice"
+      role="region"
+      tabindex="0"
+      [attr.aria-label]="'registration.policies.noticeRegion' | translate"
+      [hidden]="!noticeVisible()"
+      data-testid="registration-notice"
+    >
+      @if (noticeVisible()) {
+        <app-privacy-notice [headingLevel]="3" idPrefix="registro-aviso" />
+      }
+    </div>
     <div class="registration-form__policy">
       <mat-checkbox formControlName="policies" required>
-        {{ 'registration.policies.accept' | translate: { version: options().policiesVersion } }}
+        {{ 'registration.policies.acceptBefore' | translate }}
+        <a
+          [href]="noticePath"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="registration-notice-link"
+          >{{ 'registration.policies.noticeLink' | translate
+          }}<span class="registration-form__sr-only">
+            {{ 'privacyNotice.opensInNewTab' | translate }}</span
+          ></a
+        >
+        {{
+          'registration.policies.acceptAfter' | translate: { version: options().policiesVersion }
+        }}
       </mat-checkbox>
       @if (policiesError(); as error) {
-        <p class="registration-form__policy-error" role="alert">
-          {{
-            (error === 'outdated'
-              ? 'registration.errors.policiesOutdated'
-              : 'registration.errors.policyRequired'
-            ) | translate
-          }}
-        </p>
+        <div
+          class="registration-form__policy-error"
+          role="alert"
+          data-testid="registration-policies-error"
+        >
+          <p>
+            {{
+              (error === 'outdated'
+                ? 'registration.errors.policiesOutdated'
+                : 'registration.errors.policyRequired'
+              ) | translate
+            }}
+          </p>
+          @if (error === 'outdated') {
+            <button mat-stroked-button type="button" (click)="reloadPolicies()">
+              {{ 'registration.errors.reloadPolicies' | translate }}
+            </button>
+          }
+        </div>
       }
     </div>
   </fieldset>

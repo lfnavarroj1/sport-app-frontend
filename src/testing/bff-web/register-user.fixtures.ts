@@ -19,7 +19,7 @@ export const VALID_REGISTER_USER_REQUEST = {
   email: 'persona@example.com',
   password: 'clave-sintetica-123',
   actor_type: 'athlete',
-  accepted_policies_version: 'local-dev',
+  accepted_policies_version: 'sportapp-c108-c108plus.v1',
 } as const;
 
 const CORRELATION_ID = '6f1c2a5e-8b9d-4c3e-9f10-2a3b4c5d6e7f';

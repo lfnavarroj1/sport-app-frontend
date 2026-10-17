@@ -12,6 +12,7 @@ import {
 } from '../../../core/api/bff-web/contract';
 import { BffWebUsersApi, REGISTER_USER_ERROR_CODES } from '../../../core/api/bff-web/users.api';
 import { APP_CONFIG, ConfigValueMissingError } from '../../../core/config/app-config';
+import { PRIVACY_NOTICE_VERSION } from '../privacy-notice/privacy-notice.model';
 import { RegistrationGateway } from './registration.gateway';
 import {
   RegistrationDraft,
@@ -41,7 +42,9 @@ export class HttpRegistrationGateway extends RegistrationGateway {
       return Promise.reject(new BffNotConfiguredError());
     }
     const policiesVersion = this.config.registrationPoliciesVersion;
-    if (policiesVersion === null) {
+    // Solo se ofrece aceptar la versión cuyo aviso muestra la web: con otra versión
+    // configurada se aceptaría un texto que el usuario no puede leer.
+    if (policiesVersion === null || policiesVersion !== PRIVACY_NOTICE_VERSION) {
       return Promise.reject(new ConfigValueMissingError('registrationPoliciesVersion'));
     }
     return Promise.resolve({

@@ -75,7 +75,7 @@ test.describe('HU001 Registrar usuario (simulador del contrato) @simulado', () =
       email: 'persona@example.com',
       password: 'clave-sintetica-123',
       actor_type: 'athlete',
-      accepted_policies_version: 'local-dev',
+      accepted_policies_version: 'sportapp-c108-c108plus.v1',
     });
   });
 

@@ -44,6 +44,14 @@ export const routes: Routes = [
         (module) => module.REGISTRATION_ROUTES,
       ),
   },
+  {
+    // HU001: aviso de tratamiento de datos, público y legible antes de aceptar.
+    path: 'aviso-de-privacidad',
+    loadChildren: () =>
+      import('./features/identity/privacy-notice/privacy-notice.routes').then(
+        (module) => module.PRIVACY_NOTICE_ROUTES,
+      ),
+  },
   // HU003 (CA7–CA10) y ADR-025: un inicio y un menú por tipo de actor.
   actorArea('deportista', 'athlete', [
     {
