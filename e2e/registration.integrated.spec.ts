@@ -5,13 +5,15 @@ import { Page, Response, expect, test } from '@playwright/test';
  * Pub/Sub → affiliation-management, contra el ambiente de `PLAYWRIGHT_BASE_URL`
  * (su `app-config.json` define el BFF y la versión de políticas). Requiere que
  * users-management acepte `sportapp-c108-c108plus.v1` (`REGISTRATION_POLICIES_VERSION`)
- * y que el consumidor del plan `FREE` esté suscrito. Crea cuentas sintéticas con un
- * correo único por ejecución. Ante un fallo, el mensaje deja la operación, el
- * estado, el `code` y el `correlation_id` del BFF.
+ * y que el consumidor del plan `FREE` esté suscrito (`T-HU001-PLAT`). Crea cuentas
+ * sintéticas con un correo único por ejecución (`e2e-hu001-…@example.com`). Ante un
+ * fallo, el mensaje deja la operación, el estado, el `code` y el `correlation_id`.
  */
 
 const VERSION = 'sportapp-c108-c108plus.v1';
 const PASSWORD = 'clave-sintetica-e2e-123';
+/** Capacidades del plan `FREE` en el catálogo precargado (ADR-024, `planes/01`). */
+const FREE_CAPABILITIES = 11;
 
 const ACTORS = {
   athlete: { label: 'Deportista', home: /\/deportista\/inicio$/ },
@@ -26,8 +28,8 @@ interface Capabilities {
   readonly capabilities: readonly string[];
 }
 
-function uniqueEmail(): string {
-  return `e2e-hu001-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+function uniqueEmail(role: string): string {
+  return `e2e-hu001-${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 }
 
 function waitForOperation(page: Page, method: string, path: string): Promise<Response> {
@@ -36,17 +38,21 @@ function waitForOperation(page: Page, method: string, path: string): Promise<Res
   );
 }
 
+/** Cuerpo de error del BFF, si lo hay. */
+async function errorOf(response: Response): Promise<{ code?: string; correlation_id?: string }> {
+  try {
+    return (await response.json()) as { code?: string; correlation_id?: string };
+  } catch {
+    return {};
+  }
+}
+
 /** Comprueba el estado HTTP y, si no coincide, deja la evidencia del BFF. */
 async function expectStatus(response: Response, expected: number): Promise<void> {
   if (response.status() === expected) {
     return;
   }
-  let body: { code?: string; correlation_id?: string } = {};
-  try {
-    body = (await response.json()) as typeof body;
-  } catch {
-    // Sin cuerpo JSON.
-  }
+  const body = await errorOf(response);
   expect(
     response.status(),
     `${response.request().method()} ${new URL(response.url()).pathname} → ${response.status()}` +
@@ -67,6 +73,23 @@ async function register(page: Page, email: string, label: string): Promise<Respo
   return created;
 }
 
+/** Registro aceptado: versión aprobada enviada y sin rastro de la contraseña. */
+async function expectRegistered(page: Page, created: Response, email: string): Promise<string> {
+  expect(created.request().postDataJSON().accepted_policies_version).toBe(VERSION);
+  await expectStatus(created, 201);
+  const body = (await created.json()) as { user_id: string; email: string };
+  expect(body.email).toBe(email);
+  expect(JSON.stringify(body)).not.toContain(PASSWORD);
+  await expect(page.getByTestId('registration-success')).toContainText(email);
+  await expect(page.getByLabel('Contraseña', { exact: true })).toHaveCount(0);
+  const stored = await page.evaluate(() =>
+    JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage), document.cookie]),
+  );
+  expect(stored).not.toContain(PASSWORD);
+  expect(await page.content()).not.toContain(PASSWORD);
+  return body.user_id;
+}
+
 async function login(page: Page, email: string, home: RegExp): Promise<Capabilities> {
   await page.goto('/iniciar-sesion');
   await page.getByLabel('Correo electrónico').fill(email);
@@ -80,30 +103,20 @@ async function login(page: Page, email: string, home: RegExp): Promise<Capabilit
 }
 
 test.describe('HU001 Registrar usuario contra el BFF web @integrado', () => {
-  test('CA1 y CA2: registra una cuenta nueva con la versión aprobada y rechaza el mismo correo', async ({
+  test('athlete: registro 201, PROVISIONING → FREE ACTIVE con 11 capacidades y estado recuperable', async ({
     page,
   }) => {
-    const email = uniqueEmail();
-
-    const created = await register(page, email, ACTORS.athlete.label);
-    expect(created.request().postDataJSON().accepted_policies_version).toBe(VERSION);
-    await expectStatus(created, 201);
-    await expect(page.getByRole('status')).toContainText(email);
-
-    const duplicated = await register(page, email, ACTORS.athlete.label);
-    await expectStatus(duplicated, 409);
-    await expect(page.getByText('Ya existe una cuenta con este correo electrónico.')).toBeVisible();
-  });
-
-  test('CA6 y CA8: el deportista pasa de PROVISIONING a FREE ACTIVE con capacidades', async ({
-    page,
-  }) => {
-    test.setTimeout(120_000);
-    const email = uniqueEmail();
-    await expectStatus(await register(page, email, ACTORS.athlete.label), 201);
+    test.setTimeout(150_000);
+    const email = uniqueEmail('deportista');
+    await expectRegistered(page, await register(page, email, ACTORS.athlete.label), email);
 
     const first = await login(page, email, ACTORS.athlete.home);
     expect(first.actor_type).toBe('athlete');
+    // Evidencia: el estado con el que llegó la primera consulta (depende de la velocidad del consumidor).
+    test.info().annotations.push({
+      type: 'subscription_status_inicial',
+      description: first.subscription_status,
+    });
     if (first.subscription_status === 'PROVISIONING') {
       // CA8: mientras se activa no se conceden capacidades y se informa el estado.
       expect(first.capabilities).toEqual([]);
@@ -125,22 +138,63 @@ test.describe('HU001 Registrar usuario contra el BFF web @integrado', () => {
 
     // CA6: plan FREE con sus capacidades, tal como las entrega el backend.
     expect(current.plan_code).toBe('FREE');
-    expect(current.capabilities.length).toBeGreaterThan(0);
+    expect(current.capabilities).toHaveLength(FREE_CAPABILITIES);
+    expect(new Set(current.capabilities).size).toBe(FREE_CAPABILITIES);
     await expect(page.getByTestId('shell-plan-provisioning')).toHaveCount(0);
     await expect(
       page.locator('mat-sidenav [data-menu-item="athlete-training-plans"]'),
     ).toBeVisible();
+
+    // CA8: el estado se recupera en una sesión nueva sin repetir el registro.
+    const logout = waitForOperation(page, 'POST', '/v1/sessions/revoke');
+    await page.locator('mat-sidenav [data-menu-item="logout"]').click();
+    await expectStatus(await logout, 204);
+    const again = await login(page, email, ACTORS.athlete.home);
+    expect(again.subscription_status).toBe('ACTIVE');
+    expect(again.plan_code).toBe('FREE');
+    expect([...again.capabilities].sort()).toEqual([...current.capabilities].sort());
+  });
+
+  test('reintento y correo repetido: la misma clave devuelve el registro original y el correo repetido da 409 estable', async ({
+    page,
+  }) => {
+    const email = uniqueEmail('reintento');
+    const created = await register(page, email, ACTORS.athlete.label);
+    const userId = await expectRegistered(page, created, email);
+
+    // CA5: el mismo intento (misma Idempotency-Key y cuerpo) contra el BFF real.
+    const key = await created.request().headerValue('idempotency-key');
+    expect(key).toMatch(/^[0-9a-f-]{36}$/);
+    const replay = await page.request.post(created.url(), {
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key! },
+      data: created.request().postData()!,
+    });
+    expect(replay.status()).toBe(201);
+    expect(replay.headers()['idempotent-replayed']).toBe('true');
+    expect(((await replay.json()) as { user_id: string }).user_id).toBe(userId);
+
+    // CA2: un intento nuevo con el mismo correo se rechaza siempre con el mismo código.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const duplicated = await register(page, email, ACTORS.athlete.label);
+      await expectStatus(duplicated, 409);
+      expect((await errorOf(duplicated)).code).toBe('email_already_registered');
+      expect(await duplicated.request().headerValue('idempotency-key')).not.toBe(key);
+      await expect(
+        page.getByText('Ya existe una cuenta con este correo electrónico.'),
+      ).toBeVisible();
+    }
   });
 
   for (const actor of ['organizer', 'service_provider'] as const) {
-    test(`CA7: «${ACTORS[actor].label}» no recibe una suscripción de deportista`, async ({
+    test(`${actor}: registro 201, NOT_APPLICABLE y sin suscripción de deportista`, async ({
       page,
     }) => {
-      const email = uniqueEmail();
-      await expectStatus(await register(page, email, ACTORS[actor].label), 201);
+      const email = uniqueEmail(actor.replace('_', '-'));
+      await expectRegistered(page, await register(page, email, ACTORS[actor].label), email);
 
       const capabilities = await login(page, email, ACTORS[actor].home);
 
+      // CA7: sin suscripción de deportista ni capacidades de plan.
       expect(capabilities.actor_type).toBe(actor);
       expect(capabilities.subscription_status).toBe('NOT_APPLICABLE');
       expect(capabilities.plan_code).toBeNull();
