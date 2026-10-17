@@ -16,7 +16,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { toApiError } from '../../../../core/api/api-error';
-import { SessionStore } from '../../../../core/session/session.store';
+import { SessionEndReason, SessionStore } from '../../../../core/session/session.store';
 import { AuthShell } from '../../../../shared/ui/auth-shell/auth-shell';
 import { FieldError } from '../../../../shared/forms/field-error/field-error';
 import { LoginGateway } from '../login.gateway';
@@ -25,6 +25,14 @@ import { LoginOutcome } from '../login.model';
 
 /** Límites de `LoginRequest` en el contrato bff-web 0.13.0. */
 const LIMITS = { emailMax: 254, passwordMax: 128 } as const;
+
+/** Clave i18n del aviso de cierre de sesión (HU004), o `null` si no corresponde. */
+function loggedOutNotice(reason: SessionEndReason | null): string | null {
+  if (reason === 'logged_out') {
+    return 'login.loggedOut';
+  }
+  return reason === 'logged_out_unconfirmed' ? 'login.loggedOutUnconfirmed' : null;
+}
 
 /** Pantalla de inicio de sesión (HU003). */
 @Component({
@@ -57,6 +65,12 @@ export class LoginPage {
 
   /** La sesión anterior venció; se informa una sola vez. */
   protected readonly sessionExpired = this.session.lastEndReason() === 'expired';
+
+  /**
+   * El usuario cerró sesión (HU004): se confirma una sola vez y se aclara si el
+   * servidor no pudo confirmar la revocación.
+   */
+  protected readonly loggedOutKey = loggedOutNotice(this.session.lastEndReason());
 
   protected readonly invalidCredentials = computed(
     () => this.outcome()?.kind === 'invalid_credentials',

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 
@@ -13,6 +15,7 @@ import {
   provideFakeSessionAccess,
 } from '../../../testing/session-access-testing';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
+import { APP_CONFIG, AppConfig } from '../../core/config/app-config';
 import { SessionAccess } from '../../core/session/session-access.store';
 import { ActorType, SessionStore } from '../../core/session/session.store';
 import { ViewState } from '../../shared/ui/view-state';
@@ -44,6 +47,17 @@ describe('ActorShell (ADR-025, HU003)', () => {
       providers: [
         provideRouter([]),
         provideTranslateTesting(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: APP_CONFIG,
+          useValue: {
+            environment: 'local',
+            bffWebBaseUrl: 'http://bff.test',
+            registrationPoliciesVersion: null,
+            healthDataConsentVersion: null,
+          } satisfies AppConfig,
+        },
         fakeAccess.provider,
         { provide: ActivatedRoute, useValue: { snapshot: { data: { actor } } } },
       ],
@@ -204,7 +218,7 @@ describe('ActorShell (ADR-025, HU003)', () => {
     session.end('expired');
     TestBed.tick();
 
-    expect(navigate).toHaveBeenCalledWith('/iniciar-sesion');
+    expect(navigate).toHaveBeenCalledWith('/iniciar-sesion', { replaceUrl: true });
   });
 
   it('CA10: si el BFF no admite el actor, va al acceso no autorizado', async () => {
@@ -214,6 +228,38 @@ describe('ActorShell (ADR-025, HU003)', () => {
     session.end('unauthorized_actor');
     TestBed.tick();
 
-    expect(navigate).toHaveBeenCalledWith('/acceso-no-autorizado');
+    expect(navigate).toHaveBeenCalledWith('/acceso-no-autorizado', { replaceUrl: true });
+  });
+
+  describe('HU004: cerrar sesión', () => {
+    for (const actor of ['athlete', 'organizer', 'service_provider'] as const) {
+      it(`${actor}: «Cerrar sesión» es un botón del menú, no «Próximamente»`, async () => {
+        const element = await render(actor);
+        const logout = item(element, 'logout');
+
+        expect(logout?.tagName).toBe('BUTTON');
+        expect(logout?.textContent).toContain('Cerrar sesión');
+        expect(logout?.textContent).not.toContain('Próximamente');
+      });
+    }
+
+    it('CA1: al confirmar el cierre vuelve al acceso sin dejar el área en el historial', async () => {
+      const element = await render('athlete');
+      const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+      const http = TestBed.inject(HttpTestingController);
+
+      item(element, 'logout')!.click();
+      const request = http.expectOne('http://bff.test/v1/sessions/revoke');
+      expect(request.request.withCredentials).toBeTrue();
+      request.flush(null, { status: 204, statusText: 'No Content' });
+      await new Promise((resolve) => setTimeout(resolve));
+      TestBed.tick();
+
+      expect(session.user()).toBeNull();
+      expect(session.accessToken()).toBeNull();
+      expect(session.lastEndReason()).toBe('logged_out');
+      expect(navigate).toHaveBeenCalledWith('/iniciar-sesion', { replaceUrl: true });
+      http.verify();
+    });
   });
 });

@@ -50,7 +50,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
   it('solo «Inicio» y las HU implementadas son navegables; el resto es «Próximamente»', () => {
     const navigable = (actor: ActorType) =>
       NAVIGATION[actor].items
-        .filter((item) => item.available)
+        .filter((item) => item.available && item.action === undefined)
         .map((item) => [item.id, item.route, item.hu]);
 
     expect(navigable('athlete')).toEqual([
@@ -70,6 +70,24 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
     ]);
+  });
+
+  it('HU004: «Cerrar sesión» es una acción disponible para los tres actores web, sin ruta ni permiso', () => {
+    for (const actor of ['athlete', 'organizer', 'service_provider'] as const) {
+      const logout = NAVIGATION[actor].items.find((item) => item.id === 'logout')!;
+
+      expect(logout).toEqual(
+        jasmine.objectContaining({
+          action: 'logout',
+          available: true,
+          route: null,
+          permission: null,
+          capability: null,
+          hu: 'HU004',
+        }),
+      );
+      expect(visibleIds(actor, null)).toContain('logout');
+    }
   });
 
   it('HU010 sigue condicionada: capacidad del deportista y permiso del profesional', () => {

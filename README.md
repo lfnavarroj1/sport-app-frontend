@@ -113,6 +113,20 @@ Dirección «Energía deportiva» (decisión del responsable, 2026-10-11): naran
 - **Mantener la sesión** (`core/session/http-session-refresher.ts`, `POST /v1/sessions/refresh`): el access token se renueva 60 s antes de vencer; si el BFF no responde se reintenta cada 15 s mientras siga vigente, y si rechaza la cookie la sesión termina con «Tu sesión expiró». Al recargar o abrir la aplicación, las guardas intentan una vez recuperar la sesión con la cookie antes de decidir. Las renovaciones de varias pestañas se serializan con la Web Locks API, porque la cookie rota en cada uso y reutilizar una rotada revoca la sesión.
 - Los errores de credenciales usan siempre el mismo mensaje genérico; `429 too_many_attempts` muestra la espera indicada por `Retry-After`.
 
+## Cerrar sesión (HU004)
+
+Feature `src/app/features/identity/logout`. Usa `POST /v1/sessions/revoke` de `bff-web` 0.13.0 (`core/api/bff-web/sessions.api.ts`); la operación no cambia desde 0.7.0.
+
+- «Cerrar sesión» es una acción del menú lateral para los tres actores web (`<app-logout-button>`; en el registro de navegación tiene `action: 'logout'`).
+- **La solicitud:** va sin cuerpo y sin access token; la credencial es la cookie `HttpOnly`, que la aplicación no lee ni registra. El botón queda deshabilitado mientras dura, así que hay un solo envío.
+- **Cuándo se da por cerrada:** solo cuando el BFF confirma que borró la cookie.
+  - `204`: la sesión queda revocada. Se descartan de la memoria el access token, la identidad y la vista de permisos, y el acceso muestra «Cerraste sesión.».
+  - `503`/`504`: el BFF también borró la cookie, pero no pudo confirmar la revocación remota. Se cierra en el navegador y se avisa que el servidor no lo confirmó.
+- **Cuándo no:** sin conexión o con `403 origin_not_allowed` la cookie sigue en el navegador, así que la sesión **no** se da por cerrada. El menú lo explica, con la referencia si la hay, y se puede reintentar.
+- **Después del cierre:** la entrada del historial se reemplaza, así que «Atrás» no vuelve al área protegida. Pedir una URL protegida intenta renovar y el BFF lo rechaza (`401`).
+- Otras pestañas abiertas conservan su access token en memoria hasta que vence (≤ 15 min, riesgo aceptado en HU004); su siguiente renovación se rechaza.
+- **Pruebas:** `e2e/logout.spec.ts` (`@simulado`) y `e2e/logout.integrated.spec.ts` (`@integrado`, requiere el origen de la aplicación en `CORS_ALLOWED_ORIGINS`; en local, `ng serve --port 4200`).
+
 ## Planes de entrenamiento (HU010)
 
 Feature `src/app/features/training`, contrato `bff-web` 0.6.0 (`core/api/bff-web/training.api.ts`).

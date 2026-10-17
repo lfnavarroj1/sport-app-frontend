@@ -41,6 +41,11 @@ export interface NavItem {
   readonly hu: string;
   /** La HU ya está implementada en la web. */
   readonly available: boolean;
+  /**
+   * La opción es una acción y no una ruta (`logout`: cerrar sesión, HU004). El menú
+   * la presenta como botón.
+   */
+  readonly action?: 'logout';
 }
 
 export interface ActorNavigation {
@@ -90,6 +95,7 @@ const ATHLETE_PROFILE: NavItem = {
 
 const account = (profile: NavItem = PROFILE): NavItem[] => [
   profile,
+  // HU004: acción de cierre para los tres actores web; no tiene ruta.
   {
     id: 'logout',
     group: 'account',
@@ -99,7 +105,8 @@ const account = (profile: NavItem = PROFILE): NavItem[] => [
     permission: null,
     capability: null,
     hu: 'HU004',
-    available: false,
+    available: true,
+    action: 'logout',
   },
 ];
 

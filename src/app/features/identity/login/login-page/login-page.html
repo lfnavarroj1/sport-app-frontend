@@ -13,6 +13,12 @@
         </p>
       }
 
+      @if (loggedOutKey; as key) {
+        <p class="login__notice" role="status" data-testid="login-logged-out">
+          {{ key | translate }}
+        </p>
+      }
+
       @if (invalidCredentials()) {
         <p class="login__error" role="alert" data-testid="login-error">
           {{ 'login.errors.invalidCredentials' | translate }}

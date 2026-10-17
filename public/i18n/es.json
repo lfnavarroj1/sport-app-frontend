@@ -82,6 +82,8 @@
     "submit": "Ingresar",
     "submitting": "Ingresando…",
     "sessionExpired": "Tu sesión expiró. Ingresa de nuevo para continuar.",
+    "loggedOut": "Cerraste sesión.",
+    "loggedOutUnconfirmed": "Cerraste sesión en este navegador, aunque el servidor no pudo confirmarlo en este momento.",
     "errors": {
       "invalidCredentials": "Correo o contraseña incorrectos.",
       "tooManyAttempts": "Hiciste demasiados intentos. Espera unos minutos antes de intentarlo de nuevo.",
@@ -543,6 +545,13 @@
     "plan": {
       "title": "Opciones de tu plan",
       "provisioning": "Estamos activando tu plan. Sus opciones aparecerán en cuanto esté confirmado."
+    },
+    "logout": {
+      "inProgress": "Cerrando sesión…",
+      "errors": {
+        "offline": "No pudimos cerrar sesión porque no hay conexión. Tu sesión sigue abierta: revisa tu red e inténtalo de nuevo.",
+        "failed": "No pudimos cerrar sesión. Tu sesión sigue abierta: inténtalo de nuevo."
+      }
     }
   },
   "unauthorized": {
