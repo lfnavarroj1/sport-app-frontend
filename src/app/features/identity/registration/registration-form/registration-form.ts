@@ -1,4 +1,14 @@
-import { Component, ElementRef, effect, inject, input, output, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  InjectionToken,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -17,6 +27,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { FieldError } from '../../../../shared/forms/field-error/field-error';
+import { PrivacyNotice } from '../../privacy-notice/privacy-notice/privacy-notice';
+import { PRIVACY_NOTICE_PATH } from '../../privacy-notice/privacy-notice.model';
 import {
   RegistrationDraft,
   RegistrationField,
@@ -36,9 +48,26 @@ const LIMITS = {
 } as const;
 
 /**
+ * Recarga la página para volver a leer la configuración y el aviso vigentes tras
+ * `policies_version_mismatch`. Configurable para las pruebas.
+ */
+export const RELOAD_PAGE = new InjectionToken<() => void>('RELOAD_PAGE', {
+  factory: () => {
+    const document = inject(DOCUMENT);
+    return () => document.location.reload();
+  },
+});
+
+/**
  * Formulario de HU001. Solo aplica validaciones de experiencia (obligatorios,
  * formato y límites del contrato); las reglas autoritativas (unicidad, catálogo,
  * versión de políticas) son del backend y llegan como `serverErrors`.
+ *
+ * El aviso de tratamiento de datos puede leerse dentro del formulario o en su
+ * página, que la etiqueta del consentimiento abre en una pestaña nueva. El
+ * consentimiento es explícito: la casilla empieza desmarcada y, si el backend
+ * rechaza la versión aceptada, se desmarca para que se acepte de nuevo tras leer
+ * la versión vigente.
  */
 @Component({
   selector: 'app-registration-form',
@@ -50,6 +79,7 @@ const LIMITS = {
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    PrivacyNotice,
     ReactiveFormsModule,
     TranslatePipe,
   ],
@@ -66,8 +96,12 @@ export class RegistrationForm {
   readonly edited = output();
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly reloadPage = inject(RELOAD_PAGE);
 
   protected readonly passwordVisible = signal(false);
+  /** El aviso se muestra dentro del formulario. */
+  protected readonly noticeVisible = signal(false);
+  protected readonly noticePath = PRIVACY_NOTICE_PATH;
   protected readonly limits = LIMITS;
 
   protected readonly form = new FormGroup({
@@ -105,6 +139,15 @@ export class RegistrationForm {
     return control.hasError('outdated') ? 'outdated' : 'required';
   }
 
+  protected toggleNotice(): void {
+    this.noticeVisible.update((visible) => !visible);
+  }
+
+  /** Vuelve a cargar la página para leer y aceptar la versión vigente. */
+  protected reloadPolicies(): void {
+    this.reloadPage();
+  }
+
   protected togglePasswordVisibility(): void {
     this.passwordVisible.update((visible) => !visible);
   }
@@ -137,6 +180,8 @@ export class RegistrationForm {
       this.markServerError('email', 'emailTaken');
     }
     if (errors.policiesOutdated) {
+      // La aceptación era de una versión que ya no rige: se pide de nuevo.
+      this.form.controls.policies.setValue(false, { emitEvent: false });
       this.markServerError('policies', 'outdated');
     }
     for (const field of errors.invalidFields) {

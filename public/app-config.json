@@ -1,6 +1,6 @@
 {
   "environment": "local",
   "bffWebBaseUrl": "http://localhost:18080",
-  "registrationPoliciesVersion": "local-dev",
+  "registrationPoliciesVersion": "sportapp-c108-c108plus.v1",
   "healthDataConsentVersion": "local-dev"
 }
