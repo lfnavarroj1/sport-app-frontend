@@ -13,6 +13,7 @@ set -euo pipefail
 IMAGE="${1:?Uso: smoke-test.sh <imagen>}"
 BFF_URL="http://localhost:18080"
 POLICIES_VERSION="local-dev"
+CONSENT_VERSION="local-dev"
 CONTAINERS=()
 
 cleanup() {
@@ -97,7 +98,7 @@ user="$(docker image inspect -f '{{.Config.User}}' "$IMAGE")"
 pass "la imagen se ejecuta como 101:101 (no root)"
 
 # --- Configuración local válida -------------------------------------------------
-id="$(start -e APP_ENV=local -e BFF_WEB_BASE_URL="$BFF_URL" -e REGISTRATION_POLICIES_VERSION="$POLICIES_VERSION")"
+id="$(start -e APP_ENV=local -e BFF_WEB_BASE_URL="$BFF_URL" -e REGISTRATION_POLICIES_VERSION="$POLICIES_VERSION" -e HEALTH_DATA_CONSENT_VERSION="$CONSENT_VERSION")"
 CONTAINERS+=("$id")
 url="$(base_url_of "$id")"
 wait_healthy "$url" "$id"
@@ -111,7 +112,7 @@ status="$(curl -sS -o /dev/null -w '%{http_code}' "$url/")"
 pass "GET / -> 200"
 
 config="$(curl -fsS "$url/app-config.json")"
-expected="{\"environment\":\"local\",\"bffWebBaseUrl\":\"$BFF_URL\",\"registrationPoliciesVersion\":\"$POLICIES_VERSION\"}"
+expected="{\"environment\":\"local\",\"bffWebBaseUrl\":\"$BFF_URL\",\"registrationPoliciesVersion\":\"$POLICIES_VERSION\",\"healthDataConsentVersion\":\"$CONSENT_VERSION\"}"
 [ "$config" = "$expected" ] || fail "app-config.json inesperado: $config"
 pass "GET /app-config.json -> $config"
 
@@ -137,15 +138,25 @@ status="$(curl -sS -o /dev/null -w '%{http_code}' "$url/main-AAAAAAAA.js")"
 [ "$status" = "404" ] || fail "un archivo con hash inexistente devolvió $status (se esperaba 404)"
 pass "archivo con hash inexistente -> 404 (no index.html)"
 
-# --- BFF y políticas sin definir: se publica null ---------------------------------
-id="$(start -e APP_ENV=production -e BFF_WEB_BASE_URL= -e REGISTRATION_POLICIES_VERSION=)"
+# --- BFF, políticas y consentimiento sin definir: se publica null -----------------
+id="$(start -e APP_ENV=production -e BFF_WEB_BASE_URL= -e REGISTRATION_POLICIES_VERSION= -e HEALTH_DATA_CONSENT_VERSION=)"
 CONTAINERS+=("$id")
 url="$(base_url_of "$id")"
 wait_healthy "$url" "$id"
 config="$(curl -fsS "$url/app-config.json")"
-[ "$config" = '{"environment":"production","bffWebBaseUrl":null,"registrationPoliciesVersion":null}' ] ||
-  fail "con BFF_WEB_BASE_URL y REGISTRATION_POLICIES_VERSION vacías app-config.json fue: $config"
-pass "BFF_WEB_BASE_URL y REGISTRATION_POLICIES_VERSION vacías -> null"
+[ "$config" = '{"environment":"production","bffWebBaseUrl":null,"registrationPoliciesVersion":null,"healthDataConsentVersion":null}' ] ||
+  fail "con BFF_WEB_BASE_URL, REGISTRATION_POLICIES_VERSION y HEALTH_DATA_CONSENT_VERSION vacías app-config.json fue: $config"
+pass "BFF_WEB_BASE_URL, REGISTRATION_POLICIES_VERSION y HEALTH_DATA_CONSENT_VERSION vacías -> null"
+
+# --- Sin HEALTH_DATA_CONSENT_VERSION (ConfigMap sin la clave): se publica null ----
+id="$(start -e APP_ENV=local -e BFF_WEB_BASE_URL="$BFF_URL" -e REGISTRATION_POLICIES_VERSION="$POLICIES_VERSION")"
+CONTAINERS+=("$id")
+url="$(base_url_of "$id")"
+wait_healthy "$url" "$id"
+config="$(curl -fsS "$url/app-config.json")"
+grep -q '"healthDataConsentVersion":null}$' <<<"$config" ||
+  fail "sin HEALTH_DATA_CONSENT_VERSION app-config.json fue: $config"
+pass "HEALTH_DATA_CONSENT_VERSION ausente -> null"
 
 # --- Configuración inválida: el contenedor no arranca -----------------------------
 reject() {
@@ -168,5 +179,7 @@ reject "BFF_WEB_BASE_URL relativa" -e APP_ENV=local -e BFF_WEB_BASE_URL=/api
 reject "BFF_WEB_BASE_URL con comillas" -e APP_ENV=local -e 'BFF_WEB_BASE_URL=http://x"y'
 reject "REGISTRATION_POLICIES_VERSION con comillas" -e APP_ENV=local -e 'REGISTRATION_POLICIES_VERSION=v"1'
 reject "REGISTRATION_POLICIES_VERSION de 33 caracteres" -e APP_ENV=local -e REGISTRATION_POLICIES_VERSION=abcdefghijabcdefghijabcdefghijabc
+reject "HEALTH_DATA_CONSENT_VERSION con comillas" -e APP_ENV=local -e 'HEALTH_DATA_CONSENT_VERSION=v"1'
+reject "HEALTH_DATA_CONSENT_VERSION de 65 caracteres" -e APP_ENV=local -e HEALTH_DATA_CONSENT_VERSION=abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcde
 
 echo "Prueba de humo del contenedor: OK"

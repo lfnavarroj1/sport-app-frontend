@@ -85,6 +85,9 @@ describe('ActorShell (ADR-025, HU003)', () => {
     expect(item(element, 'event-create')?.textContent).toContain('Crear evento');
     expect(item(element, 'service-create')).toBeNull();
     expect(item(element, 'plan')).toBeNull();
+    // Sin ruta de perfil hasta HU002: «Mi perfil» sigue como «Próximamente».
+    expect(item(element, 'profile')?.tagName).toBe('DIV');
+    expect(item(element, 'profile')?.textContent).toContain('Próximamente');
   });
 
   it('«Inicio» es un enlace al inicio propio', async () => {
@@ -160,6 +163,10 @@ describe('ActorShell (ADR-025, HU003)', () => {
       // HU020: «Servicios» es una opción base y ya navega.
       expect(item(element, 'athlete-services')?.getAttribute('href')).toBe('/deportista/servicios');
       expect(item(element, 'athlete-services')?.textContent).not.toContain('Próximamente');
+      // HU005: «Mi perfil» del deportista ya navega a su perfil.
+      expect(item(element, 'profile')?.getAttribute('href')).toBe('/deportista/perfil');
+      expect(item(element, 'profile')?.textContent).toContain('Mi perfil');
+      expect(item(element, 'profile')?.textContent).not.toContain('Próximamente');
       expect(item(element, 'sports-medicine')).toBeNull();
       expect(element.querySelector('[data-testid="shell-plan-provisioning"]')).toBeNull();
     });

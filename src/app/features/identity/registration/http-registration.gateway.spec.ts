@@ -38,6 +38,7 @@ describe('HttpRegistrationGateway (HU001, contrato bff-web 0.2.0)', () => {
             environment: 'local',
             bffWebBaseUrl: BFF,
             registrationPoliciesVersion: 'local-dev',
+            healthDataConsentVersion: null,
             ...config,
           } satisfies AppConfig,
         },

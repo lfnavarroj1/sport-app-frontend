@@ -50,6 +50,7 @@ describe('HttpPlanAuthoringGateway (HU010, contrato bff-web 0.12.0)', () => {
             environment: 'local',
             bffWebBaseUrl: BFF,
             registrationPoliciesVersion: null,
+            healthDataConsentVersion: null,
           } satisfies AppConfig,
         },
       ],

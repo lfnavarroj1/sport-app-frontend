@@ -42,6 +42,14 @@ spec:
             - name: REGISTRATION_POLICIES_VERSION
               valueFrom:
                 configMapKeyRef: { name: sportapp-runtime, key: REGISTRATION_POLICIES_VERSION }
+            # Misma clave que lee users-management: una sola versión del consentimiento de
+            # datos de salud por ambiente (HU005, ADR-034). Opcional mientras la plataforma la
+            # agrega al ConfigMap: sin ella la web publica null y el registro fisiológico queda
+            # no disponible.
+            - name: HEALTH_DATA_CONSENT_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  { name: sportapp-runtime, key: HEALTH_DATA_CONSENT_VERSION, optional: true }
           readinessProbe:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 10

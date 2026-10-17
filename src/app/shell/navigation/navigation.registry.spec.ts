@@ -55,6 +55,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
 
     expect(navigable('athlete')).toEqual([
       ['home', homeFor('athlete'), 'HU003'],
+      ['profile', '/deportista/perfil', 'HU005'],
       ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
       ['athlete-services', '/deportista/servicios', 'HU020'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
@@ -90,6 +91,28 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(find('sports-medicine').capability).toBe('services.sports_medicine.access');
     expect(visibleIds('athlete', null)).toContain('athlete-services');
     expect(visibleIds('athlete', null)).not.toContain('sports-medicine');
+  });
+
+  it('HU005: «Mi perfil» navega solo para el deportista; los demás esperan HU002 (ADR-034)', () => {
+    const profile = (actor: ActorType) =>
+      NAVIGATION[actor].items.find((item) => item.id === 'profile')!;
+
+    expect(profile('athlete')).toEqual(
+      jasmine.objectContaining({
+        group: 'account',
+        route: '/deportista/perfil',
+        permission: null,
+        capability: null,
+        hu: 'HU005',
+        available: true,
+      }),
+    );
+    for (const actor of ['organizer', 'service_provider'] as const) {
+      expect(profile(actor))
+        .withContext(actor)
+        .toEqual(jasmine.objectContaining({ route: null, hu: 'HU002', available: false }));
+    }
+    expect(visibleIds('athlete', null)).toContain('profile');
   });
 
   it('no incluye opciones de HU aprobadas solo para móvil', () => {

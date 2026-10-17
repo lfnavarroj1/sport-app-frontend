@@ -6,7 +6,7 @@ import { BffWebUrl } from '../bff-web-url';
 import { SportDto } from './training.api';
 
 /**
- * Transporte de las consultas de HU011 del contrato bff-web 0.12.0 (ver
+ * Transporte de las consultas de HU011 del contrato bff-web 0.13.0 (ver
  * `contract.ts`): `GET /v1/training-history` (historial propio del deportista) y
  * `GET /v1/athletes/{athlete_id}/training-history` (profesional autorizado). Ambas
  * se autentican con el access token. Estos tipos son del transporte: la interfaz

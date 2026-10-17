@@ -31,6 +31,7 @@ describe('HttpSessionRefresher (HU003, contrato bff-web 0.12.0)', () => {
             environment: 'local',
             bffWebBaseUrl: BFF,
             registrationPoliciesVersion: 'local-dev',
+            healthDataConsentVersion: null,
           } satisfies AppConfig,
         },
       ],

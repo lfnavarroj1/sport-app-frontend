@@ -47,6 +47,14 @@ export const routes: Routes = [
   // HU003 (CA7–CA10) y ADR-025: un inicio y un menú por tipo de actor.
   actorArea('deportista', 'athlete', [
     {
+      // HU005: «Mi perfil», con los datos demográficos y fisiológicos (ADR-034).
+      path: 'perfil',
+      loadChildren: () =>
+        import('./features/identity/profile/profile.routes').then(
+          (module) => module.PROFILE_ROUTES,
+        ),
+    },
+    {
       // HU010: el deportista autoriza a profesionales a asignarle planes.
       path: 'entrenamientos/planes',
       loadChildren: () =>

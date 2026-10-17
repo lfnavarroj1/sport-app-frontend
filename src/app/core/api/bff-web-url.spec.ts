@@ -14,6 +14,7 @@ describe('BffWebUrl', () => {
       environment: 'development',
       bffWebBaseUrl: 'https://bff.example.test/',
       registrationPoliciesVersion: null,
+      healthDataConsentVersion: null,
     });
 
     expect(bff.isConfigured).toBeTrue();
@@ -25,6 +26,7 @@ describe('BffWebUrl', () => {
       environment: 'local',
       bffWebBaseUrl: null,
       registrationPoliciesVersion: null,
+      healthDataConsentVersion: null,
     });
 
     expect(bff.isConfigured).toBeFalse();

@@ -15,7 +15,7 @@ export interface EventsSimulation {
 }
 
 /**
- * Reemplaza `POST /v1/events` con el simulador del contrato bff-web 0.12.0 y
+ * Reemplaza `POST /v1/events` con el simulador del contrato bff-web 0.13.0 y
  * ADR-028. Como el BFF: sin `Bearer` responde `401`; la misma `Idempotency-Key`
  * con el mismo cuerpo devuelve el mismo borrador con `Idempotent-Replayed: true`
  * y con otro cuerpo responde `409 idempotency_key_reused`. El borrador devuelto

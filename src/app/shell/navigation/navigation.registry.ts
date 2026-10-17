@@ -64,18 +64,32 @@ const home = (route: string): NavItem => ({
   available: true,
 });
 
-const account = (): NavItem[] => [
-  {
-    id: 'profile',
-    group: 'account',
-    order: 20,
-    icon: 'person',
-    route: null,
-    permission: null,
-    capability: null,
-    hu: 'HU002',
-    available: false,
-  },
+/**
+ * «Mi perfil». El deportista lo abre en `/deportista/perfil`, donde HU005 registra
+ * sus datos demográficos y fisiológicos (ADR-034). Los demás actores no tienen
+ * ruta de perfil hasta HU002, así que su opción sigue como «Próximamente».
+ */
+const PROFILE: NavItem = {
+  id: 'profile',
+  group: 'account',
+  order: 20,
+  icon: 'person',
+  route: null,
+  permission: null,
+  capability: null,
+  hu: 'HU002',
+  available: false,
+};
+
+const ATHLETE_PROFILE: NavItem = {
+  ...PROFILE,
+  route: '/deportista/perfil',
+  hu: 'HU005',
+  available: true,
+};
+
+const account = (profile: NavItem = PROFILE): NavItem[] => [
+  profile,
   {
     id: 'logout',
     group: 'account',
@@ -153,7 +167,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     planCapabilities: true,
     items: [
       home('/deportista/inicio'),
-      ...account(),
+      ...account(ATHLETE_PROFILE),
       // «Mi plan» solo existe para el deportista (navegacion/README.md).
       upcoming('plan', 'account', 30, 'workspace_premium', null, null, 'HU016'),
       // HU011: historial propio, sin capacidad de plan (ADR-024 no define una);
