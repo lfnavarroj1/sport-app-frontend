@@ -126,6 +126,17 @@ describe('ProfilePage (HU005)', () => {
     await fixture.whenStable();
   }
 
+  /**
+   * Como `settle`, pero sigue hasta que se cumpla la condición (con un máximo de
+   * rondas). Las cadenas largas (comando → recarga → recarga programada) pueden
+   * necesitar más rondas en una máquina lenta, como la de CI.
+   */
+  async function settleUntil(condition: () => boolean, maxRounds = 50): Promise<void> {
+    for (let round = 0; round < maxRounds && !condition(); round++) {
+      await settle();
+    }
+  }
+
   function testId(id: string): HTMLElement | null {
     return element.querySelector<HTMLElement>(`[data-testid="${id}"]`);
   }
@@ -547,6 +558,7 @@ describe('ProfilePage (HU005)', () => {
       gateway.loadProfile.and.resolveTo(FULL);
       await click('Editar datos demográficos');
       await submitDemographic();
+      await settleUntil(() => testId('profile-projection-pending') !== null);
 
       // Carga inicial, recarga tras el conflicto y una recarga programada ([0]).
       expect(gateway.loadProfile).toHaveBeenCalledTimes(3);
