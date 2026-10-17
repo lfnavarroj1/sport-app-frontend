@@ -1,28 +1,36 @@
 import { AppConfigError, loadAppConfig, parseAppConfig } from './app-config';
 
 describe('parseAppConfig', () => {
-  it('acepta una configuración válida con BFF y versión de políticas definidos', () => {
+  it('acepta una configuración válida con BFF y versiones de políticas y consentimiento', () => {
     expect(
       parseAppConfig({
         environment: 'development',
         bffWebBaseUrl: 'https://bff.example.test',
         registrationPoliciesVersion: 'politicas-2026-10',
+        healthDataConsentVersion: 'health-2026-10-12.v1',
       }),
     ).toEqual({
       environment: 'development',
       bffWebBaseUrl: 'https://bff.example.test',
       registrationPoliciesVersion: 'politicas-2026-10',
+      healthDataConsentVersion: 'health-2026-10-12.v1',
     });
   });
 
-  it('acepta bffWebBaseUrl y registrationPoliciesVersion null de forma explícita', () => {
+  it('acepta bffWebBaseUrl y las versiones en null de forma explícita', () => {
     expect(
       parseAppConfig({
         environment: 'local',
         bffWebBaseUrl: null,
         registrationPoliciesVersion: null,
+        healthDataConsentVersion: null,
       }),
-    ).toEqual({ environment: 'local', bffWebBaseUrl: null, registrationPoliciesVersion: null });
+    ).toEqual({
+      environment: 'local',
+      bffWebBaseUrl: null,
+      registrationPoliciesVersion: null,
+      healthDataConsentVersion: null,
+    });
   });
 
   it('rechaza contenido que no es un objeto', () => {
@@ -37,7 +45,22 @@ describe('parseAppConfig', () => {
       fail('debía lanzar AppConfigError');
     } catch (error) {
       expect(error).toBeInstanceOf(AppConfigError);
-      expect((error as AppConfigError).problems.length).toBe(3);
+      expect((error as AppConfigError).problems.length).toBe(4);
+    }
+  });
+
+  it('exige healthDataConsentVersion aunque sea null (HU005)', () => {
+    try {
+      parseAppConfig({
+        environment: 'local',
+        bffWebBaseUrl: null,
+        registrationPoliciesVersion: null,
+      });
+      fail('debía lanzar AppConfigError');
+    } catch (error) {
+      expect((error as AppConfigError).problems).toEqual([
+        '"healthDataConsentVersion" es obligatorio (use null si aún no está definido)',
+      ]);
     }
   });
 
@@ -48,6 +71,7 @@ describe('parseAppConfig', () => {
           environment: 'staging',
           bffWebBaseUrl,
           registrationPoliciesVersion: null,
+          healthDataConsentVersion: null,
         }),
       ).toThrowError(AppConfigError);
     }
@@ -56,7 +80,12 @@ describe('parseAppConfig', () => {
   it('rechaza una versión de políticas vacía, demasiado larga o que no es texto', () => {
     for (const registrationPoliciesVersion of ['', '   ', 'x'.repeat(33), 7]) {
       expect(() =>
-        parseAppConfig({ environment: 'local', bffWebBaseUrl: null, registrationPoliciesVersion }),
+        parseAppConfig({
+          environment: 'local',
+          bffWebBaseUrl: null,
+          registrationPoliciesVersion,
+          healthDataConsentVersion: null,
+        }),
       ).toThrowError(AppConfigError);
     }
   });
@@ -69,7 +98,34 @@ describe('parseAppConfig', () => {
         environment: 'local',
         bffWebBaseUrl: null,
         registrationPoliciesVersion: version,
+        healthDataConsentVersion: null,
       }).registrationPoliciesVersion,
+    ).toBe(version);
+  });
+
+  it('rechaza una versión de consentimiento vacía, demasiado larga o que no es texto', () => {
+    for (const healthDataConsentVersion of ['', '   ', 'x'.repeat(65), 7]) {
+      expect(() =>
+        parseAppConfig({
+          environment: 'local',
+          bffWebBaseUrl: null,
+          registrationPoliciesVersion: null,
+          healthDataConsentVersion,
+        }),
+      ).toThrowError(AppConfigError);
+    }
+  });
+
+  it('acepta una versión de consentimiento de 64 caracteres (límite de users-management)', () => {
+    const version = 'h'.repeat(64);
+
+    expect(
+      parseAppConfig({
+        environment: 'local',
+        bffWebBaseUrl: null,
+        registrationPoliciesVersion: null,
+        healthDataConsentVersion: version,
+      }).healthDataConsentVersion,
     ).toBe(version);
   });
 });
@@ -82,6 +138,7 @@ describe('loadAppConfig', () => {
           environment: 'local',
           bffWebBaseUrl: null,
           registrationPoliciesVersion: null,
+          healthDataConsentVersion: null,
         }),
       ),
     );

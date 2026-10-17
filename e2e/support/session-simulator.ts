@@ -15,7 +15,7 @@ import {
 } from '../../src/testing/bff-web/refresh-session.fixtures';
 import { SimulatedResponse } from '../../src/testing/bff-web/register-user.fixtures';
 
-/** Cookie del refresh token según el contrato bff-web 0.12.0 (`Set-Cookie` de 200). */
+/** Cookie del refresh token según el contrato bff-web 0.13.0 (`Set-Cookie` de 200). */
 export const REFRESH_COOKIE = '__Secure-sportapp_refresh';
 const COOKIE_ATTRIBUTES = 'HttpOnly; Secure; Path=/v1/sessions; SameSite=Strict';
 
@@ -36,7 +36,7 @@ export interface SessionSimulation {
 
 /**
  * Reemplaza las operaciones de sesión del BFF con el simulador derivado del
- * contrato bff-web 0.12.0. Como el BFF real, `POST /v1/sessions` con `200` fija la
+ * contrato bff-web 0.13.0. Como el BFF real, `POST /v1/sessions` con `200` fija la
  * cookie HttpOnly del refresh token y `/refresh` la rota si el navegador la envía;
  * sin ella responde `401 invalid_refresh_token` y la borra. La cookie la guarda y
  * reenvía el navegador solo si la aplicación pide con credenciales.

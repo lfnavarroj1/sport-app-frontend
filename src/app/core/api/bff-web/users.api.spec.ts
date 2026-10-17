@@ -22,6 +22,7 @@ describe('BffWebUsersApi', () => {
       environment: 'local',
       bffWebBaseUrl,
       registrationPoliciesVersion: 'local-dev',
+      healthDataConsentVersion: null,
     };
     TestBed.configureTestingModule({
       providers: [

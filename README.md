@@ -76,19 +76,21 @@ La aplicación lee `app-config.json` al arrancar, de modo que el mismo artefacto
 {
   "environment": "local",
   "bffWebBaseUrl": "http://localhost:18080",
-  "registrationPoliciesVersion": "local-dev"
+  "registrationPoliciesVersion": "local-dev",
+  "healthDataConsentVersion": "local-dev"
 }
 ```
 
-| Campo                         | Obligatorio | Valores                                                                                                                                                                                                        |
-| ----------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `environment`                 | Sí          | `local`, `development`, `staging`, `production`                                                                                                                                                                |
-| `bffWebBaseUrl`               | Sí          | URL http(s) absoluta del BFF web, o `null` si aún no está definida                                                                                                                                             |
-| `registrationPoliciesVersion` | Sí          | Versión vigente de las políticas de registro (HU001), de 1 a 32 caracteres; debe coincidir con `REGISTRATION_POLICIES_VERSION` de users-management en el mismo ambiente. `null` deja el registro no disponible |
+| Campo                         | Obligatorio | Valores                                                                                                                                                                                                                                   |
+| ----------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environment`                 | Sí          | `local`, `development`, `staging`, `production`                                                                                                                                                                                           |
+| `bffWebBaseUrl`               | Sí          | URL http(s) absoluta del BFF web, o `null` si aún no está definida                                                                                                                                                                        |
+| `registrationPoliciesVersion` | Sí          | Versión vigente de las políticas de registro (HU001), de 1 a 32 caracteres; debe coincidir con `REGISTRATION_POLICIES_VERSION` de users-management en el mismo ambiente. `null` deja el registro no disponible                            |
+| `healthDataConsentVersion`    | Sí          | Versión vigente del consentimiento de datos de salud (HU005, ADR-034), de 1 a 64 caracteres; debe coincidir con `HEALTH_DATA_CONSENT_VERSION` de users-management en el mismo ambiente. `null` deja el registro fisiológico no disponible |
 
 Si el archivo falta o es inválido, la aplicación **no arranca** y muestra un mensaje de error. Con `bffWebBaseUrl: null`, cualquier llamada al BFF falla con `BffNotConfiguredError` y la interfaz muestra el estado "servicio no disponible".
 
-Con `npm start` se usa `public/app-config.json`, que apunta al BFF de la composición local (`http://localhost:18080`) y a la versión `local-dev`, el valor por defecto de la plataforma. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
+Con `npm start` se usa `public/app-config.json`, que apunta al BFF de la composición local (`http://localhost:18080`) y a las versiones `local-dev` de las políticas y del consentimiento de datos de salud, los valores por defecto de la plataforma. En el contenedor ese archivo no se incluye: el arranque lo genera a partir de variables de entorno (ver la sección siguiente).
 
 ## Estilo visual
 
@@ -145,13 +147,26 @@ Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`co
 - Los horarios llegan en UTC con la zona del servicio: se muestran en la zona del navegador sin alterar el instante y, si difiere, se indica la zona del servicio. Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo.
 - Ningún error se presenta como catálogo vacío: `401` termina la sesión como vencida; `403`, `422`, `503` y `504` muestran el error con su código de referencia.
 
+## Datos demográficos y fisiológicos (HU005)
+
+Feature `src/app/features/identity/profile`, contrato `bff-web` 0.13.0 (`core/api/bff-web/profile.api.ts`) y ADR-034.
+
+- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. «Datos personales» (HU002) y «Hábitos deportivos» (HU006) aparecen como «Próximamente». Para el organizador y el profesional, «Mi perfil» sigue como «Próximamente» hasta HU002.
+- Una sección vacía (`null`) es una invitación a registrar, nunca un error. Se muestra la respuesta del comando mientras la proyección no la alcance; si no llega tras los reintentos, se avisa y se ofrece «Actualizar datos».
+- Catálogos cerrados en listas, unidades en la etiqueta de cada campo, decimales como texto (acepta coma o punto) y la fecha de la medición en la hora del navegador, enviada en UTC. La edad es informativa. En la web solo se validan las restricciones por campo del contrato; la edad permitida, la presión coherente y la ventana de la medición las decide el backend y se marcan desde `details[{field, issue}]`.
+- **Consentimiento:** «Guardar datos fisiológicos» solo se habilita al marcar la casilla con la versión de `healthDataConsentVersion`, y la casilla se vuelve a pedir en cada guardado. Sin esa versión (`null`) el registro fisiológico no está disponible. El texto de la política aún no existe: no hay enlace.
+- El IMC lo calcula el backend y se presenta como «IMC estimado», sin rangos ni clasificaciones: no es una evaluación médica. Los valores de salud no se escriben en consola ni en almacenamiento del navegador.
+- `expected_version` es la versión mostrada; `409 version_conflict` no sobrescribe: recarga y muestra los valores vigentes. `Idempotency-Key` por intento lógico, con hasta tres reintentos automáticos (1, 2 y 4 s) ante falta de red, `502`, `503` o `504`; un reintento manual tras un fallo transitorio usa la misma clave.
+- Pruebas: `e2e/profile.spec.ts` (`@simulado`, simulador `e2e/support/profile-simulator.ts`) y `e2e/profile.integrated.spec.ts` (`@integrado`), que requiere `bff-web` 0.13.0, `users-management` 0.6.0, `usuarios-read-projector` y `HEALTH_DATA_CONSENT_VERSION=local-dev` en `sportapp-runtime`. Hoy la composición local no cumple esos requisitos, así que el recorrido integrado está bloqueado.
+
 ## Contenedor y Kubernetes
 
 Una sola imagen, `sportapp/web`, para Kubernetes local (kubeadm de Docker Desktop) y Cloud Run (ADR-022). Etapa de build con Node 24.14.0 y etapa final `nginxinc/nginx-unprivileged` 1.30.5; ambas fijadas por digest en el `Dockerfile`.
 
 ```bash
 npm run container:build                 # docker build -t sportapp/web:local .
-docker run --rm -p 18082:8080 -e APP_ENV=local -e BFF_WEB_BASE_URL=http://localhost:18080 \n  -e REGISTRATION_POLICIES_VERSION=local-dev sportapp/web:local
+docker run --rm -p 18082:8080 -e APP_ENV=local -e BFF_WEB_BASE_URL=http://localhost:18080 \
+  -e REGISTRATION_POLICIES_VERSION=local-dev -e HEALTH_DATA_CONSENT_VERSION=local-dev sportapp/web:local
 bash deploy/docker/smoke-test.sh sportapp/web:local   # Git Bash, Linux o macOS
 ```
 
@@ -164,19 +179,20 @@ En Windows, la prueba de humo se ejecuta desde Git Bash: `npm run` usaría el `b
 | `APP_ENV`                       | Obligatoria: `local`, `development`, `staging` o `production`                                                                    |
 | `BFF_WEB_BASE_URL`              | `http(s)://host[:puerto][/ruta]`; vacía o ausente publica `null`                                                                 |
 | `REGISTRATION_POLICIES_VERSION` | De 1 a 32 caracteres entre letras, dígitos y `. _ : + -`; vacía o ausente publica `null`                                         |
+| `HEALTH_DATA_CONSENT_VERSION`   | De 1 a 64 caracteres entre letras, dígitos y `. _ : + -`; vacía o ausente publica `null` (registro fisiológico no disponible)    |
 | `/app-config.json`              | Generado al arrancar en `/tmp/sportapp`; `Cache-Control: no-store`                                                               |
 | `/healthz`                      | `200` sin depender de la aplicación (sondas de Kubernetes)                                                                       |
 | Rutas de la SPA                 | Toda ruta que no sea un archivo devuelve `index.html`; un archivo con hash inexistente devuelve `404`                            |
 | Caché                           | `index.html` y `app-config.json` sin caché; archivos con hash `max-age=31536000, immutable`; el resto (i18n, favicon) `no-cache` |
 
-Si `APP_ENV`, `BFF_WEB_BASE_URL` o `REGISTRATION_POLICIES_VERSION` son inválidas, el contenedor termina con código `64` y un mensaje en la salida de error; nginx no llega a arrancar.
+Si `APP_ENV`, `BFF_WEB_BASE_URL`, `REGISTRATION_POLICIES_VERSION` o `HEALTH_DATA_CONSENT_VERSION` son inválidas, el contenedor termina con código `64` y un mensaje en la salida de error; nginx no llega a arrancar.
 
-`deploy/k8s/base` (`kubectl kustomize deploy/k8s/base`) define el `Deployment` y el `Service` `web` (puerto `80` → `http`). Lee `APP_ENV`, `BFF_WEB_BASE_URL` y `REGISTRATION_POLICIES_VERSION` del ConfigMap `sportapp-runtime`; esta última es la misma clave que usa users-management. La imagen va sin tag, y el namespace, el ConfigMap, el tag y el acceso en `localhost:18082` los aporta `sport-app-platform`.
+`deploy/k8s/base` (`kubectl kustomize deploy/k8s/base`) define el `Deployment` y el `Service` `web` (puerto `80` → `http`). Lee `APP_ENV`, `BFF_WEB_BASE_URL`, `REGISTRATION_POLICIES_VERSION` y `HEALTH_DATA_CONSENT_VERSION` del ConfigMap `sportapp-runtime`; las dos últimas son las mismas claves que usa users-management. `HEALTH_DATA_CONSENT_VERSION` es opcional (`optional: true`) mientras la plataforma la agrega al ConfigMap: sin ella la web publica `null` y el registro fisiológico queda no disponible. La imagen va sin tag, y el namespace, el ConfigMap, el tag y el acceso en `localhost:18082` los aporta `sport-app-platform`.
 
-| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           | `REGISTRATION_POLICIES_VERSION`                                     |
-| ----------------------------- | ------------ | -------------------------------------------- | ------------------------------------------------------------------- |
-| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     | `local-dev` (variable de Terraform `registration_policies_version`) |
-| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` | La misma que users-management en producción                         |
+| Ambiente                      | `APP_ENV`    | `BFF_WEB_BASE_URL`                           | `REGISTRATION_POLICIES_VERSION`                                     | `HEALTH_DATA_CONSENT_VERSION`               |
+| ----------------------------- | ------------ | -------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------- |
+| Desarrollo (Kubernetes local) | `local`      | `http://localhost:18080`                     | `local-dev` (variable de Terraform `registration_policies_version`) | `local-dev`                                 |
+| Producción (Cloud Run)        | `production` | URL pública del servicio Cloud Run `bff-web` | La misma que users-management en producción                         | La misma que users-management en producción |
 
 Para que el navegador pueda llamar al BFF, `bff-web` debe permitir CORS para el origen de la web (`localhost:18082`, `localhost:4200` y la URL de producción). Es una tarea del backend.
 
@@ -220,6 +236,7 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Documentos de políticas de uso y privacidad (texto y URL) para enlazarlos desde el registro.
 - Producción: con `SameSite=Strict`, la cookie de sesión solo viaja si la web y `bff-web` comparten sitio (decisión de la capa de borde en la plataforma).
 - Evidencia integrada del deportista con plan `ACTIVE`: en la composición local el consumidor del alta gratuita de Afiliación no activa el plan `FREE` (backend/plataforma).
+- HU005: `HEALTH_DATA_CONSENT_VERSION` en el ConfigMap `sportapp-runtime` (plataforma) y el recorrido integrado del perfil, que espera el despliegue de `users-management` 0.6.0 y `usuarios-read-projector`. El texto y la URL de la política de datos de salud.
 - Variables del Environment `production` en GitHub (OIDC/WIF y Artifact Registry) para que `release-web` publique.
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.

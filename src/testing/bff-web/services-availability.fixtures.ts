@@ -1,6 +1,6 @@
 /**
  * Simulador de `GET /v1/services/availability` derivado del contrato bff-web
- * 0.12.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de ADR-038. Lo
+ * 0.13.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de ADR-038. Lo
  * usan las pruebas unitarias y Playwright; `services-availability.contract.spec.ts`
  * valida cada respuesta contra el esquema del contrato. Datos sintéticos.
  *

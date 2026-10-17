@@ -7,6 +7,9 @@
 #   BFF_WEB_BASE_URL               URL http(s) absoluta del BFF web; vacía o ausente publica null.
 #   REGISTRATION_POLICIES_VERSION  versión vigente de las políticas de registro (HU001), la misma
 #                                  que usa users-management; vacía o ausente publica null.
+#   HEALTH_DATA_CONSENT_VERSION    versión vigente del consentimiento de datos de salud (HU005,
+#                                  ADR-034), la misma que usa users-management; vacía o ausente
+#                                  publica null y el registro fisiológico queda no disponible.
 set -eu
 
 CONFIG_DIR=/tmp/sportapp
@@ -49,10 +52,22 @@ else
   policies_json="\"$policies_version\""
 fi
 
+consent_version="${HEALTH_DATA_CONSENT_VERSION:-}"
+if [ -z "$consent_version" ]; then
+  consent_json=null
+else
+  # De 1 a 64 caracteres (límite de HEALTH_DATA_CONSENT_VERSION en users-management);
+  # el juego de caracteres permite insertarlo en el JSON sin escapar.
+  if ! printf '%s' "$consent_version" | grep -Eq '^[A-Za-z0-9._:+-]{1,64}$'; then
+    fail "HEALTH_DATA_CONSENT_VERSION debe tener de 1 a 64 caracteres entre letras, dígitos y . _ : + -"
+  fi
+  consent_json="\"$consent_version\""
+fi
+
 mkdir -p "$CONFIG_DIR"
-printf '{"environment":"%s","bffWebBaseUrl":%s,"registrationPoliciesVersion":%s}\n' \
-  "$app_env" "$bff_json" "$policies_json" > "$CONFIG_DIR/app-config.json.tmp"
+printf '{"environment":"%s","bffWebBaseUrl":%s,"registrationPoliciesVersion":%s,"healthDataConsentVersion":%s}\n' \
+  "$app_env" "$bff_json" "$policies_json" "$consent_json" > "$CONFIG_DIR/app-config.json.tmp"
 mv "$CONFIG_DIR/app-config.json.tmp" "$CONFIG_DIR/app-config.json"
-echo "sportapp-web: app-config.json generado (environment=$app_env, bffWebBaseUrl=${bff_url:-null}, registrationPoliciesVersion=${policies_version:-null})" >&2
+echo "sportapp-web: app-config.json generado (environment=$app_env, bffWebBaseUrl=${bff_url:-null}, registrationPoliciesVersion=${policies_version:-null}, healthDataConsentVersion=${consent_version:-null})" >&2
 
 exec "$@"

@@ -107,6 +107,195 @@
       "unavailable": "No pudimos consultar tu plan. Reintenta desde el menú."
     }
   },
+  "profile": {
+    "title": "Mi perfil",
+    "intro": "Consulta y mantén al día la información de tu perfil de deportista.",
+    "upcoming": "Próximamente",
+    "personal": {
+      "title": "Datos personales",
+      "upcoming": "Pronto podrás actualizar tu nombre y tu correo desde aquí."
+    },
+    "habits": {
+      "title": "Hábitos deportivos",
+      "upcoming": "Pronto podrás registrar los deportes que practicas y tu disponibilidad."
+    },
+    "hu005": {
+      "title": "Datos demográficos y fisiológicos",
+      "intro": "Nos ayudan a personalizar tu experiencia. Solo tú puedes consultarlos."
+    },
+    "projection": {
+      "pending": "Algunos datos aún se están actualizando. Te mostramos la última información confirmada.",
+      "refresh": "Actualizar datos"
+    },
+    "demographic": {
+      "title": "Datos demográficos",
+      "empty": "Aún no has registrado tus datos demográficos.",
+      "actions": {
+        "register": "Registrar datos demográficos",
+        "edit": "Editar datos demográficos",
+        "save": "Guardar datos demográficos",
+        "cancel": "Cancelar"
+      },
+      "fields": {
+        "birthDate": "Fecha de nacimiento",
+        "gender": "Género",
+        "countryCode": "País de residencia (código)",
+        "city": "Ciudad de residencia",
+        "maritalStatus": "Estado civil (opcional)",
+        "occupation": "Ocupación (opcional)",
+        "incomeRange": "Rango de ingresos (opcional)"
+      },
+      "summary": {
+        "birthDate": "Fecha de nacimiento",
+        "gender": "Género",
+        "country": "País de residencia",
+        "city": "Ciudad de residencia",
+        "maritalStatus": "Estado civil",
+        "occupation": "Ocupación",
+        "incomeRange": "Rango de ingresos",
+        "updatedAt": "Última actualización"
+      },
+      "hints": {
+        "countryCode": "Código ISO de dos letras, por ejemplo CO.",
+        "age": "Edad: {{age}} años.",
+        "ageOutOfRange": "La edad debe estar entre {{min}} y {{max}} años; el sistema la verificará al guardar."
+      },
+      "notSpecified": "Sin especificar",
+      "genders": {
+        "FEMALE": "Femenino",
+        "MALE": "Masculino",
+        "NON_BINARY": "No binario",
+        "PREFER_NOT_TO_SAY": "Prefiero no decirlo"
+      },
+      "maritalStatuses": {
+        "SINGLE": "Soltero o soltera",
+        "MARRIED": "Casado o casada",
+        "DOMESTIC_PARTNERSHIP": "Unión libre",
+        "DIVORCED": "Divorciado o divorciada",
+        "WIDOWED": "Viudo o viuda",
+        "PREFER_NOT_TO_SAY": "Prefiero no decirlo"
+      },
+      "incomeRanges": {
+        "LT_1_SMMLV": "Menos de 1 SMMLV",
+        "1_2_SMMLV": "Entre 1 y 2 SMMLV",
+        "2_4_SMMLV": "Entre 2 y 4 SMMLV",
+        "GT_4_SMMLV": "Más de 4 SMMLV",
+        "PREFER_NOT_TO_SAY": "Prefiero no decirlo"
+      },
+      "saved": {
+        "created": "Registramos tus datos demográficos.",
+        "replaced": "Actualizamos tus datos demográficos."
+      },
+      "conflict": "Tus datos demográficos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus datos demográficos ({{attempt}} de {{max}})…"
+    },
+    "physiological": {
+      "title": "Datos fisiológicos",
+      "empty": "Aún no has registrado tus datos fisiológicos.",
+      "unavailable": "El registro de datos fisiológicos no está disponible en este ambiente.",
+      "actions": {
+        "register": "Registrar datos fisiológicos",
+        "edit": "Editar datos fisiológicos",
+        "save": "Guardar datos fisiológicos",
+        "cancel": "Cancelar"
+      },
+      "fields": {
+        "measuredAt": "Fecha y hora de la medición",
+        "weightKg": "Peso (kg)",
+        "heightCm": "Altura (cm)",
+        "restingHeartRateBpm": "Frecuencia cardíaca en reposo (lpm, opcional)",
+        "bloodPressure": "Presión arterial (opcional)",
+        "systolic": "Presión sistólica (mmHg)",
+        "diastolic": "Presión diastólica (mmHg)",
+        "bodyTemperatureC": "Temperatura corporal (°C, opcional)",
+        "consent": "Consentimiento de datos de salud"
+      },
+      "units": {
+        "kg": "kg",
+        "cm": "cm",
+        "bpm": "lpm",
+        "mmHg": "mmHg",
+        "celsius": "°C"
+      },
+      "summary": {
+        "measuredAt": "Medición",
+        "weight": "Peso",
+        "height": "Altura",
+        "bmi": "IMC estimado",
+        "restingHeartRate": "Frecuencia cardíaca en reposo",
+        "bloodPressure": "Presión arterial",
+        "bodyTemperature": "Temperatura corporal",
+        "consent": "Consentimiento de datos de salud",
+        "updatedAt": "Última actualización",
+        "notProvided": "Sin registrar"
+      },
+      "values": {
+        "weight": "{{value}} kg",
+        "height": "{{value}} cm",
+        "heartRate": "{{value}} lpm",
+        "bloodPressure": "{{systolic}}/{{diastolic}} mmHg",
+        "temperature": "{{value}} °C",
+        "consent": "Versión {{version}}, aceptado el {{date}}"
+      },
+      "bmiNote": "SportApp calcula el IMC a partir de tu peso y tu altura. Es un valor estimado, no una evaluación médica.",
+      "hints": {
+        "measuredAt": "En la hora de tu dispositivo ({{zone}}).",
+        "weightKg": "Entre {{min}} y {{max}}, con un decimal como máximo.",
+        "bodyTemperatureC": "Entre {{min}} y {{max}}, con un decimal como máximo.",
+        "bloodPressure": "Si la registras, indica la sistólica y la diastólica."
+      },
+      "consent": {
+        "label": "Acepto que SportApp trate mis datos de salud para personalizar mi experiencia (versión {{version}}).",
+        "hint": "Debes aceptarlo cada vez que guardes tus datos fisiológicos.",
+        "policyPending": "El texto completo de la política de datos de salud se publicará próximamente.",
+        "requiredToSave": "Marca la casilla de consentimiento para habilitar «Guardar datos fisiológicos».",
+        "issues": {
+          "required": "Debes aceptar el consentimiento de datos de salud para guardar tus datos fisiológicos.",
+          "unsupported_consent_version": "La versión del consentimiento ya no está vigente. Recarga la página y acepta la versión actual para guardar."
+        }
+      },
+      "saved": {
+        "created": "Registramos tus datos fisiológicos.",
+        "replaced": "Actualizamos tus datos fisiológicos."
+      },
+      "conflict": "Tus datos fisiológicos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus datos fisiológicos ({{attempt}} de {{max}})…"
+    },
+    "saved": {
+      "replayed": "Esta confirmación corresponde a un envío anterior: no se duplicó el registro."
+    },
+    "errors": {
+      "idempotencyKeyReused": "No pudimos confirmar el envío. Revisa los datos y vuelve a guardar.",
+      "retryHint": "Puedes volver a intentarlo: no se duplicará el registro.",
+      "rulesTitle": "Revisa estos datos:"
+    },
+    "validation": {
+      "decimal": "Usa un número con un decimal como máximo, por ejemplo 68,5.",
+      "decimalRange": "Debe estar entre {{min}} y {{max}}.",
+      "integer": "Ingresa un número entero.",
+      "bloodPressurePair": "Indica la presión sistólica y la diastólica.",
+      "dateTime": "Ingresa una fecha y una hora válidas."
+    },
+    "issues": {
+      "item": "{{field}}: {{rule}}",
+      "fieldRequest": "Solicitud",
+      "unknown": "El valor no es válido.",
+      "required": "Este dato es obligatorio.",
+      "field_not_allowed": "Este dato no se puede enviar.",
+      "invalid_length": "La longitud no es válida.",
+      "unknown_value": "El valor no es válido.",
+      "out_of_range": "El valor está fuera del rango permitido.",
+      "too_many_decimals": "Tiene más decimales de los permitidos.",
+      "invalid_date": "La fecha no es válida.",
+      "invalid_datetime": "La fecha y la hora no son válidas.",
+      "too_far_in_future": "La fecha está demasiado en el futuro.",
+      "too_old": "La fecha es demasiado antigua: como máximo, un año atrás.",
+      "duplicate_value": "Hay valores repetidos.",
+      "too_many_items": "Hay demasiados elementos.",
+      "inconsistent_values": "La presión sistólica debe ser mayor que la diastólica.",
+      "unsupported_consent_version": "La versión del consentimiento ya no está vigente."
+    }
+  },
   "training": {
     "sports": {
       "running": "Carrera",

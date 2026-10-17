@@ -22,10 +22,20 @@ export interface AppConfig {
    * ambiente. `null` deja el registro no disponible.
    */
   readonly registrationPoliciesVersion: string | null;
+  /**
+   * Versión vigente del consentimiento de datos de salud que acepta el deportista
+   * al guardar su perfil fisiológico (HU005, ADR-034). Debe coincidir con
+   * `HEALTH_DATA_CONSENT_VERSION` de users-management en el mismo ambiente.
+   * `null` deja el registro fisiológico no disponible.
+   */
+  readonly healthDataConsentVersion: string | null;
 }
 
 /** Límite de `accepted_policies_version` en el contrato bff-web 0.2.0. */
 const POLICIES_VERSION_MAX_LENGTH = 32;
+
+/** Límite de `HEALTH_DATA_CONSENT_VERSION` en users-management (`settings.py`, HU005). */
+const HEALTH_CONSENT_VERSION_MAX_LENGTH = 64;
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG');
 
@@ -74,10 +84,24 @@ export function parseAppConfig(raw: unknown): AppConfig {
   if (
     policiesVersion !== null &&
     policiesVersion !== undefined &&
-    !isPoliciesVersion(policiesVersion)
+    !isVersionText(policiesVersion, POLICIES_VERSION_MAX_LENGTH)
   ) {
     problems.push(
       `"registrationPoliciesVersion" debe ser un texto de 1 a ${POLICIES_VERSION_MAX_LENGTH} caracteres o null`,
+    );
+  }
+
+  if (!('healthDataConsentVersion' in candidate)) {
+    problems.push('"healthDataConsentVersion" es obligatorio (use null si aún no está definido)');
+  }
+  const consentVersion = candidate['healthDataConsentVersion'];
+  if (
+    consentVersion !== null &&
+    consentVersion !== undefined &&
+    !isVersionText(consentVersion, HEALTH_CONSENT_VERSION_MAX_LENGTH)
+  ) {
+    problems.push(
+      `"healthDataConsentVersion" debe ser un texto de 1 a ${HEALTH_CONSENT_VERSION_MAX_LENGTH} caracteres o null`,
     );
   }
 
@@ -89,6 +113,7 @@ export function parseAppConfig(raw: unknown): AppConfig {
     environment: environment as AppEnvironment,
     bffWebBaseUrl: (bffWebBaseUrl as string | null) ?? null,
     registrationPoliciesVersion: (policiesVersion as string | null) ?? null,
+    healthDataConsentVersion: (consentVersion as string | null) ?? null,
   };
 }
 
@@ -103,12 +128,8 @@ export async function loadAppConfig(
   return parseAppConfig(await response.json());
 }
 
-function isPoliciesVersion(value: unknown): boolean {
-  return (
-    typeof value === 'string' &&
-    value.trim().length > 0 &&
-    value.length <= POLICIES_VERSION_MAX_LENGTH
-  );
+function isVersionText(value: unknown, maxLength: number): boolean {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= maxLength;
 }
 
 function isHttpUrl(value: unknown): boolean {

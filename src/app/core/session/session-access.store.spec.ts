@@ -36,6 +36,7 @@ describe('SessionAccessStore (HU003 CA7–CA10, ADR-024)', () => {
             environment: 'local',
             bffWebBaseUrl: BFF,
             registrationPoliciesVersion: 'local-dev',
+            healthDataConsentVersion: null,
           } satisfies AppConfig,
         },
       ],

@@ -24,6 +24,7 @@ describe('TechnicalStatus', () => {
       environment: 'local',
       bffWebBaseUrl: null,
       registrationPoliciesVersion: null,
+      healthDataConsentVersion: null,
     });
 
     expect(element.querySelector('h1')?.textContent).toContain('Estado técnico');
@@ -37,6 +38,7 @@ describe('TechnicalStatus', () => {
       environment: 'development',
       bffWebBaseUrl: 'https://bff.example.test',
       registrationPoliciesVersion: null,
+      healthDataConsentVersion: null,
     });
 
     expect(field(configured, 'bff-status')).toBe('Configurado');
@@ -48,6 +50,7 @@ describe('TechnicalStatus', () => {
       environment: 'local',
       bffWebBaseUrl: null,
       registrationPoliciesVersion: null,
+      healthDataConsentVersion: null,
     });
 
     expect(field(element, 'bff-status')).toBe('No configurado');

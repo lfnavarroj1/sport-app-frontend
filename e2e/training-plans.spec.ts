@@ -11,7 +11,7 @@ import { TrainingSimulation, simulateTraining } from './support/training-simulat
 /**
  * HU010 Crear plan de entrenamiento: el deportista autoriza a un profesional y el
  * profesional crea, confirma, asigna y consulta el plan. El BFF está reemplazado
- * por el simulador del contrato bff-web 0.12.0. NO es E2E integrado.
+ * por el simulador del contrato bff-web 0.13.0. NO es E2E integrado.
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;

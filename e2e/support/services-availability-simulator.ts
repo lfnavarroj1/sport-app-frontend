@@ -30,7 +30,7 @@ export interface ServicesAvailabilitySimulation {
 
 /**
  * Reemplaza `GET /v1/services/availability` con el simulador del contrato bff-web
- * 0.12.0 y ADR-038. Como el BFF: sin `Bearer` responde `401`; sin `from`/`to`
+ * 0.13.0 y ADR-038. Como el BFF: sin `Bearer` responde `401`; sin `from`/`to`
  * con desfase o con un periodo vacío o mayor de 31 días responde `422`; filtra
  * `category` y `modality` repetibles; `availability=available` (por defecto)
  * excluye los servicios sin espacios y `all` los incluye; sin `premium` omite

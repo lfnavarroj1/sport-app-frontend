@@ -17,7 +17,7 @@ import { login, sessionFor, simulateSession } from './support/session-simulator'
 /**
  * HU020 Visualizar disponibilidad de servicios: el deportista consulta los
  * servicios publicados y sus horarios en `/deportista/servicios`. El BFF está
- * reemplazado por el simulador del contrato bff-web 0.12.0 (ADR-038). NO es E2E
+ * reemplazado por el simulador del contrato bff-web 0.13.0 (ADR-038). NO es E2E
  * integrado.
  */
 

@@ -7,7 +7,7 @@ import { SessionSimulation, login, sessionFor, simulateSession } from './support
 /**
  * HU003 CA7–CA10 y ADR-025/ADR-024: inicio y menú lateral por tipo de actor, con
  * permisos y capacidades de `GET /v1/me/capabilities`. El BFF está reemplazado
- * por el simulador del contrato bff-web 0.12.0. NO es E2E integrado.
+ * por el simulador del contrato bff-web 0.13.0. NO es E2E integrado.
  */
 
 async function loginAs(
