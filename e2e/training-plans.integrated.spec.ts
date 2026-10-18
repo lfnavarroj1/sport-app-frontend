@@ -80,7 +80,7 @@ async function newPage(browser: Browser): Promise<Page> {
  * El deportista recibe la capacidad `training.plan.manage` de su plan `FREE`
  * (se activa por mensajería, ADR-024) y autoriza al profesional por correo.
  */
-async function authorize(page: Page, athlete: string, professional: string): Promise<void> {
+async function authorize(page: Page, athlete: string, professional: string): Promise<Page> {
   await register(page, athlete, 'Deportista');
   await login(page, athlete, /\/deportista\/inicio$/);
   const option = page.locator('mat-sidenav [data-menu-item="athlete-training-plans"]');
@@ -102,14 +102,15 @@ async function authorize(page: Page, athlete: string, professional: string): Pro
   await page.getByRole('button', { name: 'Autorizar', exact: true }).click();
   await expectStatus(await granted, 201);
   await expect(page.getByTestId('authorization-notice')).toContainText(professional);
+  return page;
 }
 
-async function fillPlan(page: Page, athlete: string): Promise<void> {
+async function fillPlan(page: Page, athlete: string, endDate = '2026-11-29'): Promise<void> {
   await page.getByLabel('Correo del deportista').fill(athlete);
   await page.getByLabel('Título').fill('Plan sintético E2E');
   await page.getByRole('textbox', { name: 'Objetivo 1' }).fill('Mejorar la resistencia');
   await page.getByLabel('Fecha de inicio').fill('2026-11-02');
-  await page.getByLabel('Fecha de fin').fill('2026-11-29');
+  await page.getByLabel('Fecha de fin').fill(endDate);
   await page.getByLabel('Fecha', { exact: true }).fill('2026-11-03');
   await page.getByLabel('Deporte').click();
   await page.getByRole('option', { name: 'Carrera' }).click();
@@ -132,10 +133,10 @@ async function openPlansAsProfessional(page: Page, email: string): Promise<void>
 }
 
 test.describe('HU010 Crear plan de entrenamiento contra el BFF web @integrado', () => {
-  test('CA1, CA2, CA4 y CA5: autorizar, asignar con Idempotency-Key, consultar proyectado y rechazar a un tercero', async ({
+  test('CA1–CA5: autorizar, rechazar reglas, asignar con reintento idempotente, consultar proyectado, rechazar a un tercero y tras revocar', async ({
     browser,
   }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     const athleteEmail = uniqueEmail('deportista');
     const professionalEmail = uniqueEmail('profesional');
     const outsiderEmail = uniqueEmail('otro-profesional');
@@ -144,19 +145,58 @@ test.describe('HU010 Crear plan de entrenamiento contra el BFF web @integrado', 
     await register(professional, professionalEmail, 'Profesional de servicios');
     await register(outsider, outsiderEmail, 'Profesional de servicios');
 
-    await authorize(await newPage(browser), athleteEmail, professionalEmail);
+    const athlete = await authorize(await newPage(browser), athleteEmail, professionalEmail);
 
-    // CA1 y CA5: el profesional autorizado asigna el plan con una clave de idempotencia.
+    // CA3: el cliente no replica la coherencia de fechas; la decide training_management.
+    // Con el fin antes del inicio, el BFF responde 422 con los motivos y nada se guarda.
     await openPlansAsProfessional(professional, professionalEmail);
-    await fillPlan(professional, athleteEmail);
+    await fillPlan(professional, athleteEmail, '2026-11-01');
+    const invalid = await confirm(professional);
+    await expectStatus(invalid, 422);
+    const violation = (await invalid.json()) as {
+      code: string;
+      details: readonly { field: string; issue: string }[];
+    };
+    expect(violation.code).toBe('training_plan_invalid');
+    expect(violation.details.map((d) => d.issue)).toContain('end_date_before_start_date');
+    const errors = professional.getByTestId('plan-errors');
+    await expect(errors).toBeFocused();
+    await expect(errors).toContainText('Fecha de fin: la fecha de fin es anterior a la de inicio.');
+    await expect(professional.getByTestId('plan-created')).toHaveCount(0);
+
+    // CA5: el profesional corrige y confirma. La primera respuesta llega al BFF real pero
+    // se pierde en la red; el reintento desde la pantalla usa la misma Idempotency-Key y
+    // el BFF devuelve el plan original con `Idempotent-Replayed`, sin crear otro.
+    await professional.getByLabel('Fecha de fin').fill('2026-11-29');
+    await professional.getByRole('button', { name: 'Revisar plan' }).click();
+    let lost: { key: string | null; status: number; plan: { plan_id: string } } | null = null;
+    await professional.route('**/v1/training-plans', async (route) => {
+      const original = await route.fetch();
+      lost = {
+        key: await route.request().headerValue('idempotency-key'),
+        status: original.status(),
+        plan: (await original.json()) as { plan_id: string },
+      };
+      await route.abort('connectionfailed');
+    });
+    await professional.getByRole('button', { name: 'Confirmar y asignar' }).click();
+    await expect(professional.getByTestId('plan-error')).toContainText('No hay conexión');
+    await professional.unrouteAll({ behavior: 'wait' });
+    expect(lost, 'la primera confirmación debía llegar al BFF').not.toBeNull();
+    const first = lost!;
+    expect(first.status, 'la primera confirmación debía crear el plan').toBe(201);
+    expect(first.key).toMatch(UUID);
+
     const created = await confirm(professional);
     await expectStatus(created, 201);
-    expect(await created.request().headerValue('idempotency-key')).toMatch(UUID);
-    expect(await created.headerValue('idempotent-replayed')).not.toBe('true');
+    expect(await created.request().headerValue('idempotency-key')).toBe(first.key);
+    expect(await created.headerValue('idempotent-replayed')).toBe('true');
     const plan = (await created.json()) as { plan_id: string; status: string; version: number };
+    expect(plan.plan_id).toBe(first.plan.plan_id);
     expect(plan.status).toBe('ASSIGNED');
     expect(plan.version).toBe(1);
     await expect(professional.getByTestId('plan-created')).toContainText('Plan asignado');
+    await expect(professional.getByTestId('plan-replayed')).toBeVisible();
 
     // CA4: la outbox publica y la lectura es eventual; mientras se proyecta,
     // la consulta responde 404 y la pantalla ofrece reintentar.
@@ -176,6 +216,8 @@ test.describe('HU010 Crear plan de entrenamiento contra el BFF web @integrado', 
     }, 'la lectura del plan debía quedar proyectada (outbox → Pub/Sub → proyector)').toPass({
       timeout: 60_000,
     });
+    // CA4: solo el contenido del plan, sin datos del perfil del deportista.
+    await expect(professional.locator('main')).not.toContainText('Persona Sintética E2E');
 
     // CA2: otro profesional, sin autorización de ese deportista, no puede asignarle planes.
     await openPlansAsProfessional(outsider, outsiderEmail);
@@ -195,6 +237,30 @@ test.describe('HU010 Crear plan de entrenamiento contra el BFF web @integrado', 
     await expectStatus(await read, 404);
     await expect(outsider.getByTestId('plan-not-found')).toBeVisible();
     await expect(outsider.getByTestId('plan-summary-title')).toHaveCount(0);
+
+    // CA2: el deportista revoca la autorización; desde ese momento el profesional ya
+    // no puede asignarle planes nuevos.
+    const entry = athlete.locator(`[data-professional="${professionalEmail}"]`);
+    await entry.getByRole('button', { name: 'Revocar', exact: true }).click();
+    const revoked = waitForOperation(
+      athlete,
+      'DELETE',
+      /^\/v1\/me\/training-authorizations\/[^/]+$/,
+    );
+    await entry.getByRole('button', { name: 'Revocar autorización' }).click();
+    await expectStatus(await revoked, 204);
+    await expect(entry).toContainText('Autorización revocada');
+
+    await professional.goto('/profesional/entrenamientos/planes');
+    await fillPlan(professional, athleteEmail);
+    const afterRevoke = await confirm(professional);
+    await expectStatus(afterRevoke, 403);
+    expect(((await afterRevoke.json()) as { code: string }).code).toBe(
+      'athlete_authorization_required',
+    );
+    await expect(professional.locator('mat-error')).toContainText(
+      'no corresponde a un deportista que te haya autorizado',
+    );
   });
 
   test('CA2: sin autorización del deportista la asignación se rechaza', async ({ page }) => {
@@ -208,5 +274,17 @@ test.describe('HU010 Crear plan de entrenamiento contra el BFF web @integrado', 
     await expect(page.locator('mat-error')).toContainText(
       'no corresponde a un deportista que te haya autorizado',
     );
+  });
+
+  test('CA2: un organizador no tiene el editor de planes', async ({ page }) => {
+    const organizerEmail = uniqueEmail('organizador');
+    await register(page, organizerEmail, 'Organizador de eventos');
+    await login(page, organizerEmail, /\/organizador\/inicio$/);
+    await expect(page.locator('mat-sidenav [data-menu-item="training-plans"]')).toHaveCount(0);
+
+    await page.goto('/profesional/entrenamientos/planes');
+
+    await expect(page).toHaveURL(/\/acceso-no-autorizado$/);
+    await expect(page.getByRole('button', { name: 'Confirmar y asignar' })).toHaveCount(0);
   });
 });
