@@ -1,8 +1,10 @@
-# CI del frontend web (Angular).
+# CI del frontend web (Angular), SIN acceso a GCP.
 # - push a cualquier rama de trabajo, develop o main: validación rápida + artefacto.
 # - pull_request hacia develop/main: puerta completa (agrega seguridad, Playwright y
-#   la prueba de la imagen de contenedor).
-# Despliegue/promoción a GCP: pendiente (OIDC/WIF y ambientes sin definir).
+#   la construcción y prueba de humo local de la imagen de contenedor).
+# Nunca se autentica en GCP, no publica imágenes y no despliega: la imagen publicable
+# la construye Cloud Build (cloudbuild.release.yaml), iniciado desde GCP, y la
+# promoción la hace Cloud Deploy desde sport-app-platform.
 # Las acciones se fijan a SHA completo; actualizarlas solo mediante PR revisado.
 name: ci-web
 
@@ -52,6 +54,8 @@ jobs:
         run: npm run lint
       - name: Tipos
         run: npm run typecheck
+      - name: Scripts de release y restricciones de los pipelines
+        run: npm run release:test
 
   unit-tests:
     name: unit-tests

@@ -13,5 +13,8 @@ playwright-report*
 playwright
 e2e
 deploy/k8s
+deploy/release
+release
+cloudbuild.release.yaml
 CLAUDE.md
 *.log

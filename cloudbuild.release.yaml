@@ -1,0 +1,117 @@
+# Release del frontend web en Cloud Build.
+#
+# Lo ejecuta un trigger de Cloud Build creado y administrado en sport-app-platform
+# (tag SemVer vX.Y.Z o vX.Y.Z-pre de lfnavarroj1/sport-app-frontend, conexión de la
+# GitHub App de Cloud Build iniciada desde GCP). Cloud Build usa la cuenta de servicio
+# que fija ese trigger: este archivo no declara `serviceAccount`, así que el
+# repositorio no puede elegir otra identidad. GitHub no aporta credenciales.
+#
+# Flujo: validar → npm ci → formato, lint y tipos → unitarias → auditoría → build →
+# construir la imagen UNA vez → prueba de humo de esa imagen → checksum de su sitio →
+# publicar esa misma imagen por tag de versión y de commit → digest sha256 →
+# dist/frontend-release.json → guardarlo en _RELEASE_BUCKET (si se configuró).
+#
+# No despliega ni crea releases o rollouts de Cloud Deploy; no ejecuta Terraform ni
+# `gcloud run`; no modifica IAM, redes, secretos, dominios, APIs ni servicios; no
+# publica `latest`. La promoción del digest la hace Cloud Deploy desde la plataforma.
+#
+# La lógica de cada paso está en deploy/release/cloudbuild-release.sh. Las imágenes
+# de los pasos están fijadas por digest; se actualizan mediante PR revisado.
+
+substitutions:
+  # Tag y commit del disparador; el paso `validate` exige que coincidan con
+  # $TAG_NAME y $COMMIT_SHA si el trigger los informa.
+  _RELEASE_TAG: '${TAG_NAME}'
+  _COMMIT_SHA: '${COMMIT_SHA}'
+  # Obligatorias: las fija el trigger de sport-app-platform.
+  _REGISTRY: ''
+  _REPOSITORY: 'sportapp-frontend'
+  # Bucket de evidencias aprovisionado desde sport-app-platform; vacío, no se sube.
+  _RELEASE_BUCKET: ''
+
+options:
+  dynamicSubstitutions: true
+  # Las sustituciones obligatorias las exige el paso `validate`, no la plantilla.
+  substitutionOption: ALLOW_LOOSE
+  # Logs solo en Cloud Logging: sin bucket de logs predeterminado.
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+  env:
+    - 'RELEASE_TAG=${_RELEASE_TAG}'
+    - 'COMMIT_SHA=${_COMMIT_SHA}'
+    - 'REGISTRY=${_REGISTRY}'
+    - 'REPOSITORY=${_REPOSITORY}'
+    - 'RELEASE_BUCKET=${_RELEASE_BUCKET}'
+    - 'BUILTIN_TAG=${TAG_NAME}'
+    - 'BUILTIN_COMMIT=${COMMIT_SHA}'
+    - 'REPO_FULL_NAME=${REPO_FULL_NAME}'
+    - 'BUILD_ID=${BUILD_ID}'
+    - 'PROJECT_ID=${PROJECT_ID}'
+    - 'LOCATION=${LOCATION}'
+    - 'CI=true'
+
+timeout: 3600s
+
+steps:
+  - id: validate
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'validate']
+
+  - id: install
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'install']
+
+  - id: checks
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'checks']
+
+  - id: unit-tests
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'unit-tests']
+
+  - id: audit
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'audit']
+
+  - id: build
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'build']
+
+  - id: image
+    name: 'gcr.io/cloud-builders/docker@sha256:f772ab459889c67835bd959c2b9e9351f2c0752c4f989710ecda20c229f0733e'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'image']
+
+  - id: smoke
+    name: 'gcr.io/cloud-builders/docker@sha256:f772ab459889c67835bd959c2b9e9351f2c0752c4f989710ecda20c229f0733e'
+    entrypoint: bash
+    env:
+      # Los pasos de Cloud Build corren en la red de Docker `cloudbuild`.
+      - 'SMOKE_TEST_NETWORK=cloudbuild'
+    args: ['deploy/release/cloudbuild-release.sh', 'smoke']
+
+  - id: artifact
+    name: 'gcr.io/cloud-builders/docker@sha256:f772ab459889c67835bd959c2b9e9351f2c0752c4f989710ecda20c229f0733e'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'artifact']
+
+  - id: publish
+    name: 'gcr.io/cloud-builders/docker@sha256:f772ab459889c67835bd959c2b9e9351f2c0752c4f989710ecda20c229f0733e'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'publish']
+
+  - id: manifest
+    name: 'node:24.14.0-bookworm-slim@sha256:d8e448a56fc63242f70026718378bd4b00f8c82e78d20eefb199224a4d8e33d8'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'manifest']
+
+  - id: store
+    name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:588.0.0-slim@sha256:cde9dbd556000c21c08449d8e5828904ef91e690bec95207f71fa6a6685922c9'
+    entrypoint: bash
+    args: ['deploy/release/cloudbuild-release.sh', 'store']

@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # Prueba de humo de la imagen web. La usan el job `container` de ci-web.yml,
-# release-web.yml y el desarrollador en local:
+# release-web.yml, cloudbuild.release.yaml y el desarrollador en local:
 #
 #   bash deploy/docker/smoke-test.sh sportapp/web:local
+#
+# Por defecto publica el puerto del contenedor en 127.0.0.1. Con SMOKE_TEST_NETWORK
+# (por ejemplo `cloudbuild`, la red de los pasos de Cloud Build) conecta los
+# contenedores a esa red de Docker y los consulta por su IP: desde un paso de
+# Cloud Build el 127.0.0.1 del anfitrión no es accesible.
 #
 # Arranca el contenedor con las mismas restricciones que Kubernetes (usuario 101:101,
 # raíz de solo lectura salvo /tmp, sin capacidades) y verifica el contrato del
@@ -14,6 +19,7 @@ IMAGE="${1:?Uso: smoke-test.sh <imagen>}"
 BFF_URL="http://localhost:18080"
 POLICIES_VERSION="local-dev"
 CONSENT_VERSION="local-dev"
+NETWORK="${SMOKE_TEST_NETWORK:-}"
 CONTAINERS=()
 
 cleanup() {
@@ -33,13 +39,17 @@ fail() {
 # MSYS_NO_PATHCONV evita que Git Bash en Windows convierta `/tmp` en una ruta de Windows;
 # no se exporta porque curl en Windows sí necesita la conversión de /dev/null.
 start() {
+  local publish=(-p 127.0.0.1::8080)
+  if [ -n "$NETWORK" ]; then
+    publish=(--network "$NETWORK")
+  fi
   MSYS_NO_PATHCONV=1 docker run -d \
     --user 101:101 \
     --read-only \
     --tmpfs /tmp:rw,size=16m \
     --cap-drop ALL \
     --security-opt no-new-privileges \
-    -p 127.0.0.1::8080 \
+    "${publish[@]}" \
     "$@" "$IMAGE"
 }
 
@@ -58,8 +68,21 @@ exit_code_of() {
 }
 
 # Docker Desktop puede tardar en publicar el puerto después de `docker run -d`.
+# En la red de SMOKE_TEST_NETWORK se usa la IP del contenedor en esa red.
 base_url_of() {
-  local port
+  local port ip
+  if [ -n "$NETWORK" ]; then
+    for _ in $(seq 1 30); do
+      ip="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NETWORK\").IPAddress}}" "$1" 2>/dev/null || true)"
+      if [ -n "$ip" ] && [ "$ip" != "<no value>" ]; then
+        echo "http://${ip}:8080"
+        return
+      fi
+      sleep 0.5
+    done
+    docker logs "$1" >&2 || true
+    fail "el contenedor no obtuvo una IP en la red $NETWORK en 15 s"
+  fi
   for _ in $(seq 1 30); do
     port="$(docker port "$1" 8080/tcp 2>/dev/null | head -n 1 | sed 's/.*://')"
     if [ -n "$port" ]; then

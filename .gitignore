@@ -3,6 +3,8 @@ CLAUDE.md
 
 # Compiled output
 /dist
+# Salidas locales de release (deploy/release y cloudbuild.release.yaml)
+/release/
 /tmp
 /out-tsc
 /bazel-out
