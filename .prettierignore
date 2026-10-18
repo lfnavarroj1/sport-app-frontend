@@ -1,6 +1,7 @@
 # Generado o externo
 node_modules
 dist
+release
 coverage
 .angular
 package-lock.json

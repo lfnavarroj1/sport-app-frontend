@@ -35,6 +35,7 @@ Stack fijado: Angular 21.2 (CLI 21.2.26), TypeScript 5.9.3, Angular Material 21.
 | Verificación local equivalente a CI  | `npm run ci`                                                           |
 | Imagen de contenedor                 | `npm run container:build` (ver [Contenedor](#contenedor-y-kubernetes)) |
 | Prueba de humo de la imagen          | `bash deploy/docker/smoke-test.sh sportapp/web:local`                  |
+| Scripts de release y pipelines       | `npm run release:test` (ver [CI/CD](docs/ci-cd.md))                    |
 
 La primera vez que se ejecute Playwright: `npx playwright install chromium`.
 
@@ -251,7 +252,16 @@ Para que el navegador pueda llamar al BFF, `bff-web` debe permitir CORS para el 
 - **Playwright local/PR (`playwright.config.ts`):** levanta la build de producción y ejecuta los recorridos `@simulado`, con el BFF reemplazado por el simulador del contrato. **No es E2E integrado.**
 - **Playwright integrado (`playwright.integrated.config.ts`):** se ejecuta contra un ambiente desplegado (`PLAYWRIGHT_BASE_URL`) e incluye los recorridos `@integrado`, que llaman al BFF real. Ejemplo local: `PLAYWRIGHT_BASE_URL=http://localhost:4200 npm run e2e:integrated` con `npm start` y la composición local de la plataforma activa. `PLAYWRIGHT_BFF_MOBILE_URL` (en local, `http://localhost:18081`) es la URL pública de `bff-mobile`. Solo la usa la preparación de `e2e/training-history.integrated.spec.ts` para producir las sesiones terminadas de HU032, como lo haría la app móvil; la aplicación web nunca la llama. Sin ella, ese recorrido falla con un mensaje explícito.
 
-## Integración continua
+## Integración continua y entrega
+
+GitHub no tiene identidad en GCP: ningún workflow se autentica en GCP, publica imágenes ni despliega. Detalle completo en [docs/ci-cd.md](docs/ci-cd.md).
+
+| Pieza                                   | Responsabilidad                                                                                                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Actions                          | Validación sin GCP: `ci-web.yml` en push y PR; `release-web.yml` al publicar un GitHub Release                                                                                                                |
+| Cloud Build (`cloudbuild.release.yaml`) | Iniciado desde GCP por un trigger de `sport-app-platform` con un tag SemVer: prueba, construye la imagen una vez, la publica en Artifact Registry y genera `dist/frontend-release.json` con su URI por digest |
+| `sport-app-platform` / Cloud Deploy     | Promueve ese digest al servicio Cloud Run, con aprobación obligatoria                                                                                                                                         |
+| Terraform                               | Infraestructura en `sport-app-platform`, ejecutada manualmente por el propietario                                                                                                                             |
 
 Workflow `ci-web` (`.github/workflows/ci-web.yml`):
 
@@ -260,17 +270,18 @@ Workflow `ci-web` (`.github/workflows/ci-web.yml`):
 | `push` a `feature/**`, `fix/**`, `chore/**`, `release/**`, `hotfix/**`, `develop`, `main` | `quality`, `unit-tests`, `build`              |
 | `pull_request` hacia `develop` o `main`                                                   | lo anterior + `security`, `e2e` y `container` |
 
-`build` publica el artefacto web empaquetado de forma reproducible con su SHA-256 y un `manifest.json` (repositorio, commit, versión, checks). `container` construye la imagen y ejecuta `deploy/docker/smoke-test.sh`. Permisos mínimos (`contents: read`) y acciones fijadas a SHA completo. Ningún workflow fusiona ramas automáticamente.
+`quality` incluye `npm run release:test`. `build` publica el artefacto web empaquetado de forma reproducible con su SHA-256 y un `manifest.json` (repositorio, commit, versión, checks). `container` construye la imagen y ejecuta `deploy/docker/smoke-test.sh`, en local. Permisos mínimos (`contents: read`) y acciones fijadas a SHA completo. Ningún workflow fusiona ramas automáticamente.
 
 Checks propuestos como obligatorios para el PR: `quality`, `unit-tests`, `build`, `security`, `e2e`, `container`.
 
-Workflow `release-web` (`.github/workflows/release-web.yml`), al crear un tag `vX.Y.Z`, en el Environment `production`:
+Workflow `release-web` (`.github/workflows/release-web.yml`), con `release: types: [published]`:
 
-1. Rechaza el tag si su commit no pertenece a `main`.
-2. Construye la imagen una vez y la prueba con `deploy/docker/smoke-test.sh`.
-3. Publica esa misma imagen en `GCP_ARTIFACT_REGISTRY` como `web:<tag>` mediante OIDC/WIF y deja el digest en el resumen del job.
+1. Valida el tag SemVer `vX.Y.Z` o `vX.Y.Z-pre` y que su commit pertenezca a `main`.
+2. Ejecuta todas las comprobaciones (formato, lint, tipos, scripts de release, unitarias, auditoría, build y Playwright).
+3. Construye la imagen en el runner una sola vez, ejecuta la prueba de humo y calcula el checksum de su sitio.
+4. Publica como artefacto del run el paquete de evidencia `release-evidence-<tag>`, con `release-validation.json` (`deploy/release/release-validation.schema.json`).
 
-Si faltan `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DELIVERY_SERVICE_ACCOUNT`, `GCP_ARTIFACT_REGISTRY` o `GCP_ARTIFACT_REGISTRY_HOST`, informa `BLOQUEADO` y no publica. No despliega: Cloud Run se actualiza desde Terraform de `sport-app-platform` con el digest.
+No se autentica en GCP, no publica la imagen y no despliega.
 
 ## Ramas y commits
 
@@ -286,7 +297,7 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Producción: con `SameSite=Strict`, la cookie de sesión solo viaja si la web y `bff-web` comparten sitio (decisión de la capa de borde en la plataforma).
 - Evidencia integrada del deportista con plan `ACTIVE`: en la composición local el consumidor del alta gratuita de Afiliación no activa el plan `FREE` (backend/plataforma).
 - HU005: `HEALTH_DATA_CONSENT_VERSION` en el ConfigMap `sportapp-runtime` (plataforma) y el recorrido integrado del perfil, que espera el despliegue de `users-management` 0.6.0 y `usuarios-read-projector`. El texto y la URL de la política de datos de salud.
-- Variables del Environment `production` en GitHub (OIDC/WIF y Artifact Registry) para que `release-web` publique.
+- Recursos de `sport-app-platform` para la release (conexión de Cloud Build con la GitHub App, trigger de tags, cuenta exclusiva con permisos mínimos, bucket de evidencias, consumo de `frontend-release.json` y target de Cloud Deploy con aprobación); ver [docs/ci-cd.md](docs/ci-cd.md).
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).
