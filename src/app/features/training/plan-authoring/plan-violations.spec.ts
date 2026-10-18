@@ -1,3 +1,4 @@
+import contractJson from '../../../core/api/contracts/bff-web.openapi.json';
 import { PLAN_RULE_ISSUES } from './plan-authoring.model';
 import { ruleText, violationMessage, violationTarget } from './plan-violations';
 
@@ -37,6 +38,20 @@ describe('Reglas incumplidas del plan (HU010 CA3)', () => {
       for (const issue of PLAN_RULE_ISSUES) {
         expect(ruleText(issue).key).toBe(`training.plan.rules.${issue}`);
       }
+    });
+
+    it('los motivos conocidos son los motivos estables que declara el contrato', () => {
+      const description =
+        contractJson.paths['/v1/training-plans'].post.responses['422'].description;
+      // «Motivos estables de `issue` en `training_plan_invalid`: `a`, `b`…»
+      const declared = [
+        ...description
+          .split('Motivos estables')[1]
+          .split(':')[1]
+          .matchAll(/`([a-z_]+)`/g),
+      ];
+
+      expect(declared.map((match) => match[1]).sort()).toEqual([...PLAN_RULE_ISSUES].sort());
     });
 
     it('un motivo desconocido se informa con un texto genérico, sin ocultarlo', () => {

@@ -23,9 +23,10 @@ export interface PlanRuleViolation {
 }
 
 /**
- * Motivos estables de `training_plan_invalid`. El OpenAPI 0.12.0 no los enumera;
- * se toman de `training_management` (`domain/plans/model.py`, backend `67a239d`).
- * Un motivo fuera de esta lista se informa con un texto genérico, nunca se oculta.
+ * Motivos estables de `training_plan_invalid`, enumerados por el contrato desde
+ * bff-web 0.14.0 en la descripción del `422` de `POST /v1/training-plans`
+ * (`plan-violations.spec.ts` comprueba que coinciden). Un motivo fuera de esta
+ * lista se informa con un texto genérico, nunca se oculta.
  */
 export const PLAN_RULE_ISSUES = [
   'invalid_length',

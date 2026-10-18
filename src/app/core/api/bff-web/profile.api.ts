@@ -6,7 +6,7 @@ import { BffWebUrl } from '../bff-web-url';
 
 /**
  * Transporte del perfil del deportista (HU005, ADR-034) del contrato bff-web
- * 0.13.0 (ver `contract.ts`): `GET /v1/me/profile`
+ * 0.15.0 (ver `contract.ts`): `GET /v1/me/profile`
  * (`get_profile_v1_me_profile_get`), `PUT /v1/me/demographic-profile`
  * (`put_demographic_v1_me_demographic_profile_put`) y
  * `PUT /v1/me/physiological-profile`

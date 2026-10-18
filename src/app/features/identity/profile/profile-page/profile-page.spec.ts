@@ -31,7 +31,7 @@ import {
 } from '../profile.model';
 import { PROFILE_PROJECTION_RETRY_DELAYS_MS, ProfilePage } from './profile-page';
 
-// Datos sintéticos de prueba, derivados de los fixtures del contrato bff-web 0.13.0.
+// Datos sintéticos de prueba, derivados de los fixtures del contrato bff-web 0.15.0.
 const EMPTY: AthleteProfile = toAthleteProfile(EMPTY_PROFILE as ProfileResponseDto);
 const FULL: AthleteProfile = toAthleteProfile(FULL_PROFILE as unknown as ProfileResponseDto);
 const DEMOGRAPHIC_V1: DemographicProfile = FULL.demographic!;

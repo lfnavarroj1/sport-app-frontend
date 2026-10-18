@@ -1,5 +1,5 @@
 /**
- * Simulador de `POST /v1/sessions/refresh` derivado del contrato bff-web 0.13.0
+ * Simulador de `POST /v1/sessions/refresh` derivado del contrato bff-web 0.15.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`). Lo usan las pruebas
  * unitarias y Playwright; `sessions.contract.spec.ts` valida cada respuesta contra
  * el esquema del contrato. Datos y tokens sintéticos: no son JWT válidos.

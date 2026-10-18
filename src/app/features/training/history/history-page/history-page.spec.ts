@@ -232,6 +232,23 @@ describe('HistoryPage (HU011)', () => {
     expect(rows()).toEqual([session(3).id]);
   });
 
+  it('cambiar los filtros mientras carga la página siguiente no deja «Cargar más» bloqueado', async () => {
+    loadPage.and.resolveTo(page([session(0)], 'cursor-2'));
+    await create();
+    let resolveMore!: (value: HistoryPageData) => void;
+    loadPage.and.returnValue(new Promise((resolve) => (resolveMore = resolve)));
+    button('Cargar más')!.click();
+    loadPage.and.resolveTo(page([session(3)], 'cursor-3'));
+    button('Limpiar')!.click();
+    await settle();
+
+    resolveMore(page([session(1)]));
+    await settle();
+
+    expect(rows()).toEqual([session(3).id]);
+    expect(button('Cargar más')?.disabled).toBeFalse();
+  });
+
   it('muestra el detalle de la sesión elegida y lo oculta', async () => {
     await create();
     const detailButton = element.querySelector<HTMLButtonElement>('tbody tr button')!;

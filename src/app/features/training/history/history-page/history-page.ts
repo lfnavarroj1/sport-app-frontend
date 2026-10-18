@@ -151,6 +151,8 @@ export class HistoryPage {
     this.sessions.set([]);
     this.nextCursor.set(null);
     this.moreError.set(null);
+    // Una página siguiente en curso queda descartada: su `finally` ya no la libera.
+    this.loadingMore.set(false);
     this.selectedId.set(null);
     try {
       const page = await this.gateway.loadPage(this.scope, this.applied(), null);
