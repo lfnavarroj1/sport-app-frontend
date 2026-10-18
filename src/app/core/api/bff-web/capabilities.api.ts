@@ -11,7 +11,7 @@ export type SubscriptionStatusDto = (typeof SUBSCRIPTION_STATUSES)[number];
 
 /**
  * Esquema `CapabilitiesResponse` de `GET /v1/me/capabilities`
- * (`get_capabilities_v1_me_capabilities_get`, contrato bff-web 0.15.0, HU003 y
+ * (`get_capabilities_v1_me_capabilities_get`, contrato bff-web 0.16.0, HU003 y
  * ADR-024). `permissions` son los permisos estables del actor en el canal web;
  * `capabilities`, las de la suscripción activa del deportista.
  */

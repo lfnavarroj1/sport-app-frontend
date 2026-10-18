@@ -18,7 +18,7 @@ const COOKIE_CLEARED_CODES: readonly string[] = [
 
 /**
  * Implementación de HU004 sobre `POST /v1/sessions/revoke` del BFF web (contrato
- * 0.15.0, sin cambios desde 0.7.0). No envía cuerpo ni access token: la
+ * 0.16.0, sin cambios desde 0.7.0). No envía cuerpo ni access token: la
  * credencial es la cookie `HttpOnly`, que la aplicación no lee ni registra.
  */
 @Injectable()

@@ -106,6 +106,14 @@ export const routes: Routes = [
           (module) => module.CREATE_EVENT_ROUTES,
         ),
     },
+    {
+      // HU024: el organizador revisa sus eventos y publica un borrador (ADR-033).
+      path: 'eventos/publicacion',
+      loadChildren: () =>
+        import('./features/events/publish-event/publish-event.routes').then(
+          (module) => module.PUBLISH_EVENT_ROUTES,
+        ),
+    },
   ]),
   actorArea('profesional', 'service_provider', [
     {

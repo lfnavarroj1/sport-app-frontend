@@ -270,7 +270,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.calendar.view',
         'HU023',
       ),
-      upcoming(
+      permissionOption(
         'event-publish',
         'events',
         130,

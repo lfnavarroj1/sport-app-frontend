@@ -6,7 +6,7 @@ import { BffWebUrl } from '../bff-web-url';
 import { SportDto } from './training.api';
 
 /**
- * Transporte de las consultas de HU011 del contrato bff-web 0.15.0 (ver
+ * Transporte de las consultas de HU011 del contrato bff-web 0.16.0 (ver
  * `contract.ts`): `GET /v1/training-history` (historial propio del deportista),
  * `GET /v1/athletes/{athlete_id}/training-history` (profesional autorizado) y
  * `GET /v1/me/training-athletes` (deportistas que autorizaron al profesional, CA5).

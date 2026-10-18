@@ -174,6 +174,17 @@ Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core
 - `Idempotency-Key` por intento lógico: se reintenta automáticamente hasta tres veces (1, 2 y 4 s) solo ante falta de red, `502`, `503` o `504`; nunca ante `4xx`. Al agotar los reintentos, volver a crear usa la misma clave.
 - Se presenta el borrador devuelto por `201` en la hora local del evento, sin consultar la proyección.
 
+## Publicar eventos (HU024)
+
+Feature `src/app/features/events/publish-event`, contrato `bff-web` 0.16.0 (`core/api/bff-web/events.api.ts`) y ADR-033.
+
+- `/organizador/eventos/publicacion` (permiso `events.publish`; la guarda `requirePermission` rechaza la ruta cuando la vista de capacidades confirma que falta el permiso). Pestañas «Borradores» y «Publicados» con `GET /v1/me/events?status`, en el orden del backend, con «Cargar más» por cursor. Las fechas se muestran en la zona del navegador, junto con la hora y la zona del evento.
+- Elegir un evento abre su detalle a la derecha (`/:eventId`, `GET /v1/events/{event_id}`; un `404` se informa sin datos). «Publicar» pide confirmación y envía `POST /v1/events/{event_id}/publish` sin cuerpo. Se usa una `Idempotency-Key` por intento lógico, que se conserva en los reintentos automáticos (red, `502`, `503`, `504`; hasta tres) y manuales, y se renueva tras el éxito o ante `idempotency_key_reused`.
+- Un `422` lista los requisitos faltantes y los marca junto a cada campo. El evento sigue como borrador. Si el inicio ya pasó, se advierte antes de enviar, pero la regla es del backend.
+- Tras el `200` se muestran `published_at` y la versión. El evento sale de los borradores y aparece entre los publicados con la respuesta del comando, sin esperar la proyección.
+- No captura tarifa, inscritos ni notificaciones, ni edita el evento.
+- Pruebas: `e2e/publish-event.spec.ts` (`@simulado`) y `e2e/publish-event.integrated.spec.ts` (`@integrado`). La integrada crea el borrador por API con `POST /v1/events` de `bff-web` (la URL sale del `app-config.json` del ambiente), lo publica desde la pantalla y lo espera en publicados. También comprueba el `404` para un tercero, el `200` público y el `422 not_in_future`. Requiere `bff-web` 0.16.0 desplegado.
+
 ## Disponibilidad de servicios (HU020)
 
 Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`core/api/bff-web/services-availability.api.ts`) y ADR-038.

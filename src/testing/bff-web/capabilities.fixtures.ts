@@ -1,5 +1,5 @@
 /**
- * Simulador de `GET /v1/me/capabilities` derivado del contrato bff-web 0.15.0
+ * Simulador de `GET /v1/me/capabilities` derivado del contrato bff-web 0.16.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`). Los códigos de capacidad
  * salen de ADR-024 y los permisos de `contracts/authorization/actor-permissions.v1.json`
  * del backend, filtrados al canal web como hace el BFF. Lo usan las pruebas

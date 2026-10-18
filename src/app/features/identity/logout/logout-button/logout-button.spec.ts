@@ -24,7 +24,7 @@ class MenuHost {}
 const BFF = 'http://bff.example.com';
 const URL = `${BFF}/v1/sessions/revoke`;
 
-describe('LogoutButton (HU004, contrato bff-web 0.15.0)', () => {
+describe('LogoutButton (HU004, contrato bff-web 0.16.0)', () => {
   let fixture: ComponentFixture<MenuHost>;
   let element: HTMLElement;
   let http: HttpTestingController;
