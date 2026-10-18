@@ -23,7 +23,7 @@ import { LoginGateway } from '../login.gateway';
 import { homeFor, UNAUTHORIZED_PATH } from '../../../../shell/navigation/navigation.registry';
 import { LoginOutcome } from '../login.model';
 
-/** Límites de `LoginRequest` en el contrato bff-web 0.13.0. */
+/** Límites de `LoginRequest` en el contrato bff-web 0.15.0. */
 const LIMITS = { emailMax: 254, passwordMax: 128 } as const;
 
 /** Clave i18n del aviso de cierre de sesión (HU004), o `null` si no corresponde. */

@@ -13,7 +13,7 @@ import { LoginGateway } from './login.gateway';
 import { LoginCredentials, LoginOutcome } from './login.model';
 
 /**
- * Implementación de HU003 sobre `POST /v1/sessions` del BFF web (contrato 0.13.0).
+ * Implementación de HU003 sobre `POST /v1/sessions` del BFF web (contrato 0.15.0).
  * El refresh token queda en la cookie HttpOnly que fija el BFF; la aplicación no
  * lo recibe.
  */

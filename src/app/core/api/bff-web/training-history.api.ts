@@ -6,11 +6,12 @@ import { BffWebUrl } from '../bff-web-url';
 import { SportDto } from './training.api';
 
 /**
- * Transporte de las consultas de HU011 del contrato bff-web 0.13.0 (ver
- * `contract.ts`): `GET /v1/training-history` (historial propio del deportista) y
- * `GET /v1/athletes/{athlete_id}/training-history` (profesional autorizado). Ambas
- * se autentican con el access token. Estos tipos son del transporte: la interfaz
- * los transforma antes de usarlos.
+ * Transporte de las consultas de HU011 del contrato bff-web 0.15.0 (ver
+ * `contract.ts`): `GET /v1/training-history` (historial propio del deportista),
+ * `GET /v1/athletes/{athlete_id}/training-history` (profesional autorizado) y
+ * `GET /v1/me/training-athletes` (deportistas que autorizaron al profesional, CA5).
+ * Todas se autentican con el access token. Estos tipos son del transporte: la
+ * interfaz los transforma antes de usarlos.
  */
 
 /** Parámetros de consulta; los ausentes no se envían. */
@@ -43,7 +44,32 @@ export interface TrainingHistoryResponseDto {
   readonly filters: { readonly sports: readonly SportDto[] };
 }
 
-/** Límites del parámetro `limit` en el contrato. */
+/** Parámetros de `GET /v1/me/training-athletes`; los ausentes no se envían. */
+export interface TrainingAthletesQueryDto {
+  /** 1–100; el BFF usa 20 si no se envía. */
+  readonly limit?: number | null;
+  /** Cursor opaco de `next_cursor`; la web nunca lo interpreta. */
+  readonly cursor?: string | null;
+}
+
+/**
+ * Esquema `TrainingAthleteItem`. `full_name` y `email` son datos personales: solo
+ * se muestran al profesional autorizado, no se guardan ni se registran.
+ */
+export interface TrainingAthleteItemDto {
+  readonly athlete_id: string;
+  readonly full_name: string;
+  readonly email: string;
+  readonly authorized_at: string;
+}
+
+/** Esquema `TrainingAthletesResponse`: orden `authorized_at` y `athlete_id` desc. */
+export interface TrainingAthletesResponseDto {
+  readonly items: readonly TrainingAthleteItemDto[];
+  readonly next_cursor: string | null;
+}
+
+/** Límites del parámetro `limit` en el contrato (iguales en las tres consultas). */
 export const TRAINING_HISTORY_LIMIT = { min: 1, max: 100, default: 20 } as const;
 
 /** Códigos de error que el contrato declara para ambas consultas de HU011. */
@@ -51,6 +77,15 @@ export const TRAINING_HISTORY_ERROR_CODES = {
   invalidAccessToken: 'invalid_access_token',
   permissionRequired: 'permission_required',
   athleteAuthorizationRequired: 'athlete_authorization_required',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Códigos de error que el contrato declara para `GET /v1/me/training-athletes`. */
+export const TRAINING_ATHLETES_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
   validationError: 'validation_error',
   upstreamUnavailable: 'upstream_unavailable',
   upstreamTimeout: 'upstream_timeout',
@@ -84,6 +119,20 @@ export class BffWebTrainingHistoryApi {
       { headers: bearer(accessToken), params: toParams(query) },
     );
   }
+
+  /**
+   * Deportistas con autorización vigente para el profesional de la sesión, con
+   * nombre y correo que compone el BFF. El cliente no envía identificadores.
+   */
+  getTrainingAthletes(
+    accessToken: string,
+    query: TrainingAthletesQueryDto,
+  ): Observable<TrainingAthletesResponseDto> {
+    return this.http.get<TrainingAthletesResponseDto>(
+      this.bffWebUrl.resolve('v1/me/training-athletes'),
+      { headers: bearer(accessToken), params: toParams(query) },
+    );
+  }
 }
 
 function bearer(accessToken: string): HttpHeaders {
@@ -102,7 +151,7 @@ export const STRICT_CODEC: HttpParameterCodec = {
   decodeValue: decodeURIComponent,
 };
 
-function toParams(query: TrainingHistoryQueryDto): HttpParams {
+function toParams(query: TrainingHistoryQueryDto | TrainingAthletesQueryDto): HttpParams {
   let params = new HttpParams({ encoder: STRICT_CODEC });
   for (const [name, value] of Object.entries(query)) {
     if (value !== null && value !== undefined && value !== '') {

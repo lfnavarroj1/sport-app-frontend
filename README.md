@@ -156,11 +156,14 @@ Feature `src/app/features/training`, contrato `bff-web` 0.6.0 (`core/api/bff-web
 
 ## Historial de entrenamiento (HU011)
 
-Feature `src/app/features/training/history`, contrato `bff-web` 0.8.0 (`core/api/bff-web/training-history.api.ts`).
+Feature `src/app/features/training/history`, contrato `bff-web` 0.8.0 para el historial y 0.15.0 para la lista de deportistas (`core/api/bff-web/training-history.api.ts`).
 
 - **Deportista** (`/deportista/historial/entrenamientos`, sin capacidad de plan): su historial con `GET /v1/training-history`.
-- **Profesional** (`/profesional/historial/entrenamientos/:athleteId`, permiso `training.history.view_assigned`): historial de un deportista que lo autorizó, con `GET /v1/athletes/{athlete_id}/training-history`. Se llega desde el resultado o la consulta de un plan (HU010), porque el contrato no ofrece una lista de deportistas autorizados; la opción del menú explica ese camino. `403 athlete_authorization_required` se muestra sin datos.
+- **Profesional** (permiso `training.history.view_assigned`):
+  - `/profesional/historial/entrenamientos` lista, con `GET /v1/me/training-athletes` (CA5), los deportistas con autorización vigente: nombre, correo y fecha de autorización, en el orden del backend y con «Cargar más». No hay búsqueda ni ingreso de identificadores, y la revocación retira al deportista cuando se proyecta. Un `503` (nombre y correo incompletos) se muestra como error recuperable, nunca como lista vacía. El código está en `history/authorized-athletes/`.
+  - Elegir un deportista abre `/profesional/historial/entrenamientos/:athleteId` (`GET /v1/athletes/{athlete_id}/training-history`). El resultado o la consulta de un plan (HU010) siguen como atajo. `403 athlete_authorization_required` se muestra sin datos.
 - Filtros por fecha de fin (día UTC, inclusiva) y deporte (los que informa el backend en `filters.sports`). Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo (codificado con `encodeURIComponent`) y agrega la página tal como llega. Cada fila abre su detalle.
+- Pruebas: `e2e/training-history.spec.ts` (`@simulado`) y `e2e/training-history.integrated.spec.ts` (`@integrado`). La integrada produce 25 sesiones reales con HU032 en `bff-mobile` (`PLAYWRIGHT_BFF_MOBILE_URL`) y cubre los filtros, las dos páginas, el acceso del profesional autorizado y el rechazo a un tercero y tras revocar. Su recorrido de CA5 (lista por nombre y correo y retiro tras revocar) requiere `bff-web` 0.15.0 desplegado.
 
 ## Crear evento (HU021)
 
@@ -235,7 +238,7 @@ Para que el navegador pueda llamar al BFF, `bff-web` debe permitir CORS para el 
 - **Unitarias y componentes (Jasmine + TestBed):** estado, validadores, transformaciones y estados de interfaz (carga, éxito, vacío, validación, error, conflicto, permiso denegado). La cobertura se reporta en `coverage/`; el umbral web aún no está ratificado, por eso no se aplica uno.
 - **Contrato simulado:** `src/app/core/api/contracts/` guarda la copia exacta del OpenAPI consumido (`bff-web` 0.2.0). `*.contract.spec.ts` verifica que los modelos de transporte y el simulador (`src/testing/bff-web/`) cumplan esa copia.
 - **Playwright local/PR (`playwright.config.ts`):** levanta la build de producción y ejecuta los recorridos `@simulado`, con el BFF reemplazado por el simulador del contrato. **No es E2E integrado.**
-- **Playwright integrado (`playwright.integrated.config.ts`):** se ejecuta contra un ambiente desplegado (`PLAYWRIGHT_BASE_URL`) e incluye los recorridos `@integrado`, que llaman al BFF real. Ejemplo local: `PLAYWRIGHT_BASE_URL=http://localhost:4200 npm run e2e:integrated` con `npm start` y la composición local de la plataforma activa.
+- **Playwright integrado (`playwright.integrated.config.ts`):** se ejecuta contra un ambiente desplegado (`PLAYWRIGHT_BASE_URL`) e incluye los recorridos `@integrado`, que llaman al BFF real. Ejemplo local: `PLAYWRIGHT_BASE_URL=http://localhost:4200 npm run e2e:integrated` con `npm start` y la composición local de la plataforma activa. `PLAYWRIGHT_BFF_MOBILE_URL` (en local, `http://localhost:18081`) es la URL pública de `bff-mobile`. Solo la usa la preparación de `e2e/training-history.integrated.spec.ts` para producir las sesiones terminadas de HU032, como lo haría la app móvil; la aplicación web nunca la llama. Sin ella, ese recorrido falla con un mensaje explícito.
 
 ## Integración continua
 

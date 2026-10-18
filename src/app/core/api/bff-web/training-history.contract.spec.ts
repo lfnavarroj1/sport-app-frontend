@@ -5,6 +5,8 @@ import { TestBed } from '@angular/core/testing';
 import {
   OWN_TRAINING_HISTORY_PATH,
   SIMULATED_HISTORY_ATHLETE_ID,
+  TRAINING_ATHLETES_PATH,
+  TRAINING_ATHLETES_RESPONSES,
   TRAINING_HISTORY_RESPONSES,
 } from '../../../../testing/bff-web/training-history.fixtures';
 import {
@@ -19,8 +21,11 @@ import { BFF_WEB_CONTRACT_VERSION } from './contract';
 import {
   BffWebTrainingHistoryApi,
   SessionHistoryItemDto,
+  TRAINING_ATHLETES_ERROR_CODES,
   TRAINING_HISTORY_ERROR_CODES,
   TRAINING_HISTORY_LIMIT,
+  TrainingAthleteItemDto,
+  TrainingAthletesResponseDto,
   TrainingHistoryResponseDto,
 } from './training-history.api';
 import { SPORTS } from './training.api';
@@ -30,6 +35,7 @@ const schemas = contract.components.schemas as Record<string, Record<string, unk
 const operations = {
   own: contract.paths[OWN_TRAINING_HISTORY_PATH]['get'],
   athlete: contract.paths['/v1/athletes/{athlete_id}/training-history']['get'],
+  athletes: contract.paths[TRAINING_ATHLETES_PATH]['get'],
 } satisfies Record<string, OpenApiOperation>;
 
 function declaredCodes(operation: OpenApiOperation, statuses: number[]): string[] {
@@ -120,6 +126,60 @@ describe('Contrato bff-web: consultas de HU011', () => {
   }
 });
 
+describe('Contrato bff-web: deportistas autorizados de HU011 (CA5)', () => {
+  it('usa su operationId y solo acepta paginación y Authorization', () => {
+    expect(operations.athletes.operationId).toBe('training_athletes_v1_me_training_athletes_get');
+    expect(
+      (operations.athletes.parameters ?? []).map((item) => `${item.in}:${item.name.toLowerCase()}`),
+    ).toEqual(['query:limit', 'query:cursor', 'header:authorization']);
+  });
+
+  it('el límite coincide con el de las consultas del historial', () => {
+    const limit = parameter(operations.athletes, 'limit').schema;
+
+    expect<Record<string, unknown>>(TRAINING_HISTORY_LIMIT).toEqual({
+      min: limit['minimum'],
+      max: limit['maximum'],
+      default: limit['default'],
+    });
+  });
+
+  it('los modelos tienen exactamente las propiedades obligatorias del contrato', () => {
+    const response: TrainingAthletesResponseDto = TRAINING_ATHLETES_RESPONSES.firstPage.body;
+    const item: TrainingAthleteItemDto = response.items[0];
+
+    expect(Object.keys(response).sort()).toEqual(
+      [...(schemas['TrainingAthletesResponse']['required'] as string[])].sort(),
+    );
+    expect(Object.keys(item).sort()).toEqual(
+      [...(schemas['TrainingAthleteItem']['required'] as string[])].sort(),
+    );
+  });
+
+  it('los códigos de error del cliente son los que declara el contrato', () => {
+    expect<string[]>(Object.values(TRAINING_ATHLETES_ERROR_CODES).sort()).toEqual(
+      declaredCodes(operations.athletes, [401, 403, 422, 503, 504]),
+    );
+  });
+
+  for (const [name, response] of Object.entries(TRAINING_ATHLETES_RESPONSES)) {
+    it(`la respuesta simulada "${name}" (${response.status}) cumple el contrato`, () => {
+      expect(
+        validateAgainstSchema(
+          contract,
+          responseSchema(operations.athletes, response.status),
+          response.body,
+        ),
+      ).toEqual([]);
+      if (response.status >= 400) {
+        expect(declaredCodes(operations.athletes, [response.status])).toContain(
+          (response.body as { code: string }).code,
+        );
+      }
+    });
+  }
+});
+
 describe('BffWebTrainingHistoryApi', () => {
   let api: BffWebTrainingHistoryApi;
   let http: HttpTestingController;
@@ -178,5 +238,16 @@ describe('BffWebTrainingHistoryApi', () => {
     expect(request.request.params.get('cursor')).toBe('abc+/=');
     expect(request.request.urlWithParams).toContain('cursor=abc%2B%2F%3D');
     request.flush(TRAINING_HISTORY_RESPONSES.lastPage.body);
+  });
+
+  it('consulta los deportistas autorizados sin identificadores y con el cursor intacto', () => {
+    api.getTrainingAthletes('token-sintetico', { limit: 20, cursor: 'abc+/=' }).subscribe();
+
+    const request = http.expectOne((r) => r.url === 'http://bff.test/v1/me/training-athletes');
+    expect(request.request.method).toBe('GET');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer token-sintetico');
+    expect(request.request.params.keys().sort()).toEqual(['cursor', 'limit']);
+    expect(request.request.urlWithParams).toContain('cursor=abc%2B%2F%3D');
+    request.flush(TRAINING_ATHLETES_RESPONSES.lastPage.body);
   });
 });

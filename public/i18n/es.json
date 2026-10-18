@@ -628,9 +628,15 @@
         "endedAt": "Fin",
         "viewPlan": "Consultar el plan"
       },
-      "professionalIntro": {
-        "message": "Consulta el historial de un deportista que te autorizó.",
-        "howTo": "Abre el historial desde el plan que le asignaste: en el resultado o en la consulta del plan encontrarás «Ver historial de entrenamiento». Por ahora no hay un listado de tus deportistas autorizados.",
+      "athletes": {
+        "title": "Historial de entrenamiento",
+        "intro": "Elige un deportista que te autorizó para consultar su historial de entrenamiento.",
+        "listLabel": "Deportistas que te autorizaron",
+        "authorizedAt": "Te autorizó el {{date}}",
+        "empty": "Aún ningún deportista te ha autorizado. Cuando un deportista te autorice desde su cuenta, aparecerá aquí.",
+        "countMore": "Deportistas mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Deportistas mostrados: {{count}}.",
+        "shortcut": "También puedes abrir el historial desde un plan que hayas asignado.",
         "goToPlans": "Ir a planes de entrenamiento"
       }
     }

@@ -52,13 +52,16 @@ const operations = {
 
 /**
  * Códigos de error declarados en la descripción de cada respuesta. El `422` de
- * crear un plan cita además el campo `details`, que no es un código.
+ * crear un plan cita además el campo `details`, que no es un código, y desde
+ * 0.14.0 enumera después de «Motivos estables» los valores de `details[].issue`
+ * (los comprueba `plan-violations.spec.ts`).
  */
 function declaredCodes(operation: OpenApiOperation, statuses: number[]): string[] {
   return statuses
     .flatMap((status) => {
       const description = operation.responses[String(status)]?.description ?? '';
-      return [...description.matchAll(/`([a-z_]+)`/g)].map((match) => match[1]);
+      const codes = description.split('Motivos estables')[0];
+      return [...codes.matchAll(/`([a-z_]+)`/g)].map((match) => match[1]);
     })
     .filter((code) => code !== 'details')
     .sort();

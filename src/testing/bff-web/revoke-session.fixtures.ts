@@ -1,6 +1,6 @@
 /**
  * Simulador de `POST /v1/sessions/revoke` (HU004) derivado del contrato bff-web
- * 0.13.0 (`src/app/core/api/contracts/bff-web.openapi.json`; la operación no
+ * 0.15.0 (`src/app/core/api/contracts/bff-web.openapi.json`; la operación no
  * cambia desde 0.7.0). Lo usan las pruebas unitarias y Playwright;
  * `sessions.contract.spec.ts` valida cada respuesta contra el esquema del
  * contrato. Datos sintéticos.
