@@ -2,7 +2,7 @@ import { AuthorizedAthletesPage } from './authorized-athletes.model';
 
 /**
  * Puerto hacia el BFF web para la selección directa del profesional (HU011, CA5).
- * `HttpAuthorizedAthletesGateway` traduce el contrato bff-web 0.15.0.
+ * `HttpAuthorizedAthletesGateway` traduce el contrato bff-web 0.16.0.
  */
 export abstract class AuthorizedAthletesGateway {
   /**

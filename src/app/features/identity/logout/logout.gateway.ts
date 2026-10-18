@@ -16,7 +16,7 @@ export type LogoutOutcome =
 
 /**
  * Puerto hacia el BFF web para cerrar la sesión (HU004).
- * `HttpLogoutGateway` traduce el contrato bff-web 0.15.0.
+ * `HttpLogoutGateway` traduce el contrato bff-web 0.16.0.
  */
 export abstract class LogoutGateway {
   /** Resuelve siempre con un `LogoutOutcome`; nunca rechaza. */

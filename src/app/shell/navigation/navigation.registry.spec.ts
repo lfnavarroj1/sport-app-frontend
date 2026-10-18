@@ -64,6 +64,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(navigable('organizer')).toEqual([
       ['home', homeFor('organizer'), 'HU003'],
       ['event-create', '/organizador/eventos/nuevo', 'HU021'],
+      ['event-publish', '/organizador/eventos/publicacion', 'HU024'],
     ]);
     expect(navigable('service_provider')).toEqual([
       ['home', homeFor('service_provider'), 'HU003'],
@@ -255,6 +256,14 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
         route: '/organizador/eventos/nuevo',
         permission: 'events.create',
         hu: 'HU021',
+      }),
+    );
+    expect(NAVIGATION.organizer.items.find((item) => item.id === 'event-publish')).toEqual(
+      jasmine.objectContaining({
+        route: '/organizador/eventos/publicacion',
+        permission: 'events.publish',
+        hu: 'HU024',
+        available: true,
       }),
     );
     expect(NAVIGATION.athlete.items.find((item) => item.id === 'sport-calendar')).toEqual(

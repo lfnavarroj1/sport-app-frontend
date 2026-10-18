@@ -9,7 +9,7 @@ import {
 
 /**
  * Puerto hacia el BFF web para el perfil del deportista (HU005).
- * `HttpProfileGateway` traduce el contrato bff-web 0.15.0.
+ * `HttpProfileGateway` traduce el contrato bff-web 0.16.0.
  */
 export abstract class ProfileGateway {
   /**

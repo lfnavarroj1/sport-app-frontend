@@ -14,7 +14,7 @@ import { AuthorizedAthletesPage } from './authorized-athletes.model';
 
 /**
  * Implementación de CA5 sobre `GET /v1/me/training-athletes` (contrato bff-web
- * 0.15.0). El BFF deriva los deportistas del token; el cliente solo envía el
+ * 0.16.0). El BFF deriva los deportistas del token; el cliente solo envía el
  * tamaño de página por defecto del contrato y el cursor.
  */
 @Injectable()

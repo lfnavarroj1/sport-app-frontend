@@ -13,7 +13,7 @@ import { HttpLogoutGateway } from './http-logout.gateway';
 const BFF = 'http://bff.example.com';
 const URL = `${BFF}/v1/sessions/revoke`;
 
-describe('HttpLogoutGateway (HU004, contrato bff-web 0.15.0)', () => {
+describe('HttpLogoutGateway (HU004, contrato bff-web 0.16.0)', () => {
   let http: HttpTestingController;
   let gateway: HttpLogoutGateway;
 

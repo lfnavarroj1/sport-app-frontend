@@ -7,7 +7,7 @@ import { STRICT_CODEC } from './training-history.api';
 
 /**
  * Transporte de `GET /v1/services/availability` (operationId
- * `availability_v1_services_availability_get`) del contrato bff-web 0.15.0 (ver
+ * `availability_v1_services_availability_get`) del contrato bff-web 0.16.0 (ver
  * `contract.ts`), conforme a ADR-038 y ADR-027 (HU020). Solo `athlete`; se
  * autentica con el access token. Estos tipos son del transporte: la interfaz los
  * transforma antes de usarlos.

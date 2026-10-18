@@ -14,7 +14,7 @@ const BFF = 'http://bff.example.com';
 const TOKEN = 'token-sintetico';
 const URL = `${BFF}/v1/me/training-athletes`;
 
-describe('HttpAuthorizedAthletesGateway (HU011 CA5, contrato bff-web 0.15.0)', () => {
+describe('HttpAuthorizedAthletesGateway (HU011 CA5, contrato bff-web 0.16.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpAuthorizedAthletesGateway;

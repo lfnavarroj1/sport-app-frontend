@@ -41,7 +41,7 @@ export const PROFILE_RETRY_DELAYS_MS = new InjectionToken<readonly number[]>(
 /**
  * Implementación de HU005 sobre `GET /v1/me/profile`,
  * `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile` del BFF
- * web (contrato 0.15.0). Los valores del perfil son datos sensibles: no se
+ * web (contrato 0.16.0). Los valores del perfil son datos sensibles: no se
  * registran en consola ni se guardan fuera de la memoria de la pestaña.
  */
 @Injectable()

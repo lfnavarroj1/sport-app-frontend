@@ -783,6 +783,77 @@
       "status": {
         "DRAFT": "Borrador"
       }
+    },
+    "publish": {
+      "title": "Publicar eventos",
+      "intro": "Revisa tus eventos y publica un borrador para que los deportistas puedan verlo e inscribirse.",
+      "list": {
+        "statusLabel": "Estado de los eventos",
+        "tabs": {
+          "DRAFT": "Borradores",
+          "PUBLISHED": "Publicados"
+        },
+        "label": {
+          "DRAFT": "Eventos en borrador",
+          "PUBLISHED": "Eventos publicados"
+        },
+        "empty": {
+          "DRAFT": "No tienes eventos en borrador.",
+          "PUBLISHED": "Aún no has publicado eventos."
+        },
+        "startsAt": "Inicio en tu hora: {{date}}",
+        "eventTime": "Hora del evento: {{date}} ({{timeZone}})",
+        "publishedAt": "Publicado el {{date}}",
+        "recent": "Recién publicado",
+        "countMore": "Eventos mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Eventos mostrados: {{count}}.",
+        "loadMore": "Cargar más"
+      },
+      "detail": {
+        "choose": "Elige un evento de la lista para revisarlo."
+      },
+      "fields": {
+        "status": "Estado",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "publishedAt": "Publicado el",
+        "version": "Versión"
+      },
+      "eventTime": "hora del evento: {{date}} ({{timeZone}})",
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado"
+      },
+      "actions": {
+        "publish": "Publicar",
+        "confirm": "Confirmar publicación",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar"
+      },
+      "confirm": {
+        "title": "¿Publicar «{{name}}»?",
+        "message": "El evento quedará visible para los deportistas y abierto a inscripciones. Desde aquí no podrás despublicarlo."
+      },
+      "warnings": {
+        "startsInPast": "La fecha de inicio de este evento ya pasó. Si intentas publicarlo, el sistema lo rechazará."
+      },
+      "retrying": "No pudimos confirmar la publicación. Reintentando ({{attempt}} de {{max}})…",
+      "result": {
+        "title": "Evento publicado",
+        "message": "«{{name}}» ya está publicado.",
+        "replayed": "Esta publicación ya se había confirmado; no se volvió a publicar.",
+        "visibility": "Los deportistas lo verán en el catálogo y en su calendario en unos instantes."
+      },
+      "violations": {
+        "title": "El evento no se publicó porque le faltan estos requisitos:",
+        "stillDraft": "El evento sigue como borrador."
+      },
+      "alreadyPublished": "Este evento ya está publicado.",
+      "errors": {
+        "notFound": "No encontramos este evento o no te pertenece.",
+        "idempotencyKeyReused": "No pudimos confirmar esta publicación. Inténtalo de nuevo.",
+        "retryHint": "Si vuelves a intentarlo, el evento no se publicará dos veces."
+      }
     }
   },
   "services": {

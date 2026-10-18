@@ -1,5 +1,5 @@
 /**
- * Simulador de `POST /v1/events` derivado del contrato bff-web 0.15.0
+ * Simulador de `POST /v1/events` derivado del contrato bff-web 0.16.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`) y de los ejemplos de
  * ADR-028. Lo usan las pruebas unitarias y Playwright; `events.contract.spec.ts`
  * valida cada respuesta contra el esquema del contrato. Datos sintéticos.

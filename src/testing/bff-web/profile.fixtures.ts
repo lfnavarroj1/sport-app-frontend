@@ -1,6 +1,6 @@
 /**
  * Simulador del perfil del deportista (HU005) derivado del contrato bff-web
- * 0.15.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los ejemplos de
+ * 0.16.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los ejemplos de
  * ADR-034: `GET /v1/me/profile`, `PUT /v1/me/demographic-profile` y
  * `PUT /v1/me/physiological-profile`. Lo usan las pruebas unitarias y
  * Playwright; `profile.contract.spec.ts` valida cada respuesta contra el esquema

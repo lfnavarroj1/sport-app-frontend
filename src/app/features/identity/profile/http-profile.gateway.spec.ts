@@ -45,7 +45,7 @@ const PHYSIOLOGICAL_DRAFT: PhysiologicalDraft = {
   bodyTemperatureC: '36.6',
 };
 
-describe('HttpProfileGateway (HU005, contrato bff-web 0.15.0)', () => {
+describe('HttpProfileGateway (HU005, contrato bff-web 0.16.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpProfileGateway;

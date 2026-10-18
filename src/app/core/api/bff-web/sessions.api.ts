@@ -6,7 +6,7 @@ import { BffWebUrl } from '../bff-web-url';
 import { ActorTypeDto } from './contract';
 
 /**
- * Transporte de las operaciones de sesión del contrato bff-web 0.15.0:
+ * Transporte de las operaciones de sesión del contrato bff-web 0.16.0:
  * `POST /v1/sessions` (`create_session_v1_sessions_post`) y
  * `POST /v1/sessions/refresh` (`refresh_v1_sessions_refresh_post`) de HU003, y
  * `POST /v1/sessions/revoke` (`revoke_v1_sessions_revoke_post`) de HU004.
