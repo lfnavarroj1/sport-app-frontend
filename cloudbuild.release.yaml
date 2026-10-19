@@ -86,6 +86,10 @@ steps:
   - id: image
     name: 'gcr.io/cloud-builders/docker@sha256:f772ab459889c67835bd959c2b9e9351f2c0752c4f989710ecda20c229f0733e'
     entrypoint: bash
+    env:
+      # El Dockerfile usa COPY --chmod, que exige BuildKit; este builder (Docker 20.10)
+      # usa el constructor clásico salvo que se active. En GitHub Actions ya es el predeterminado.
+      - 'DOCKER_BUILDKIT=1'
     args: ['deploy/release/cloudbuild-release.sh', 'image']
 
   - id: smoke
