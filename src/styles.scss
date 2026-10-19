@@ -1,0 +1,84 @@
+// Tema de SportApp: dirección visual «Energía deportiva» (decisión del responsable,
+// 2026-10-11). Paleta Material 3 generada desde los colores de marca con
+// `ng generate @angular/material:theme-color` (src/styles/_theme-colors.scss).
+@use '@angular/material' as mat;
+@use './styles/theme-colors' as brand;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: brand.$primary-palette,
+        tertiary: brand.$tertiary-palette,
+      ),
+      typography: (
+        plain-family: Roboto,
+        brand-family: Barlow,
+      ),
+      density: 0,
+    )
+  );
+
+  // Colores de marca para fondos y acentos. El naranja vivo no se usa como color
+  // de texto sobre claro: Material ya aplica a botones y textos el tono accesible.
+  --sa-brand-orange: #f26b1d;
+  --sa-brand-petrol: #0e5e6f;
+  --sa-night: #0b1b2b;
+  --sa-night-2: #12324a;
+  --sa-on-night: #ffffff;
+  --sa-on-night-muted: rgb(255 255 255 / 78%);
+  --sa-radius-lg: 1.25rem;
+  --sa-shadow-card: 0 1.5rem 3rem rgb(11 27 43 / 28%);
+
+  @media (prefers-contrast: more) {
+    @include brand.high-contrast-overrides(light);
+  }
+}
+
+body {
+  color-scheme: light;
+  background-color: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}
+
+// Títulos de página con la tipografía de marca.
+h1,
+h2 {
+  font-family: Barlow, Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+// Foco siempre visible al navegar con teclado.
+:focus-visible {
+  outline: 3px solid var(--sa-brand-orange);
+  outline-offset: 2px;
+}
+
+// Tarjeta de formulario sobre el fondo de marca (<app-auth-shell>).
+.sa-auth-card.mat-mdc-card {
+  width: 100%;
+  color: var(--mat-sys-on-surface);
+  border: 0;
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-card);
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+// Las páginas enrutadas ocupan el alto disponible bajo la barra superior.
+app-root main > :not(router-outlet) {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+// Enlaces de texto con el color de marca accesible.
+a:not(.mat-mdc-button-base) {
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+  text-underline-offset: 0.2em;
+}

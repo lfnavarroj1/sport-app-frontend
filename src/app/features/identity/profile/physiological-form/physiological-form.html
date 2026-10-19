@@ -1,0 +1,186 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="profile-form"
+  data-testid="physiological-form"
+>
+  @if (summary().length > 0) {
+    <div class="profile-form__errors" role="alert" tabindex="-1" data-testid="physiological-errors">
+      <p>{{ 'profile.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'profile.issues.item'
+                | translate: { field: (item.field | translate), rule: (item.issue | translate) }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.physiological.fields.measuredAt' | translate }}</mat-label>
+      <input matInput type="datetime-local" formControlName="measuredAt" required />
+      <mat-hint>{{
+        'profile.physiological.hints.measuredAt' | translate: { zone: zone }
+      }}</mat-hint>
+      <mat-error><app-profile-field-error [control]="form.controls.measuredAt" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.physiological.fields.weightKg' | translate }}</mat-label>
+      <input
+        matInput
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        formControlName="weightKg"
+        required
+      />
+      <span matTextSuffix aria-hidden="true">{{
+        'profile.physiological.units.kg' | translate
+      }}</span>
+      <mat-hint>{{ 'profile.physiological.hints.weightKg' | translate: weightRange }}</mat-hint>
+      <mat-error><app-profile-field-error [control]="form.controls.weightKg" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.physiological.fields.heightCm' | translate }}</mat-label>
+      <input
+        matInput
+        type="number"
+        inputmode="numeric"
+        formControlName="heightCm"
+        [min]="limits.heightMin"
+        [max]="limits.heightMax"
+        step="1"
+        required
+      />
+      <span matTextSuffix aria-hidden="true">{{
+        'profile.physiological.units.cm' | translate
+      }}</span>
+      <mat-error><app-profile-field-error [control]="form.controls.heightCm" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.physiological.fields.restingHeartRateBpm' | translate }}</mat-label>
+      <input
+        matInput
+        type="number"
+        inputmode="numeric"
+        formControlName="restingHeartRateBpm"
+        [min]="limits.restingHeartRateMin"
+        [max]="limits.restingHeartRateMax"
+        step="1"
+      />
+      <span matTextSuffix aria-hidden="true">{{
+        'profile.physiological.units.bpm' | translate
+      }}</span>
+      <mat-error>
+        <app-profile-field-error [control]="form.controls.restingHeartRateBpm" />
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.physiological.fields.bodyTemperatureC' | translate }}</mat-label>
+      <input
+        matInput
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        formControlName="bodyTemperatureC"
+      />
+      <span matTextSuffix aria-hidden="true">{{
+        'profile.physiological.units.celsius' | translate
+      }}</span>
+      <mat-hint>
+        {{ 'profile.physiological.hints.bodyTemperatureC' | translate: temperatureRange }}
+      </mat-hint>
+      <mat-error><app-profile-field-error [control]="form.controls.bodyTemperatureC" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <fieldset class="profile-form__group">
+    <legend>{{ 'profile.physiological.fields.bloodPressure' | translate }}</legend>
+    <p class="profile-form__note">{{ 'profile.physiological.hints.bloodPressure' | translate }}</p>
+    <div class="profile-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'profile.physiological.fields.systolic' | translate }}</mat-label>
+        <input
+          matInput
+          type="number"
+          inputmode="numeric"
+          formControlName="systolic"
+          [min]="limits.systolicMin"
+          [max]="limits.systolicMax"
+          step="1"
+        />
+        <span matTextSuffix aria-hidden="true">{{
+          'profile.physiological.units.mmHg' | translate
+        }}</span>
+        <mat-error><app-profile-field-error [control]="form.controls.systolic" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'profile.physiological.fields.diastolic' | translate }}</mat-label>
+        <input
+          matInput
+          type="number"
+          inputmode="numeric"
+          formControlName="diastolic"
+          [min]="limits.diastolicMin"
+          [max]="limits.diastolicMax"
+          step="1"
+        />
+        <span matTextSuffix aria-hidden="true">{{
+          'profile.physiological.units.mmHg' | translate
+        }}</span>
+        <mat-error><app-profile-field-error [control]="form.controls.diastolic" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="profile-form__group">
+    <legend>{{ 'profile.physiological.fields.consent' | translate }}</legend>
+    <mat-checkbox formControlName="consent" required>
+      {{ 'profile.physiological.consent.label' | translate: { version: consentVersion() } }}
+    </mat-checkbox>
+    <p class="profile-form__note">{{ 'profile.physiological.consent.hint' | translate }}</p>
+    <p class="profile-form__note">
+      {{ 'profile.physiological.consent.policyPending' | translate }}
+    </p>
+    @if (consentRule(); as rule) {
+      <p class="profile-form__rule" role="alert" data-testid="physiological-consent-error">
+        {{ rule | translate }}
+      </p>
+    }
+  </fieldset>
+
+  @if (!consentChecked()) {
+    <p
+      class="profile-form__note"
+      id="physiological-consent-required"
+      data-testid="physiological-consent-required"
+    >
+      {{ 'profile.physiological.consent.requiredToSave' | translate }}
+    </p>
+  }
+  <div class="profile-form__actions">
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="submitting() || !consentChecked()"
+      [attr.aria-describedby]="consentChecked() ? null : 'physiological-consent-required'"
+    >
+      {{ 'profile.physiological.actions.save' | translate }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'profile.physiological.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>

@@ -1,0 +1,211 @@
+# Validación de una release del frontend web en GitHub, SIN acceso a GCP.
+#
+# Se ejecuta al publicar un GitHub Release. Valida el tag SemVer, que su commit
+# pertenezca a main, todas las comprobaciones de CI, la imagen construida y probada
+# en el runner, y deja un paquete de evidencia con su manifiesto.
+#
+# No se autentica en GCP, no usa OIDC ni Workload Identity Federation, no publica en
+# Artifact Registry y no despliega. La imagen que se publica la construye Cloud Build
+# con cloudbuild.release.yaml, iniciado desde GCP por un trigger de sport-app-platform;
+# la promoción del digest a Cloud Run la hace Cloud Deploy desde la plataforma.
+# Las acciones se fijan a SHA completo; actualizarlas solo mediante PR revisado.
+name: release-web
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-web-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  CI: true
+  TAG: ${{ github.event.release.tag_name }}
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: tag
+        name: Validar tag SemVer y commit
+        run: |
+          set -euo pipefail
+          version="$(bash deploy/release/validate-release.sh "$TAG" "$GITHUB_SHA")"
+          tagged="$(git rev-list -n 1 "refs/tags/${TAG}")"
+          if [ "$tagged" != "$GITHUB_SHA" ]; then
+            echo "::error::El tag ${TAG} apunta a ${tagged}, no a ${GITHUB_SHA}."
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Verificar que el commit pertenezca a main
+        run: |
+          set -euo pipefail
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::El commit del tag ${TAG} (${GITHUB_SHA}) no pertenece a main."
+            exit 1
+          fi
+          echo "Tag ${TAG} en main (${GITHUB_SHA})."
+
+  checks:
+    name: checks
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Formato
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Tipos
+        run: npm run typecheck
+      - name: Scripts de release
+        run: npm run release:test
+      - name: Unitarias y componentes (Jasmine + cobertura)
+        run: npm run test:ci
+      - name: Vulnerabilidades en dependencias de producción
+        run: npm run audit:prod
+      - name: Build de producción
+        run: npm run build
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-coverage-${{ env.TAG }}
+          path: coverage/
+          retention-days: 30
+          if-no-files-found: warn
+
+  e2e:
+    name: e2e
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Instalar navegador de Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Playwright completo (aplicación local, sin BFF; no es E2E integrado)
+        run: npm run e2e
+      - name: Publicar reporte de Playwright
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-playwright-${{ env.TAG }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+          if-no-files-found: ignore
+
+  container:
+    name: container
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      IMAGE: sportapp/web-release:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Construir la imagen una sola vez (local, no se publica)
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          docker build -t "$IMAGE" --build-arg "VERSION=${VERSION}" --build-arg "REVISION=${GITHUB_SHA}" .
+          mkdir -p release
+          docker image inspect -f '{{.Id}}' "$IMAGE" > release/image-id.txt
+      - name: Prueba de humo del contenedor
+        run: |
+          set -euo pipefail
+          bash deploy/docker/smoke-test.sh "$IMAGE" 2>&1 | tee release/smoke-test.log
+      - name: Checksum del sitio de la imagen probada
+        run: |
+          set -euo pipefail
+          [ "$(docker image inspect -f '{{.Id}}' "$IMAGE")" = "$(cat release/image-id.txt)" ]
+          bash deploy/release/web-artifact.sh "$IMAGE" release
+      - name: Guardar resultados del contenedor
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-container-${{ env.TAG }}
+          path: release/
+          retention-days: 30
+          if-no-files-found: error
+
+  evidence:
+    name: evidence
+    needs: [validate, checks, e2e, container]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Recuperar resultados del contenedor
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: release-container-${{ env.TAG }}
+          path: release/
+      - name: Generar el manifiesto de evidencia
+        run: |
+          set -euo pipefail
+          LOCAL_IMAGE_ID="$(cat release/image-id.txt)" \
+            RELEASE_TAG="$TAG" \
+            COMMIT_SHA="$GITHUB_SHA" \
+            REPO_FULL_NAME="$GITHUB_REPOSITORY" \
+            ARTIFACT_SHA256_FILE=release/web.tgz.sha256 \
+            SMOKE_TEST_LOG=release/smoke-test.log \
+            node deploy/release/release-manifest.mjs release-validation release/release-validation.json
+          {
+            echo "## Validación de la release ${TAG}"
+            echo "Sin acceso a GCP: la imagen se construyó y probó en el runner, no se publicó."
+            echo "La imagen publicable la construye Cloud Build (cloudbuild.release.yaml)."
+            echo '```json'
+            cat release/release-validation.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Publicar el paquete de evidencia
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-evidence-${{ env.TAG }}
+          path: release/
+          retention-days: 90
+          if-no-files-found: error

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lfnavarroj1/sport-app-frontend/deploy/release/frontend-release.schema.json",
+  "title": "frontend-release.json",
+  "description": "Manifiesto de la release del frontend web que produce cloudbuild.release.yaml. Identifica la imagen solo por digest; no contiene secretos ni referencias mutables.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "repository",
+    "component",
+    "version",
+    "tag",
+    "commit",
+    "expectedBffContract",
+    "image",
+    "artifact",
+    "checks",
+    "smokeTest",
+    "cloudBuild",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "frontend-release" },
+    "repository": { "const": "lfnavarroj1/sport-app-frontend" },
+    "component": { "const": "web" },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "tag": {
+      "type": "string",
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "expectedBffContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "sha256"],
+      "properties": {
+        "name": { "const": "bff-web" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri", "digest"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*-docker\\.pkg\\.dev/[a-z][a-z0-9-]{4,28}[a-z0-9]/[a-z]([a-z0-9-]{0,61}[a-z0-9])?/web@sha256:[0-9a-f]{64}$"
+        },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sha256", "source"],
+      "properties": {
+        "name": { "const": "web.tgz" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "source": { "const": "/usr/share/nginx/html" }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command", "status"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "status": { "const": "passed" }
+        }
+      }
+    },
+    "smokeTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "script", "scriptSha256", "checksPassed"],
+      "properties": {
+        "status": { "const": "passed" },
+        "script": { "const": "deploy/docker/smoke-test.sh" },
+        "scriptSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "checksPassed": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "cloudBuild": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["buildId", "projectId", "location"],
+      "properties": {
+        "buildId": { "type": "string", "pattern": "^[0-9a-f-]{36}$" },
+        "projectId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$" },
+        "location": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    }
+  }
+}

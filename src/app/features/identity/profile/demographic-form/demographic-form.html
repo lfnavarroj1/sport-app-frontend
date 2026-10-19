@@ -1,0 +1,123 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="profile-form"
+  data-testid="demographic-form"
+>
+  @if (summary().length > 0) {
+    <div class="profile-form__errors" role="alert" tabindex="-1" data-testid="demographic-errors">
+      <p>{{ 'profile.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'profile.issues.item'
+                | translate: { field: (item.field | translate), rule: (item.issue | translate) }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.birthDate' | translate }}</mat-label>
+      <input matInput type="date" formControlName="birthDate" required />
+      @if (age() !== null) {
+        <mat-hint>
+          @if (age()! >= 0) {
+            <span data-testid="demographic-age">
+              {{ 'profile.demographic.hints.age' | translate: { age: age() } }}
+            </span>
+          }
+          @if (ageOutOfRange()) {
+            <span data-testid="demographic-age-warning">
+              {{
+                'profile.demographic.hints.ageOutOfRange'
+                  | translate: { min: limits.ageMin, max: limits.ageMax }
+              }}
+            </span>
+          }
+        </mat-hint>
+      }
+      <mat-error><app-profile-field-error [control]="form.controls.birthDate" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.gender' | translate }}</mat-label>
+      <mat-select formControlName="gender" required>
+        @for (gender of genders; track gender) {
+          <mat-option [value]="gender">{{
+            'profile.demographic.genders.' + gender | translate
+          }}</mat-option>
+        }
+      </mat-select>
+      <mat-error><app-profile-field-error [control]="form.controls.gender" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.countryCode' | translate }}</mat-label>
+      <input
+        matInput
+        formControlName="countryCode"
+        maxlength="2"
+        autocomplete="off"
+        (input)="uppercaseCountry()"
+        required
+      />
+      <mat-hint data-testid="demographic-country-name">
+        {{ countryLabel() ?? ('profile.demographic.hints.countryCode' | translate) }}
+      </mat-hint>
+      <mat-error><app-profile-field-error [control]="form.controls.countryCode" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.city' | translate }}</mat-label>
+      <input matInput formControlName="city" [maxlength]="limits.cityMax" required />
+      <mat-error><app-profile-field-error [control]="form.controls.city" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.maritalStatus' | translate }}</mat-label>
+      <mat-select formControlName="maritalStatus">
+        <mat-option [value]="null">{{ 'profile.demographic.notSpecified' | translate }}</mat-option>
+        @for (status of maritalStatuses; track status) {
+          <mat-option [value]="status">{{
+            'profile.demographic.maritalStatuses.' + status | translate
+          }}</mat-option>
+        }
+      </mat-select>
+      <mat-error><app-profile-field-error [control]="form.controls.maritalStatus" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.occupation' | translate }}</mat-label>
+      <input matInput formControlName="occupation" [maxlength]="limits.occupationMax" />
+      <mat-error><app-profile-field-error [control]="form.controls.occupation" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.demographic.fields.incomeRange' | translate }}</mat-label>
+      <mat-select formControlName="incomeRange">
+        <mat-option [value]="null">{{ 'profile.demographic.notSpecified' | translate }}</mat-option>
+        @for (range of incomeRanges; track range) {
+          <mat-option [value]="range">{{
+            'profile.demographic.incomeRanges.' + range | translate
+          }}</mat-option>
+        }
+      </mat-select>
+      <mat-error><app-profile-field-error [control]="form.controls.incomeRange" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="profile-form__actions">
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{ 'profile.demographic.actions.save' | translate }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'profile.demographic.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>

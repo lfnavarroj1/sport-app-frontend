@@ -1,0 +1,917 @@
+{
+  "app": {
+    "name": "SportApp",
+    "skipToContent": "Saltar al contenido principal",
+    "navigation": "Navegación principal",
+    "nav": {
+      "login": "Iniciar sesión",
+      "home": "Inicio"
+    }
+  },
+  "common": {
+    "state": {
+      "loading": "Cargando…",
+      "empty": "No hay información para mostrar.",
+      "retry": "Reintentar"
+    },
+    "errors": {
+      "offline": "No hay conexión. Revisa tu red e inténtalo de nuevo.",
+      "validation": "Algunos datos no son válidos. Revísalos e inténtalo de nuevo.",
+      "unauthenticated": "Tu sesión no es válida. Inicia sesión de nuevo.",
+      "forbidden": "No tienes permiso para realizar esta acción.",
+      "not_found": "La información solicitada no existe o ya no está disponible.",
+      "conflict": "La información cambió mientras trabajabas. Recarga los datos antes de continuar.",
+      "server": "El servicio no está disponible en este momento. Inténtalo más tarde.",
+      "not_configured": "El servicio aún no está disponible en este ambiente.",
+      "unknown": "Ocurrió un error inesperado.",
+      "reference": "Código de referencia: {{id}}"
+    }
+  },
+  "validation": {
+    "required": "Este campo es obligatorio.",
+    "email": "Ingresa un correo electrónico válido.",
+    "minlength": "Debe tener al menos {{requiredLength}} caracteres.",
+    "maxlength": "Debe tener como máximo {{requiredLength}} caracteres.",
+    "min": "El valor mínimo permitido es {{min}}.",
+    "max": "El valor máximo permitido es {{max}}.",
+    "pattern": "El formato no es válido.",
+    "invalid": "El valor no es válido."
+  },
+  "registration": {
+    "title": "Crear cuenta",
+    "fields": {
+      "fullName": "Nombre completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "showPassword": "Mostrar contraseña",
+      "actorType": "Tipo de usuario",
+      "passwordHint": "Entre {{min}} y {{max}} caracteres."
+    },
+    "actorTypes": {
+      "athlete": "Deportista",
+      "organizer": "Organizador de eventos",
+      "service_provider": "Profesional de servicios"
+    },
+    "policies": {
+      "legend": "Tratamiento de datos",
+      "summary": "Antes de aceptar, lee cómo trata SportApp tus datos personales.",
+      "showNotice": "Leer el aviso aquí",
+      "hideNotice": "Ocultar el aviso",
+      "noticeRegion": "Aviso de tratamiento de datos",
+      "acceptBefore": "Acepto las políticas de tratamiento de datos descritas en el",
+      "noticeLink": "aviso de tratamiento de datos",
+      "acceptAfter": "(versión {{version}})."
+    },
+    "errors": {
+      "emailTaken": "Ya existe una cuenta con este correo electrónico.",
+      "policyRequired": "Debes aceptar las políticas para registrarte.",
+      "policiesOutdated": "La versión del aviso que aceptaste ya no está vigente. Recarga la página para leer la versión vigente y acéptala de nuevo.",
+      "reloadPolicies": "Recargar y leer la versión vigente"
+    },
+    "optionsEmpty": "El registro no está disponible en este momento.",
+    "submit": "Registrarme",
+    "submitting": "Registrando…",
+    "success": {
+      "title": "Tu cuenta fue creada",
+      "message": "Registramos la cuenta asociada a {{email}}.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "goToLogin": "Inicia sesión"
+  },
+  "privacyNotice": {
+    "title": "Aviso de tratamiento de datos personales de SportApp",
+    "meta": {
+      "version": "Versión",
+      "effectiveDate": "Fecha de vigencia"
+    },
+    "pending": "Pendiente de definir por el responsable del proyecto.",
+    "intro": "Este aviso explica, en lenguaje claro, qué datos personales trata SportApp, para qué los usa, cómo los protege y qué derechos tienes sobre ellos. Debes leerlo y aceptarlo para crear tu cuenta.",
+    "referencesNote": "Para redactarlo se tomaron como referencia el Convenio 108 del Consejo de Europa y su versión modernizada (Convenio 108+). Son referencias de buenas prácticas: este aviso no es una certificación de cumplimiento de esos convenios.",
+    "sections": {
+      "controller": {
+        "title": "Quién trata tus datos",
+        "paragraphs": {
+          "0": "Tus datos los trata SportApp, la plataforma en la que te registras. La identificación del responsable del tratamiento (razón social y domicilio) y su dato de contacto aún no están definidos: se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "data": {
+        "title": "Qué datos recopilamos",
+        "paragraphs": {
+          "0": "Pedimos solo los datos que necesita cada función:"
+        },
+        "items": {
+          "0": "Al registrarte: tu nombre completo, tu correo electrónico, una contraseña y tu tipo de usuario (deportista, organizador de eventos o profesional de servicios).",
+          "1": "Si eres deportista y decides completar tu perfil: fecha de nacimiento, género, país y ciudad de residencia y, si quieres, estado civil, ocupación y rango de ingresos.",
+          "2": "Si eres deportista y das tu consentimiento específico: datos fisiológicos y de salud, como peso, altura, frecuencia cardíaca en reposo, presión arterial y temperatura corporal.",
+          "3": "Mientras usas SportApp: tu actividad y tus hábitos deportivos, tus planes de entrenamiento y los datos técnicos necesarios para mantener tu sesión."
+        }
+      },
+      "purposes": {
+        "title": "Para qué usamos tus datos",
+        "paragraphs": {
+          "0": "Usamos tus datos solo para estas finalidades:"
+        },
+        "items": {
+          "0": "Crear y administrar tu cuenta, y comprobar que tu correo no esté registrado dos veces.",
+          "1": "Autenticarte y mantener tu sesión de forma segura.",
+          "2": "Si te registras como deportista, asignarte automáticamente el plan gratuito y habilitar las opciones que incluye tu plan.",
+          "3": "Personalizar tu experiencia deportiva con los datos de tu perfil.",
+          "4": "Permitir que los profesionales que tú autorices te asignen planes de entrenamiento y consulten tu historial.",
+          "5": "Gestionar los eventos y servicios en los que participes."
+        }
+      },
+      "minimization": {
+        "title": "Minimización y calidad de los datos",
+        "items": {
+          "0": "Solo son obligatorios los datos indispensables para cada función; los demás son opcionales.",
+          "1": "No te pedimos datos de raza, etnia ni religión.",
+          "2": "Validamos el formato de los datos al capturarlos, y puedes corregir los de tu perfil para mantenerlos exactos y actualizados."
+        }
+      },
+      "retention": {
+        "title": "Cuánto tiempo conservamos tus datos",
+        "paragraphs": {
+          "0": "El plazo de conservación de tus datos y la forma de eliminarlos aún no están definidos: se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "security": {
+        "title": "Cómo protegemos tus datos",
+        "items": {
+          "0": "Tu contraseña nunca se guarda en texto claro: se almacena protegida con un algoritmo de hash seguro.",
+          "1": "En la aplicación web, el token de acceso de tu sesión se guarda solo en la memoria de la pestaña, y la renovación usa una cookie protegida que la aplicación no puede leer.",
+          "2": "Cada persona solo accede a la información que le corresponde según su rol y sus autorizaciones.",
+          "3": "Tus valores de salud no se escriben en los registros técnicos ni en las métricas del sistema."
+        }
+      },
+      "recipients": {
+        "title": "Quién puede ver tus datos",
+        "items": {
+          "0": "Los profesionales de servicios solo acceden a tus datos de entrenamiento si tú los autorizas, y puedes revocar esa autorización.",
+          "1": "Los organizadores ven solo los datos mínimos necesarios de las personas inscritas en sus eventos.",
+          "2": "Las integraciones con servicios de terceros requieren tu consentimiento específico, y puedes revocarlo.",
+          "3": "SportApp funciona sobre servicios de infraestructura en la nube. El país donde se tratan los datos y las posibles transferencias internacionales aún no están definidos: se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "sensitive": {
+        "title": "Datos sensibles y de salud",
+        "items": {
+          "0": "Tratamos tus datos fisiológicos y de salud como datos sensibles.",
+          "1": "Solo los registramos con tu consentimiento explícito y específico, distinto de este aviso, que se te pide cada vez que guardas esos datos.",
+          "2": "SportApp no clasifica ni diagnostica tu salud: valores como el índice de masa corporal se muestran como estimaciones.",
+          "3": "Estos datos no se comparten con otras partes de SportApp que no los necesiten."
+        }
+      },
+      "rights": {
+        "title": "Tus derechos",
+        "paragraphs": {
+          "0": "Sobre tus datos personales tienes derecho a:"
+        },
+        "items": {
+          "0": "Acceder a ellos y saber cómo se tratan.",
+          "1": "Rectificarlos si son inexactos o están incompletos.",
+          "2": "Solicitar su supresión.",
+          "3": "Oponerte a su tratamiento."
+        }
+      },
+      "exercise": {
+        "title": "Cómo ejercer tus derechos",
+        "paragraphs": {
+          "0": "Hoy, si eres deportista, puedes consultar y corregir tus datos demográficos y fisiológicos en «Mi perfil». La corrección del nombre y del correo, la supresión de la cuenta y la oposición al tratamiento aún no tienen un canal en SportApp: ese canal, el dato de contacto y la autoridad ante la que puedes presentar una reclamación se publicarán en una nueva versión de este aviso."
+        }
+      },
+      "references": {
+        "title": "Referencias",
+        "paragraphs": {
+          "0": "Estos documentos oficiales del Consejo de Europa orientan el aviso:"
+        }
+      },
+      "changes": {
+        "title": "Versión de este aviso",
+        "paragraphs": {
+          "0": "Estás leyendo la versión {{version}}. Si el aviso cambia, publicaremos una nueva versión con otro identificador; al registrarte aceptas la versión que se muestra en el formulario."
+        }
+      }
+    },
+    "references": {
+      "convention108": "Convenio 108 y sus protocolos (Consejo de Europa, en inglés)",
+      "convention108plus": "Convenio 108 modernizado o Convenio 108+ (Consejo de Europa, en inglés)"
+    },
+    "opensInNewTab": "(se abre en una pestaña nueva)",
+    "actionsLabel": "Acciones del aviso",
+    "goToRegistration": "Ir al registro",
+    "goToLogin": "Iniciar sesión"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "fields": {
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "showPassword": "Mostrar contraseña"
+    },
+    "submit": "Ingresar",
+    "submitting": "Ingresando…",
+    "sessionExpired": "Tu sesión expiró. Ingresa de nuevo para continuar.",
+    "loggedOut": "Cerraste sesión.",
+    "loggedOutUnconfirmed": "Cerraste sesión en este navegador, aunque el servidor no pudo confirmarlo en este momento.",
+    "errors": {
+      "invalidCredentials": "Correo o contraseña incorrectos.",
+      "tooManyAttempts": "Hiciste demasiados intentos. Espera unos minutos antes de intentarlo de nuevo.",
+      "tooManyAttemptsWait": "Hiciste demasiados intentos. Intenta de nuevo en {{minutes}} min."
+    },
+    "noAccount": "¿Aún no tienes una cuenta?",
+    "createAccount": "Crear cuenta"
+  },
+  "home": {
+    "greeting": "Hola, {{name}}",
+    "email": "Correo electrónico",
+    "featuresTitle": "Tus funciones",
+    "intro": {
+      "athlete": "Este es tu espacio de deportista: aquí verás el estado de tu plan, tus entrenamientos y tu calendario.",
+      "organizer": "Desde aquí gestionarás tus eventos deportivos: borradores, publicaciones, inscritos, tarifas y calendario.",
+      "service_provider": "Desde aquí gestionarás tus servicios y tu trabajo profesional: publicaciones, planes, historiales autorizados y agenda."
+    },
+    "plan": {
+      "title": "Tu plan",
+      "loading": "Consultando el estado de tu plan…",
+      "provisioning": "Estamos activando tu plan. Sus opciones aparecerán en cuanto esté confirmado.",
+      "active": "Tu plan está activo. Sus opciones disponibles en la web aparecen en tu menú.",
+      "unavailable": "No pudimos consultar tu plan. Reintenta desde el menú."
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "intro": "Consulta y mantén al día la información de tu perfil de deportista.",
+    "upcoming": "Próximamente",
+    "personal": {
+      "title": "Datos personales",
+      "upcoming": "Pronto podrás actualizar tu nombre y tu correo desde aquí."
+    },
+    "habits": {
+      "title": "Hábitos deportivos",
+      "upcoming": "Pronto podrás registrar los deportes que practicas y tu disponibilidad."
+    },
+    "hu005": {
+      "title": "Datos demográficos y fisiológicos",
+      "intro": "Nos ayudan a personalizar tu experiencia. Solo tú puedes consultarlos."
+    },
+    "projection": {
+      "pending": "Algunos datos aún se están actualizando. Te mostramos la última información confirmada.",
+      "refresh": "Actualizar datos"
+    },
+    "demographic": {
+      "title": "Datos demográficos",
+      "empty": "Aún no has registrado tus datos demográficos.",
+      "actions": {
+        "register": "Registrar datos demográficos",
+        "edit": "Editar datos demográficos",
+        "save": "Guardar datos demográficos",
+        "cancel": "Cancelar"
+      },
+      "fields": {
+        "birthDate": "Fecha de nacimiento",
+        "gender": "Género",
+        "countryCode": "País de residencia (código)",
+        "city": "Ciudad de residencia",
+        "maritalStatus": "Estado civil (opcional)",
+        "occupation": "Ocupación (opcional)",
+        "incomeRange": "Rango de ingresos (opcional)"
+      },
+      "summary": {
+        "birthDate": "Fecha de nacimiento",
+        "gender": "Género",
+        "country": "País de residencia",
+        "city": "Ciudad de residencia",
+        "maritalStatus": "Estado civil",
+        "occupation": "Ocupación",
+        "incomeRange": "Rango de ingresos",
+        "updatedAt": "Última actualización"
+      },
+      "hints": {
+        "countryCode": "Código ISO de dos letras, por ejemplo CO.",
+        "age": "Edad: {{age}} años.",
+        "ageOutOfRange": "La edad debe estar entre {{min}} y {{max}} años; el sistema la verificará al guardar."
+      },
+      "notSpecified": "Sin especificar",
+      "genders": {
+        "FEMALE": "Femenino",
+        "MALE": "Masculino",
+        "NON_BINARY": "No binario",
+        "PREFER_NOT_TO_SAY": "Prefiero no decirlo"
+      },
+      "maritalStatuses": {
+        "SINGLE": "Soltero o soltera",
+        "MARRIED": "Casado o casada",
+        "DOMESTIC_PARTNERSHIP": "Unión libre",
+        "DIVORCED": "Divorciado o divorciada",
+        "WIDOWED": "Viudo o viuda",
+        "PREFER_NOT_TO_SAY": "Prefiero no decirlo"
+      },
+      "incomeRanges": {
+        "LT_1_SMMLV": "Menos de 1 SMMLV",
+        "1_2_SMMLV": "Entre 1 y 2 SMMLV",
+        "2_4_SMMLV": "Entre 2 y 4 SMMLV",
+        "GT_4_SMMLV": "Más de 4 SMMLV",
+        "PREFER_NOT_TO_SAY": "Prefiero no decirlo"
+      },
+      "saved": {
+        "created": "Registramos tus datos demográficos.",
+        "replaced": "Actualizamos tus datos demográficos."
+      },
+      "conflict": "Tus datos demográficos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus datos demográficos ({{attempt}} de {{max}})…"
+    },
+    "physiological": {
+      "title": "Datos fisiológicos",
+      "empty": "Aún no has registrado tus datos fisiológicos.",
+      "unavailable": "El registro de datos fisiológicos no está disponible en este ambiente.",
+      "actions": {
+        "register": "Registrar datos fisiológicos",
+        "edit": "Editar datos fisiológicos",
+        "save": "Guardar datos fisiológicos",
+        "cancel": "Cancelar"
+      },
+      "fields": {
+        "measuredAt": "Fecha y hora de la medición",
+        "weightKg": "Peso (kg)",
+        "heightCm": "Altura (cm)",
+        "restingHeartRateBpm": "Frecuencia cardíaca en reposo (lpm, opcional)",
+        "bloodPressure": "Presión arterial (opcional)",
+        "systolic": "Presión sistólica (mmHg)",
+        "diastolic": "Presión diastólica (mmHg)",
+        "bodyTemperatureC": "Temperatura corporal (°C, opcional)",
+        "consent": "Consentimiento de datos de salud"
+      },
+      "units": {
+        "kg": "kg",
+        "cm": "cm",
+        "bpm": "lpm",
+        "mmHg": "mmHg",
+        "celsius": "°C"
+      },
+      "summary": {
+        "measuredAt": "Medición",
+        "weight": "Peso",
+        "height": "Altura",
+        "bmi": "IMC estimado",
+        "restingHeartRate": "Frecuencia cardíaca en reposo",
+        "bloodPressure": "Presión arterial",
+        "bodyTemperature": "Temperatura corporal",
+        "consent": "Consentimiento de datos de salud",
+        "updatedAt": "Última actualización",
+        "notProvided": "Sin registrar"
+      },
+      "values": {
+        "weight": "{{value}} kg",
+        "height": "{{value}} cm",
+        "heartRate": "{{value}} lpm",
+        "bloodPressure": "{{systolic}}/{{diastolic}} mmHg",
+        "temperature": "{{value}} °C",
+        "consent": "Versión {{version}}, aceptado el {{date}}"
+      },
+      "bmiNote": "SportApp calcula el IMC a partir de tu peso y tu altura. Es un valor estimado, no una evaluación médica.",
+      "hints": {
+        "measuredAt": "En la hora de tu dispositivo ({{zone}}).",
+        "weightKg": "Entre {{min}} y {{max}}, con un decimal como máximo.",
+        "bodyTemperatureC": "Entre {{min}} y {{max}}, con un decimal como máximo.",
+        "bloodPressure": "Si la registras, indica la sistólica y la diastólica."
+      },
+      "consent": {
+        "label": "Acepto que SportApp trate mis datos de salud para personalizar mi experiencia (versión {{version}}).",
+        "hint": "Debes aceptarlo cada vez que guardes tus datos fisiológicos.",
+        "policyPending": "El texto completo de la política de datos de salud se publicará próximamente.",
+        "requiredToSave": "Marca la casilla de consentimiento para habilitar «Guardar datos fisiológicos».",
+        "issues": {
+          "required": "Debes aceptar el consentimiento de datos de salud para guardar tus datos fisiológicos.",
+          "unsupported_consent_version": "La versión del consentimiento ya no está vigente. Recarga la página y acepta la versión actual para guardar."
+        }
+      },
+      "saved": {
+        "created": "Registramos tus datos fisiológicos.",
+        "replaced": "Actualizamos tus datos fisiológicos."
+      },
+      "conflict": "Tus datos fisiológicos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus datos fisiológicos ({{attempt}} de {{max}})…"
+    },
+    "saved": {
+      "replayed": "Esta confirmación corresponde a un envío anterior: no se duplicó el registro."
+    },
+    "errors": {
+      "idempotencyKeyReused": "No pudimos confirmar el envío. Revisa los datos y vuelve a guardar.",
+      "retryHint": "Puedes volver a intentarlo: no se duplicará el registro.",
+      "rulesTitle": "Revisa estos datos:"
+    },
+    "validation": {
+      "decimal": "Usa un número con un decimal como máximo, por ejemplo 68,5.",
+      "decimalRange": "Debe estar entre {{min}} y {{max}}.",
+      "integer": "Ingresa un número entero.",
+      "bloodPressurePair": "Indica la presión sistólica y la diastólica.",
+      "dateTime": "Ingresa una fecha y una hora válidas."
+    },
+    "issues": {
+      "item": "{{field}}: {{rule}}",
+      "fieldRequest": "Solicitud",
+      "unknown": "El valor no es válido.",
+      "required": "Este dato es obligatorio.",
+      "field_not_allowed": "Este dato no se puede enviar.",
+      "invalid_length": "La longitud no es válida.",
+      "unknown_value": "El valor no es válido.",
+      "out_of_range": "El valor está fuera del rango permitido.",
+      "too_many_decimals": "Tiene más decimales de los permitidos.",
+      "invalid_date": "La fecha no es válida.",
+      "invalid_datetime": "La fecha y la hora no son válidas.",
+      "too_far_in_future": "La fecha está demasiado en el futuro.",
+      "too_old": "La fecha es demasiado antigua: como máximo, un año atrás.",
+      "duplicate_value": "Hay valores repetidos.",
+      "too_many_items": "Hay demasiados elementos.",
+      "inconsistent_values": "La presión sistólica debe ser mayor que la diastólica.",
+      "unsupported_consent_version": "La versión del consentimiento ya no está vigente."
+    }
+  },
+  "training": {
+    "sports": {
+      "running": "Carrera",
+      "cycling": "Ciclismo",
+      "swimming": "Natación",
+      "strength": "Fuerza",
+      "other": "Otro"
+    },
+    "plan": {
+      "title": "Crear plan de entrenamiento",
+      "intro": "Diseña un plan personalizado y asígnalo a un deportista que te haya autorizado.",
+      "steps": {
+        "edit": "Datos del plan",
+        "review": "Confirma la asignación"
+      },
+      "sections": {
+        "athlete": "Deportista",
+        "plan": "Plan y periodo"
+      },
+      "fields": {
+        "athleteEmail": "Correo del deportista",
+        "title": "Título",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "objectives": "Objetivos",
+        "objectiveN": "Objetivo {{n}}",
+        "sessions": "Sesiones",
+        "sessionN": "Sesión {{n}}",
+        "scheduledDate": "Fecha",
+        "sport": "Deporte",
+        "durationMinutes": "Duración (min)",
+        "intensityRpe": "Intensidad (RPE)"
+      },
+      "hints": {
+        "athleteEmail": "Correo exacto con el que el deportista se registró en SportApp.",
+        "objectives": "Entre {{min}} y {{max}} objetivos.",
+        "sessions": "Entre {{min}} y {{max}} sesiones dentro del periodo del plan.",
+        "durationMinutes": "De {{min}} a {{max}} minutos.",
+        "intensityRpe": "Esfuerzo percibido de {{min}} (muy suave) a {{max}} (máximo)."
+      },
+      "actions": {
+        "addObjective": "Agregar objetivo",
+        "removeObjective": "Quitar el objetivo {{n}}",
+        "addSession": "Agregar sesión",
+        "removeSession": "Quitar la sesión {{n}}",
+        "remove": "Quitar",
+        "review": "Revisar plan",
+        "backToEdit": "Volver a editar",
+        "assign": "Confirmar y asignar",
+        "assigning": "Asignando…",
+        "viewPlan": "Consultar el plan",
+        "createAnother": "Crear otro plan",
+        "viewHistory": "Ver historial de entrenamiento"
+      },
+      "errors": {
+        "rulesTitle": "El plan no se guardó porque no cumple estas reglas:",
+        "athleteNotAuthorized": "No puedes asignar planes a este correo: no corresponde a un deportista que te haya autorizado.",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa el plan y vuelve a confirmarlo."
+      },
+      "rules": {
+        "item": "{{field}}: {{rule}}",
+        "fieldPlan": "Plan",
+        "fieldObjective": "Objetivo {{n}}",
+        "fieldSession": {
+          "scheduledDate": "Fecha de la sesión {{n}}",
+          "sport": "Deporte de la sesión {{n}}",
+          "durationMinutes": "Duración de la sesión {{n}}",
+          "intensityRpe": "Intensidad de la sesión {{n}}"
+        },
+        "invalid_length": "la longitud no es válida.",
+        "invalid_count": "la cantidad no es válida.",
+        "end_date_before_start_date": "la fecha de fin es anterior a la de inicio.",
+        "period_too_long": "el periodo supera la duración máxima permitida.",
+        "outside_plan_period": "está fuera del periodo del plan.",
+        "out_of_range": "el valor está fuera del rango permitido.",
+        "too_many_sessions_per_day": "hay más sesiones de las permitidas en el mismo día.",
+        "unknown": "no cumple las reglas del plan."
+      },
+      "review": {
+        "message": "Revisa el plan antes de asignarlo a {{email}}. Al confirmar, el deportista podrá consultarlo."
+      },
+      "summary": {
+        "period": "Periodo",
+        "periodValue": "Del {{start}} al {{end}}",
+        "sessions": "Sesiones ({{count}})",
+        "sessionsCaption": "Sesiones del plan",
+        "minutes": "{{value}} min",
+        "rpe": "RPE {{value}}",
+        "status": "Estado",
+        "version": "Versión",
+        "createdAt": "Creado"
+      },
+      "status": {
+        "ASSIGNED": "Asignado"
+      },
+      "created": {
+        "title": "Plan asignado",
+        "message": "El plan «{{title}}» quedó asignado a {{email}}.",
+        "replayed": "Este plan ya se había registrado con esta misma confirmación; no se creó otro."
+      },
+      "detail": {
+        "title": "Plan de entrenamiento",
+        "notFound": "El plan aún no está disponible para consulta o no tienes acceso a él. Si acabas de crearlo, espera unos segundos y vuelve a intentarlo."
+      }
+    },
+    "authorizations": {
+      "title": "Planes de entrenamiento",
+      "intro": "Autoriza a un profesional para que pueda crearte y asignarte planes de entrenamiento. Puedes revocar la autorización cuando quieras.",
+      "grantTitle": "Autorizar a un profesional",
+      "fields": {
+        "professionalEmail": "Correo del profesional"
+      },
+      "hints": {
+        "professionalEmail": "Correo exacto con el que el profesional se registró en SportApp."
+      },
+      "errors": {
+        "professionalNotFound": "Este correo no corresponde a un profesional de servicios registrado.",
+        "capabilityRequired": "Tu plan actual no incluye esta opción."
+      },
+      "actions": {
+        "grant": "Autorizar",
+        "granting": "Autorizando…",
+        "revoke": "Revocar",
+        "cancel": "Cancelar",
+        "confirmRevoke": "Revocar autorización",
+        "revoking": "Revocando…"
+      },
+      "notice": {
+        "granted": "Autorizaste a {{email}}. Ya puede asignarte planes de entrenamiento.",
+        "alreadyActive": "{{email}} ya tenía tu autorización."
+      },
+      "listTitle": "Autorizaciones gestionadas",
+      "listHint": "Aquí aparecen las autorizaciones que gestionas en esta visita. Si ya autorizaste a un profesional, ingresa su correo para verlo aquí y poder revocarlo.",
+      "empty": "Aún no has gestionado autorizaciones en esta visita.",
+      "status": {
+        "active": "Autorizado · {{date}}",
+        "revoked": "Autorización revocada"
+      },
+      "confirm": {
+        "label": "Confirmar revocación",
+        "message": "¿Revocar la autorización de {{email}}? Ya no podrá asignarte planes nuevos."
+      }
+    },
+    "history": {
+      "title": {
+        "own": "Mi historial de entrenamiento",
+        "athlete": "Historial de entrenamiento del deportista"
+      },
+      "intro": {
+        "own": "Consulta tus sesiones de entrenamiento terminadas, de la más reciente a la más antigua.",
+        "athlete": "Sesiones terminadas de un deportista que te autorizó, de la más reciente a la más antigua."
+      },
+      "filters": {
+        "label": "Filtros del historial",
+        "from": "Terminadas desde",
+        "to": "Terminadas hasta",
+        "sport": "Deporte",
+        "allSports": "Todos los deportes",
+        "apply": "Aplicar filtros",
+        "clear": "Limpiar",
+        "hint": "Las fechas filtran por el día en que terminó la sesión, en hora UTC."
+      },
+      "errors": {
+        "athleteNotAuthorized": "No puedes consultar este historial: el deportista no te ha autorizado o revocó la autorización."
+      },
+      "empty": {
+        "own": "Aún no tienes entrenamientos terminados.",
+        "athlete": "Este deportista aún no tiene entrenamientos terminados.",
+        "filtered": "No hay entrenamientos terminados con estos filtros."
+      },
+      "tableLabel": "Sesiones de entrenamiento terminadas",
+      "columns": {
+        "endedAt": "Terminó",
+        "sport": "Deporte",
+        "duration": "Duración",
+        "plan": "Plan",
+        "detail": "Detalle"
+      },
+      "plan": {
+        "yes": "Parte de un plan",
+        "no": "Sin plan"
+      },
+      "actions": {
+        "showDetail": "Ver detalle",
+        "hideDetail": "Ocultar detalle",
+        "loadMore": "Cargar más"
+      },
+      "countMore": "Sesiones mostradas: {{count}}. Hay más disponibles.",
+      "countAll": "Sesiones mostradas: {{count}}.",
+      "duration": {
+        "seconds": "{{s}} s",
+        "minutes": "{{m}} min",
+        "hoursMinutes": "{{h}} h {{m}} min"
+      },
+      "detail": {
+        "title": "Detalle de la sesión",
+        "startedAt": "Inicio",
+        "endedAt": "Fin",
+        "viewPlan": "Consultar el plan"
+      },
+      "athletes": {
+        "title": "Historial de entrenamiento",
+        "intro": "Elige un deportista que te autorizó para consultar su historial de entrenamiento.",
+        "listLabel": "Deportistas que te autorizaron",
+        "authorizedAt": "Te autorizó el {{date}}",
+        "empty": "Aún ningún deportista te ha autorizado. Cuando un deportista te autorice desde su cuenta, aparecerá aquí.",
+        "countMore": "Deportistas mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Deportistas mostrados: {{count}}.",
+        "shortcut": "También puedes abrir el historial desde un plan que hayas asignado.",
+        "goToPlans": "Ir a planes de entrenamiento"
+      }
+    }
+  },
+  "shell": {
+    "menuLabel": "Menú principal",
+    "openMenu": "Menú",
+    "upcoming": "Próximamente",
+    "groups": {
+      "events": "Eventos",
+      "services": "Servicios",
+      "training": "Entrenamiento",
+      "health": "Salud",
+      "nutrition": "Alimentación",
+      "calendar": "Calendario",
+      "account": "Mi cuenta"
+    },
+    "items": {
+      "home": "Inicio",
+      "profile": "Mi perfil",
+      "plan": "Mi plan",
+      "logout": "Cerrar sesión",
+      "event-create": "Crear evento",
+      "event-attendees": "Consultar inscritos",
+      "event-calendar": "Calendario de eventos",
+      "event-publish": "Publicar eventos",
+      "event-pricing": "Tarifas de eventos",
+      "integrated-calendar": "Calendario integrado",
+      "service-create": "Crear servicio",
+      "service-publish": "Publicar servicios",
+      "training-plans": "Crear planes de entrenamiento",
+      "training-history": "Historial de entrenamiento",
+      "health-history": "Historial de molestias o lesiones",
+      "nutrition-history": "Historial de alimentación",
+      "nutrition-plans": "Crear planes de alimentación",
+      "athlete-training-plans": "Planes de entrenamiento",
+      "athlete-training-history": "Mi historial de entrenamiento",
+      "athlete-services": "Servicios",
+      "sport-calendar": "Calendario deportivo",
+      "sports-medicine": "Servicios médicos y deportivos"
+    },
+    "plan": {
+      "title": "Opciones de tu plan",
+      "provisioning": "Estamos activando tu plan. Sus opciones aparecerán en cuanto esté confirmado."
+    },
+    "logout": {
+      "inProgress": "Cerrando sesión…",
+      "errors": {
+        "offline": "No pudimos cerrar sesión porque no hay conexión. Tu sesión sigue abierta: revisa tu red e inténtalo de nuevo.",
+        "failed": "No pudimos cerrar sesión. Tu sesión sigue abierta: inténtalo de nuevo."
+      }
+    }
+  },
+  "unauthorized": {
+    "title": "Acceso no autorizado",
+    "message": "No tienes permiso para ver esta sección.",
+    "goToHome": "Ir a mi inicio",
+    "goToLogin": "Ir a iniciar sesión"
+  },
+  "authShell": {
+    "headline": "Entrena, compite y conecta",
+    "tagline": "Planes de entrenamiento, eventos deportivos y servicios para tu rendimiento, en un solo lugar."
+  },
+  "technicalStatus": {
+    "title": "Estado técnico",
+    "description": "Verificación de arranque y configuración de la aplicación web.",
+    "environment": "Ambiente",
+    "bffWeb": "BFF web",
+    "bffConfigured": "Configurado",
+    "bffNotConfigured": "No configurado",
+    "language": "Idioma",
+    "diagnosticId": "Identificador de diagnóstico"
+  },
+  "events": {
+    "create": {
+      "title": "Crear evento",
+      "intro": "Prepara un evento deportivo como borrador. Podrás publicarlo más adelante.",
+      "sections": {
+        "event": "Evento",
+        "location": "Ubicación",
+        "schedule": "Fecha y duración",
+        "capacity": "Capacidad"
+      },
+      "fields": {
+        "name": "Nombre del evento",
+        "description": "Descripción",
+        "discipline": "Disciplina",
+        "locationName": "Nombre del lugar",
+        "address": "Dirección",
+        "city": "Ciudad",
+        "countryCode": "País (código)",
+        "startDate": "Fecha de inicio",
+        "startTime": "Hora de inicio",
+        "startsAt": "Fecha y hora de inicio",
+        "timeZone": "Zona horaria",
+        "durationMinutes": "Duración (min)",
+        "capacity": "Capacidad (personas)"
+      },
+      "hints": {
+        "discipline": "Por ejemplo: Running, Ciclismo, Triatlón.",
+        "description": "Entre {{min}} y {{max}} caracteres.",
+        "countryCode": "Código ISO de 2 letras, por ejemplo CO o MX.",
+        "timeZone": "Zona horaria del lugar del evento; la fecha y la hora se interpretan en ella.",
+        "durationMinutes": "De {{min}} a {{max}} minutos.",
+        "capacity": "De {{min}} a {{max}} personas."
+      },
+      "actions": {
+        "create": "Crear borrador",
+        "creating": "Creando…",
+        "createAnother": "Crear otro evento"
+      },
+      "retrying": "El servicio no respondió. Reintentando ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "El evento no se creó porque no cumple estas reglas:",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa los datos y vuelve a crear el borrador.",
+        "retryHint": "Puedes volver a intentarlo: si el evento ya se había guardado, no se creará otro."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "fieldRequest": "Solicitud",
+        "required": "es obligatorio.",
+        "field_not_allowed": "no está permitido.",
+        "invalid_length": "la longitud no es válida.",
+        "unknown_value": "el valor no es válido.",
+        "not_in_future": "debe ser una fecha futura.",
+        "out_of_range": "está fuera del rango permitido.",
+        "time_zone_unknown": "la zona horaria no es válida.",
+        "time_zone_offset_mismatch": "la hora no existe o no coincide con la zona horaria en esa fecha.",
+        "unknown": "no cumple las reglas del evento."
+      },
+      "created": {
+        "title": "Borrador creado",
+        "message": "El evento «{{name}}» quedó guardado como borrador.",
+        "replayed": "Este borrador ya se había creado con esta misma solicitud; no se creó otro.",
+        "draftNote": "Los borradores no aparecen en el catálogo ni en el calendario públicos."
+      },
+      "summary": {
+        "status": "Estado",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "minutes": "{{value}} min",
+        "version": "Versión"
+      },
+      "status": {
+        "DRAFT": "Borrador"
+      }
+    },
+    "publish": {
+      "title": "Publicar eventos",
+      "intro": "Revisa tus eventos y publica un borrador para que los deportistas puedan verlo e inscribirse.",
+      "list": {
+        "statusLabel": "Estado de los eventos",
+        "tabs": {
+          "DRAFT": "Borradores",
+          "PUBLISHED": "Publicados"
+        },
+        "label": {
+          "DRAFT": "Eventos en borrador",
+          "PUBLISHED": "Eventos publicados"
+        },
+        "empty": {
+          "DRAFT": "No tienes eventos en borrador.",
+          "PUBLISHED": "Aún no has publicado eventos."
+        },
+        "startsAt": "Inicio en tu hora: {{date}}",
+        "eventTime": "Hora del evento: {{date}} ({{timeZone}})",
+        "publishedAt": "Publicado el {{date}}",
+        "recent": "Recién publicado",
+        "countMore": "Eventos mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Eventos mostrados: {{count}}.",
+        "loadMore": "Cargar más"
+      },
+      "detail": {
+        "choose": "Elige un evento de la lista para revisarlo."
+      },
+      "fields": {
+        "status": "Estado",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "publishedAt": "Publicado el",
+        "version": "Versión"
+      },
+      "eventTime": "hora del evento: {{date}} ({{timeZone}})",
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado"
+      },
+      "actions": {
+        "publish": "Publicar",
+        "confirm": "Confirmar publicación",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar"
+      },
+      "confirm": {
+        "title": "¿Publicar «{{name}}»?",
+        "message": "El evento quedará visible para los deportistas y abierto a inscripciones. Desde aquí no podrás despublicarlo."
+      },
+      "warnings": {
+        "startsInPast": "La fecha de inicio de este evento ya pasó. Si intentas publicarlo, el sistema lo rechazará."
+      },
+      "retrying": "No pudimos confirmar la publicación. Reintentando ({{attempt}} de {{max}})…",
+      "result": {
+        "title": "Evento publicado",
+        "message": "«{{name}}» ya está publicado.",
+        "replayed": "Esta publicación ya se había confirmado; no se volvió a publicar.",
+        "visibility": "Los deportistas lo verán en el catálogo y en su calendario en unos instantes."
+      },
+      "violations": {
+        "title": "El evento no se publicó porque le faltan estos requisitos:",
+        "stillDraft": "El evento sigue como borrador."
+      },
+      "alreadyPublished": "Este evento ya está publicado.",
+      "errors": {
+        "notFound": "No encontramos este evento o no te pertenece.",
+        "idempotencyKeyReused": "No pudimos confirmar esta publicación. Inténtalo de nuevo.",
+        "retryHint": "Si vuelves a intentarlo, el evento no se publicará dos veces."
+      }
+    }
+  },
+  "services": {
+    "availability": {
+      "title": "Servicios",
+      "titleMedical": "Servicios médicos y deportivos",
+      "intro": "Explora los servicios publicados por profesionales y sus horarios disponibles. Consultar no reserva ningún cupo.",
+      "filters": {
+        "label": "Filtros de servicios",
+        "from": "Desde",
+        "to": "Hasta",
+        "category": "Categoría",
+        "modality": "Modalidad",
+        "includeUnavailable": "Mostrar también servicios sin espacios en el periodo",
+        "apply": "Buscar",
+        "clear": "Limpiar",
+        "hint": "Periodo de hasta {{max}} días. Los horarios se muestran en tu zona horaria ({{zone}}).",
+        "periodTooLong": "El periodo no puede superar {{max}} días.",
+        "toBeforeFrom": "La fecha final no puede ser anterior a la inicial."
+      },
+      "categories": {
+        "SPORTS_MEDICINE": "Medicina deportiva",
+        "COACHING": "Entrenamiento",
+        "NUTRITION": "Nutrición",
+        "TRANSPORT": "Transporte",
+        "ACCOMPANIMENT": "Acompañamiento"
+      },
+      "modalities": {
+        "IN_PERSON": "Presencial",
+        "VIRTUAL": "Virtual",
+        "HYBRID": "Híbrida"
+      },
+      "billingUnits": {
+        "SERVICE": "por servicio",
+        "SESSION": "por sesión",
+        "HOUR": "por hora",
+        "DAY": "por día"
+      },
+      "price": {
+        "label": "Tarifa",
+        "value": "{{amount}} {{unit}}",
+        "note": "Tarifa informativa: no está incluida en tu plan y consultarla no reserva ni cobra nada."
+      },
+      "intervals": {
+        "title": "Horarios disponibles",
+        "range": "{{start}} – {{end}}",
+        "capacity": "Cupo: {{count}}",
+        "serviceZone": "Zona horaria del servicio: {{zone}}"
+      },
+      "unavailable": "Sin espacios en el periodo",
+      "restricted": {
+        "SPORTS_MEDICINE": "La categoría Medicina deportiva está disponible con el plan Premium. Podrás comparar los planes en «Mi plan» (Próximamente)."
+      },
+      "listLabel": "Servicios disponibles",
+      "empty": "No hay servicios disponibles para este periodo y estos filtros.",
+      "countAll": "Servicios mostrados: {{count}}.",
+      "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
+      "loadMore": "Cargar más"
+    }
+  }
+}

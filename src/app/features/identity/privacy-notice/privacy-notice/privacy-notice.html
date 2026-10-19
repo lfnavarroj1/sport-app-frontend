@@ -1,0 +1,79 @@
+<div class="privacy-notice" data-testid="privacy-notice">
+  <dl class="privacy-notice__meta" data-testid="privacy-notice-meta">
+    <dt>{{ 'privacyNotice.meta.version' | translate }}</dt>
+    <dd data-testid="privacy-notice-version">{{ version }}</dd>
+    <dt>{{ 'privacyNotice.meta.effectiveDate' | translate }}</dt>
+    <dd class="privacy-notice__pending">{{ 'privacyNotice.pending' | translate }}</dd>
+  </dl>
+
+  <p>{{ 'privacyNotice.intro' | translate }}</p>
+  <p class="privacy-notice__note">{{ 'privacyNotice.referencesNote' | translate }}</p>
+
+  @for (section of sections; track section.id) {
+    @let headingId = idPrefix() + '-' + section.id;
+    <section class="privacy-notice__section" [attr.aria-labelledby]="headingId">
+      @if (headingLevel() === 2) {
+        <h2 [id]="headingId">
+          {{ 'privacyNotice.sections.' + section.id + '.title' | translate }}
+        </h2>
+      } @else {
+        <h3 [id]="headingId">
+          {{ 'privacyNotice.sections.' + section.id + '.title' | translate }}
+        </h3>
+      }
+      @for (index of indexes(section.paragraphs); track index) {
+        <p>{{ 'privacyNotice.sections.' + section.id + '.paragraphs.' + index | translate }}</p>
+      }
+      @if (section.items > 0) {
+        <ul>
+          @for (index of indexes(section.items); track index) {
+            <li>{{ 'privacyNotice.sections.' + section.id + '.items.' + index | translate }}</li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <section class="privacy-notice__section" [attr.aria-labelledby]="idPrefix() + '-references'">
+    @if (headingLevel() === 2) {
+      <h2 [id]="idPrefix() + '-references'">
+        {{ 'privacyNotice.sections.references.title' | translate }}
+      </h2>
+    } @else {
+      <h3 [id]="idPrefix() + '-references'">
+        {{ 'privacyNotice.sections.references.title' | translate }}
+      </h3>
+    }
+    <p>{{ 'privacyNotice.sections.references.paragraphs.0' | translate }}</p>
+    <ul>
+      @for (reference of references; track reference.id) {
+        <li>
+          <a
+            [href]="reference.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.data-testid]="'privacy-notice-link-' + reference.id"
+          >
+            {{ 'privacyNotice.references.' + reference.id | translate }}
+            <span class="privacy-notice__sr-only">{{
+              'privacyNotice.opensInNewTab' | translate
+            }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="privacy-notice__section" [attr.aria-labelledby]="idPrefix() + '-changes'">
+    @if (headingLevel() === 2) {
+      <h2 [id]="idPrefix() + '-changes'">
+        {{ 'privacyNotice.sections.changes.title' | translate }}
+      </h2>
+    } @else {
+      <h3 [id]="idPrefix() + '-changes'">
+        {{ 'privacyNotice.sections.changes.title' | translate }}
+      </h3>
+    }
+    <p>{{ 'privacyNotice.sections.changes.paragraphs.0' | translate: { version: version } }}</p>
+  </section>
+</div>

@@ -1,0 +1,122 @@
+<section class="events-page">
+  <header class="events-page__header">
+    <h1>{{ 'events.publish.title' | translate }}</h1>
+    <p>{{ 'events.publish.intro' | translate }}</p>
+  </header>
+
+  <div class="publish-events">
+    <mat-card appearance="outlined" class="events-page__card publish-events__list">
+      <mat-card-content>
+        <mat-button-toggle-group
+          class="publish-events__tabs"
+          [value]="status()"
+          (change)="selectStatus($event.value)"
+          [attr.aria-label]="'events.publish.list.statusLabel' | translate"
+        >
+          <mat-button-toggle value="DRAFT" data-testid="events-tab-draft">
+            {{ 'events.publish.list.tabs.DRAFT' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle value="PUBLISHED" data-testid="events-tab-published">
+            {{ 'events.publish.list.tabs.PUBLISHED' | translate }}
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <app-async-state [state]="state()" [emptyMessageKey]="emptyKey()" (retry)="loadFirst()">
+          <ul
+            #list
+            class="publish-events__items"
+            data-testid="organizer-events-list"
+            [attr.aria-label]="'events.publish.list.label.' + status() | translate"
+          >
+            @for (item of listed(); track item.event.id) {
+              @let event = item.event;
+              <li class="publish-events__item" [attr.data-event]="event.id">
+                <a
+                  class="publish-events__link"
+                  [routerLink]="[event.id]"
+                  routerLinkActive="publish-events__link--active"
+                  ariaCurrentWhenActive="page"
+                >
+                  <span class="publish-events__name">{{ event.name }}</span>
+                  <span class="publish-events__meta">
+                    {{ event.discipline }} · {{ event.location.city }}
+                  </span>
+                  <span class="publish-events__meta">
+                    {{
+                      'events.publish.list.startsAt'
+                        | translate: { date: (event.startsAt | date: 'medium') }
+                    }}
+                  </span>
+                  <span class="publish-events__meta">
+                    {{
+                      'events.publish.list.eventTime'
+                        | translate
+                          : { date: inZone(event.startsAt, event), timeZone: event.timeZone }
+                    }}
+                  </span>
+                  @if (event.publishedAt) {
+                    <span class="publish-events__meta">
+                      {{
+                        'events.publish.list.publishedAt'
+                          | translate: { date: (event.publishedAt | date: 'medium') }
+                      }}
+                    </span>
+                  }
+                  @if (item.recent) {
+                    <span class="publish-events__badge" data-testid="event-recently-published">
+                      {{ 'events.publish.list.recent' | translate }}
+                    </span>
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+
+          <p class="publish-events__count" role="status" data-testid="organizer-events-count">
+            {{
+              (nextCursor() ? 'events.publish.list.countMore' : 'events.publish.list.countAll')
+                | translate: { count: listed().length }
+            }}
+          </p>
+
+          @if (moreError(); as error) {
+            <div class="events-page__error" role="alert" data-testid="organizer-events-more-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p class="events-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (nextCursor()) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
+              {{
+                (loadingMore()
+                  ? 'common.state.loading'
+                  : moreError()
+                    ? 'common.state.retry'
+                    : 'events.publish.list.loadMore'
+                ) | translate
+              }}
+            </button>
+          }
+        </app-async-state>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="publish-events__detail">
+      @if (!detailOpen()) {
+        <p class="events-page__note" data-testid="event-detail-placeholder">
+          {{ 'events.publish.detail.choose' | translate }}
+        </p>
+      }
+      <router-outlet (activate)="detailOpen.set(true)" (deactivate)="detailOpen.set(false)" />
+    </div>
+  </div>
+</section>

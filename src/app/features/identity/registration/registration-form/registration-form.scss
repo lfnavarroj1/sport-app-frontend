@@ -1,0 +1,77 @@
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.registration-form__policies {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+
+  legend {
+    margin-bottom: 0.5rem;
+    font: var(--mat-sys-title-small);
+  }
+}
+
+.registration-form__policy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.5rem;
+}
+
+.registration-form__policy-error {
+  flex-basis: 100%;
+  margin: 0 0 0.5rem;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-small);
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+}
+
+.registration-form__policy-summary {
+  margin: 0 0 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.registration-form__notice-toggle {
+  align-self: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+// El aviso completo dentro del formulario: desplazable para no alargar la tarjeta.
+.registration-form__notice {
+  max-height: 22rem;
+  margin-bottom: 0.75rem;
+  padding: 0 1rem;
+  overflow-y: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+}
+
+.registration-form__policy a {
+  color: var(--mat-sys-primary);
+  text-decoration: underline;
+}
+
+.registration-form__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.registration-form__submit {
+  width: 100%;
+  height: 3rem;
+  font-size: 1rem;
+}

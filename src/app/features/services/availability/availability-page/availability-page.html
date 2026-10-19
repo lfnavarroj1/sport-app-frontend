@@ -1,0 +1,180 @@
+<section class="availability-page">
+  <header class="availability-page__header">
+    <h1>{{ titleKey | translate }}</h1>
+    <p>{{ 'services.availability.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="availability-page__card">
+    <mat-card-content>
+      <form
+        class="availability__filters"
+        data-testid="availability-filters"
+        [formGroup]="form"
+        (ngSubmit)="applyFilters()"
+        novalidate
+        [attr.aria-label]="'services.availability.filters.label' | translate"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'services.availability.filters.from' | translate }}</mat-label>
+          <input matInput type="date" formControlName="fromDate" required />
+          <mat-error><app-field-error [control]="form.controls.fromDate" /></mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'services.availability.filters.to' | translate }}</mat-label>
+          <input matInput type="date" formControlName="toDate" required />
+          <mat-error><app-field-error [control]="form.controls.toDate" /></mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'services.availability.filters.category' | translate }}</mat-label>
+          <mat-select formControlName="categories" multiple>
+            @for (category of categoryOptions; track category) {
+              <mat-option [value]="category">{{
+                'services.availability.categories.' + category | translate
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'services.availability.filters.modality' | translate }}</mat-label>
+          <mat-select formControlName="modalities" multiple>
+            @for (modality of modalityOptions; track modality) {
+              <mat-option [value]="modality">{{
+                'services.availability.modalities.' + modality | translate
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-checkbox class="availability__checkbox" formControlName="includeUnavailable">
+          {{ 'services.availability.filters.includeUnavailable' | translate }}
+        </mat-checkbox>
+        <div class="availability__filter-actions">
+          <button mat-flat-button type="submit">
+            {{ 'services.availability.filters.apply' | translate }}
+          </button>
+          <button mat-stroked-button type="button" (click)="clearFilters()">
+            {{ 'services.availability.filters.clear' | translate }}
+          </button>
+        </div>
+        @if (periodError(); as error) {
+          <p
+            class="availability__period-error"
+            role="alert"
+            data-testid="availability-period-error"
+          >
+            {{ error.key | translate: error.params }}
+          </p>
+        }
+        <p class="availability__hint">
+          {{
+            'services.availability.filters.hint' | translate: { max: maxDays, zone: browserZone }
+          }}
+        </p>
+      </form>
+
+      @if (medicalRestricted()) {
+        <p class="availability__restricted" role="note" data-testid="availability-restricted">
+          {{ 'services.availability.restricted.SPORTS_MEDICINE' | translate }}
+        </p>
+      }
+
+      <app-async-state
+        [state]="state()"
+        emptyMessageKey="services.availability.empty"
+        (retry)="loadFirst()"
+      >
+        <ul
+          #list
+          class="availability__list"
+          data-testid="availability-list"
+          [attr.aria-label]="'services.availability.listLabel' | translate"
+        >
+          @for (service of services(); track service.id) {
+            @let unit =
+              'services.availability.billingUnits.' + service.price.billingUnit | translate;
+            <li class="availability__service" [attr.data-service]="service.id">
+              <h2 class="availability__name" tabindex="-1">{{ service.name }}</h2>
+              @if (!service.available) {
+                <p class="availability__unavailable" data-testid="availability-unavailable">
+                  {{ 'services.availability.unavailable' | translate }}
+                </p>
+              }
+              <p class="availability__description">{{ service.description }}</p>
+              <dl class="availability__facts">
+                <dt>{{ 'services.availability.filters.category' | translate }}</dt>
+                <dd>{{ 'services.availability.categories.' + service.category | translate }}</dd>
+                <dt>{{ 'services.availability.filters.modality' | translate }}</dt>
+                <dd>{{ 'services.availability.modalities.' + service.modality | translate }}</dd>
+                <dt>{{ 'services.availability.price.label' | translate }}</dt>
+                <dd data-testid="availability-price">
+                  {{
+                    'services.availability.price.value'
+                      | translate: { amount: price(service.price.amount), unit: unit }
+                  }}
+                </dd>
+              </dl>
+              <p class="availability__note">
+                {{ 'services.availability.price.note' | translate }}
+              </p>
+              @if (service.intervals.length > 0) {
+                <h3 class="availability__subtitle">
+                  {{ 'services.availability.intervals.title' | translate }}
+                </h3>
+                <ul class="availability__intervals" data-testid="availability-intervals">
+                  @for (interval of service.intervals; track interval.startsAt) {
+                    @let shown = range(interval.startsAt, interval.endsAt);
+                    <li>
+                      <span>{{
+                        'services.availability.intervals.range'
+                          | translate: { start: shown.start, end: shown.end }
+                      }}</span>
+                      <span class="availability__capacity">{{
+                        'services.availability.intervals.capacity'
+                          | translate: { count: interval.capacity }
+                      }}</span>
+                      @if (interval.timeZone !== browserZone) {
+                        <span class="availability__zone">{{
+                          'services.availability.intervals.serviceZone'
+                            | translate: { zone: interval.timeZone }
+                        }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ul>
+
+        <p class="availability__count" role="status" data-testid="availability-count">
+          {{
+            (nextCursor() ? 'services.availability.countMore' : 'services.availability.countAll')
+              | translate: { count: services().length }
+          }}
+        </p>
+
+        @if (moreError(); as error) {
+          <div class="availability__error" role="alert" data-testid="availability-more-error">
+            <p>{{ 'common.errors.' + error.kind | translate }}</p>
+            @if (error.correlationId) {
+              <p class="availability__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        @if (nextCursor()) {
+          <button mat-stroked-button type="button" [disabled]="loadingMore()" (click)="loadMore()">
+            {{
+              (loadingMore()
+                ? 'common.state.loading'
+                : moreError()
+                  ? 'common.state.retry'
+                  : 'services.availability.loadMore'
+              ) | translate
+            }}
+          </button>
+        }
+      </app-async-state>
+    </mat-card-content>
+  </mat-card>
+</section>

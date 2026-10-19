@@ -1,0 +1,59 @@
+@if (user(); as user) {
+  <section class="actor-home">
+    <div class="actor-home__hero">
+      <p class="actor-home__role" data-testid="home-actor-type">
+        {{ 'registration.actorTypes.' + user.actorType | translate }}
+      </p>
+      <h1>{{ 'home.greeting' | translate: { name: user.fullName } }}</h1>
+      <p class="actor-home__intro">{{ 'home.intro.' + user.actorType | translate }}</p>
+    </div>
+
+    <div class="actor-home__body">
+      @if (planStatus(); as planStatus) {
+        <mat-card appearance="outlined" class="actor-home__card" data-testid="home-plan">
+          <mat-card-content>
+            <h2>
+              <mat-icon aria-hidden="true">workspace_premium</mat-icon>
+              {{ 'home.plan.title' | translate }}
+            </h2>
+            <p role="status" [attr.data-plan-status]="planStatus">
+              {{ 'home.plan.' + planStatus | translate }}
+            </p>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      @if (features().length > 0) {
+        <mat-card appearance="outlined" class="actor-home__card" data-testid="home-features">
+          <mat-card-content>
+            <h2>{{ 'home.featuresTitle' | translate }}</h2>
+            <ul class="actor-home__features">
+              @for (item of features(); track item.id) {
+                <li class="actor-home__feature" [attr.data-feature]="item.id">
+                  <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                  <span class="actor-home__feature-text">
+                    <span class="actor-home__feature-name">{{
+                      'shell.items.' + item.id | translate
+                    }}</span>
+                    @if (!item.available) {
+                      <span class="actor-home__badge">{{ 'shell.upcoming' | translate }}</span>
+                    }
+                  </span>
+                </li>
+              }
+            </ul>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <mat-card appearance="outlined" class="actor-home__card">
+        <mat-card-content>
+          <dl>
+            <dt>{{ 'home.email' | translate }}</dt>
+            <dd data-testid="home-email">{{ user.email }}</dd>
+          </dl>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </section>
+}

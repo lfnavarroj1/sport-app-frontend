@@ -1,0 +1,136 @@
+// Mi perfil (HU005) dentro del área del deportista; mismo lenguaje visual que eventos.
+:host {
+  display: block;
+}
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+}
+
+.profile-page__header {
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  p {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-large);
+  }
+}
+
+.profile-page__card {
+  border: 0;
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-card);
+}
+
+.profile-page__card--upcoming {
+  background: var(--mat-sys-surface-container-low);
+}
+
+.profile-page__title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-large);
+  font-weight: 700;
+}
+
+.profile-page__badge {
+  padding: 0.125rem 0.75rem;
+  border-radius: 999px;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-label-medium);
+}
+
+.profile-section {
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.profile-section__title {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-medium);
+  font-weight: 700;
+}
+
+.profile-page__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 1rem 0;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.profile-page__note {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.profile-page__error,
+.profile-page__warning,
+.profile-page__success,
+.profile-page__pending {
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.profile-page__error,
+.profile-page__warning {
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.profile-page__success {
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
+.profile-page__pending {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--mat-sys-surface-container-high);
+}
+
+.profile-page__reference {
+  margin-top: 0.25rem !important;
+  font: var(--mat-sys-body-small);
+}
+
+.profile-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

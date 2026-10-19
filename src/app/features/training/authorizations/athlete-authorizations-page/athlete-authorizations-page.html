@@ -1,0 +1,161 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.authorizations.title' | translate }}</h1>
+    <p>{{ 'training.authorizations.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <h2 class="training-page__step">{{ 'training.authorizations.grantTitle' | translate }}</h2>
+      <form class="authorizations__form" [formGroup]="form" (ngSubmit)="grant()" novalidate>
+        <mat-form-field
+          appearance="outline"
+          class="authorizations__email"
+          subscriptSizing="dynamic"
+        >
+          <mat-label>{{
+            'training.authorizations.fields.professionalEmail' | translate
+          }}</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="professionalEmail"
+            autocomplete="off"
+            required
+          />
+          <mat-hint>{{ 'training.authorizations.hints.professionalEmail' | translate }}</mat-hint>
+          <mat-error>
+            @if (email.hasError('professionalNotFound')) {
+              <span>{{ 'training.authorizations.errors.professionalNotFound' | translate }}</span>
+            } @else {
+              <app-field-error [control]="email" />
+            }
+          </mat-error>
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="submitting()">
+          {{
+            (submitting()
+              ? 'training.authorizations.actions.granting'
+              : 'training.authorizations.actions.grant'
+            ) | translate
+          }}
+        </button>
+      </form>
+
+      <div role="status" class="authorizations__notice" data-testid="authorization-notice">
+        @if (notice(); as notice) {
+          {{
+            (notice.alreadyActive
+              ? 'training.authorizations.notice.alreadyActive'
+              : 'training.authorizations.notice.granted'
+            ) | translate: { email: notice.email }
+          }}
+        }
+      </div>
+
+      @if (grantFailure(); as error) {
+        <div class="training-page__error" role="alert" data-testid="authorization-error">
+          <p>{{ failureMessage(error) | translate }}</p>
+          @if (error.correlationId) {
+            <p class="training-page__reference">
+              {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+            </p>
+          }
+        </div>
+      }
+
+      <h2 class="training-page__step authorizations__list-title">
+        {{ 'training.authorizations.listTitle' | translate }}
+      </h2>
+      <p class="authorizations__hint">{{ 'training.authorizations.listHint' | translate }}</p>
+      @if (entries().length === 0) {
+        <p data-testid="authorizations-empty">{{ 'training.authorizations.empty' | translate }}</p>
+      } @else {
+        <ul class="authorizations__list" data-testid="authorizations-list">
+          @for (entry of entries(); track entry.authorization.professionalId) {
+            <li
+              class="authorizations__item"
+              [attr.data-professional]="entry.authorization.professionalEmail"
+            >
+              <div class="authorizations__who">
+                <span class="authorizations__email-text">
+                  {{ entry.authorization.professionalEmail }}
+                </span>
+                <span class="authorizations__state">
+                  @if (entry.status === 'revoked') {
+                    {{ 'training.authorizations.status.revoked' | translate }}
+                  } @else {
+                    {{
+                      'training.authorizations.status.active'
+                        | translate: { date: (entry.authorization.grantedAt | date: 'medium') }
+                    }}
+                  }
+                </span>
+              </div>
+
+              @switch (entry.status) {
+                @case ('active') {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="askRevoke(entry.authorization.professionalId)"
+                  >
+                    {{ 'training.authorizations.actions.revoke' | translate }}
+                  </button>
+                }
+                @case ('revoked') {}
+                @default {
+                  <div
+                    class="authorizations__confirm"
+                    role="group"
+                    [attr.aria-label]="'training.authorizations.confirm.label' | translate"
+                  >
+                    <p>
+                      {{
+                        'training.authorizations.confirm.message'
+                          | translate: { email: entry.authorization.professionalEmail }
+                      }}
+                    </p>
+                    @if (entry.error; as error) {
+                      <div class="training-page__error" role="alert">
+                        <p>{{ 'common.errors.' + error.kind | translate }}</p>
+                        @if (error.correlationId) {
+                          <p class="training-page__reference">
+                            {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                          </p>
+                        }
+                      </div>
+                    }
+                    <div class="training-page__actions">
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="entry.status === 'revoking'"
+                        (click)="cancelRevoke(entry.authorization.professionalId)"
+                      >
+                        {{ 'training.authorizations.actions.cancel' | translate }}
+                      </button>
+                      <button
+                        mat-flat-button
+                        type="button"
+                        [disabled]="entry.status === 'revoking'"
+                        (click)="revoke(entry.authorization.professionalId)"
+                      >
+                        {{
+                          (entry.status === 'revoking'
+                            ? 'training.authorizations.actions.revoking'
+                            : 'training.authorizations.actions.confirmRevoke'
+                          ) | translate
+                        }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              }
+            </li>
+          }
+        </ul>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

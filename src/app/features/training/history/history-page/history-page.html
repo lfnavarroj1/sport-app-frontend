@@ -1,0 +1,191 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.history.title.' + scope.kind | translate }}</h1>
+    <p>{{ 'training.history.intro.' + scope.kind | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <form
+        class="history__filters"
+        [formGroup]="form"
+        (ngSubmit)="applyFilters()"
+        novalidate
+        [attr.aria-label]="'training.history.filters.label' | translate"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.history.filters.from' | translate }}</mat-label>
+          <input matInput type="date" formControlName="from" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.history.filters.to' | translate }}</mat-label>
+          <input matInput type="date" formControlName="to" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.history.filters.sport' | translate }}</mat-label>
+          <mat-select formControlName="sport">
+            <mat-option [value]="null">{{
+              'training.history.filters.allSports' | translate
+            }}</mat-option>
+            @for (sport of sportOptions(); track sport) {
+              <mat-option [value]="sport">{{ 'training.sports.' + sport | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="history__filter-actions">
+          <button mat-flat-button type="submit">
+            {{ 'training.history.filters.apply' | translate }}
+          </button>
+          <button mat-stroked-button type="button" (click)="clearFilters()">
+            {{ 'training.history.filters.clear' | translate }}
+          </button>
+        </div>
+        <p class="history__hint">{{ 'training.history.filters.hint' | translate }}</p>
+      </form>
+
+      @if (notAuthorized()) {
+        <div class="training-page__error" role="alert" data-testid="history-not-authorized">
+          <p>{{ 'training.history.errors.athleteNotAuthorized' | translate }}</p>
+        </div>
+      } @else {
+        <app-async-state [state]="state()" [emptyMessageKey]="emptyKey()" (retry)="loadFirst()">
+          <div class="history__table-wrapper">
+            <table
+              #table
+              class="history__table"
+              data-testid="history-table"
+              [attr.aria-label]="'training.history.tableLabel' | translate"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'training.history.columns.endedAt' | translate }}</th>
+                  <th scope="col">{{ 'training.history.columns.sport' | translate }}</th>
+                  <th scope="col">{{ 'training.history.columns.duration' | translate }}</th>
+                  <th scope="col">{{ 'training.history.columns.plan' | translate }}</th>
+                  <th scope="col">
+                    <span class="history__sr-only">{{
+                      'training.history.columns.detail' | translate
+                    }}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (session of sessions(); track session.id) {
+                  @let duration = durationText(session.durationSeconds);
+                  <tr
+                    [class.history__row--selected]="session.id === selectedId()"
+                    [attr.data-session]="session.id"
+                  >
+                    <td>
+                      {{ session.endedAt | date: 'medium' }}
+                    </td>
+                    <td>
+                      {{ 'training.sports.' + session.sport | translate }}
+                    </td>
+                    <td>
+                      {{ duration.key | translate: duration.params }}
+                    </td>
+                    <td>
+                      {{
+                        (session.planId ? 'training.history.plan.yes' : 'training.history.plan.no')
+                          | translate
+                      }}
+                    </td>
+                    <td>
+                      <button
+                        mat-button
+                        type="button"
+                        aria-controls="history-detail"
+                        [attr.aria-expanded]="session.id === selectedId()"
+                        (click)="toggleDetail(session.id)"
+                      >
+                        {{
+                          (session.id === selectedId()
+                            ? 'training.history.actions.hideDetail'
+                            : 'training.history.actions.showDetail'
+                          ) | translate
+                        }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <p class="history__count" role="status" data-testid="history-count">
+            {{
+              (nextCursor() ? 'training.history.countMore' : 'training.history.countAll')
+                | translate: { count: sessions().length }
+            }}
+          </p>
+
+          @if (moreError(); as error) {
+            <div class="training-page__error" role="alert" data-testid="history-more-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p class="training-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (nextCursor()) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
+              {{
+                (loadingMore()
+                  ? 'common.state.loading'
+                  : moreError()
+                    ? 'common.state.retry'
+                    : 'training.history.actions.loadMore'
+                ) | translate
+              }}
+            </button>
+          }
+
+          <section
+            id="history-detail"
+            class="history__detail"
+            aria-live="polite"
+            data-testid="history-detail"
+          >
+            @if (selected(); as session) {
+              @let duration = durationText(session.durationSeconds);
+              <h2 class="training-page__step">
+                {{ 'training.history.detail.title' | translate }}
+              </h2>
+              <dl>
+                <dt>{{ 'training.history.columns.sport' | translate }}</dt>
+                <dd>{{ 'training.sports.' + session.sport | translate }}</dd>
+                <dt>{{ 'training.history.detail.startedAt' | translate }}</dt>
+                <dd>{{ session.startedAt | date: 'medium' }}</dd>
+                <dt>{{ 'training.history.detail.endedAt' | translate }}</dt>
+                <dd>{{ session.endedAt | date: 'medium' }}</dd>
+                <dt>{{ 'training.history.columns.duration' | translate }}</dt>
+                <dd>{{ duration.key | translate: duration.params }}</dd>
+                <dt>{{ 'training.history.columns.plan' | translate }}</dt>
+                <dd>
+                  @if (session.planId && planRoute) {
+                    <a [routerLink]="[planRoute, session.planId]">
+                      {{ 'training.history.detail.viewPlan' | translate }}
+                    </a>
+                  } @else {
+                    {{
+                      (session.planId ? 'training.history.plan.yes' : 'training.history.plan.no')
+                        | translate
+                    }}
+                  }
+                </dd>
+              </dl>
+            }
+          </section>
+        </app-async-state>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

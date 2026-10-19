@@ -1,0 +1,4 @@
+# Fin de línea LF en todas las plataformas (Prettier y CI lo exigen).
+* text=auto eol=lf
+*.ico binary
+*.png binary

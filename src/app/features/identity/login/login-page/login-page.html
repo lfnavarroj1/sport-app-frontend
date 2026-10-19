@@ -1,0 +1,88 @@
+<app-auth-shell>
+  <mat-card appearance="outlined" class="login sa-auth-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h1>{{ 'login.title' | translate }}</h1>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (sessionExpired) {
+        <p class="login__notice" role="status" data-testid="login-session-expired">
+          {{ 'login.sessionExpired' | translate }}
+        </p>
+      }
+
+      @if (loggedOutKey; as key) {
+        <p class="login__notice" role="status" data-testid="login-logged-out">
+          {{ key | translate }}
+        </p>
+      }
+
+      @if (invalidCredentials()) {
+        <p class="login__error" role="alert" data-testid="login-error">
+          {{ 'login.errors.invalidCredentials' | translate }}
+        </p>
+      } @else if (tooManyAttempts(); as limit) {
+        <p class="login__error" role="alert" data-testid="login-error">
+          {{
+            (limit.minutes === null
+              ? 'login.errors.tooManyAttempts'
+              : 'login.errors.tooManyAttemptsWait'
+            ) | translate: { minutes: limit.minutes }
+          }}
+        </p>
+      } @else if (failure(); as error) {
+        <div class="login__error" role="alert" data-testid="login-error">
+          <p>{{ 'common.errors.' + error.kind | translate }}</p>
+          @if (error.correlationId) {
+            <p class="login__reference">
+              {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+            </p>
+          }
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="login__form">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'login.fields.email' | translate }}</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email" required />
+          <mat-error><app-field-error [control]="form.controls.email" /></mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'login.fields.password' | translate }}</mat-label>
+          <input
+            matInput
+            [type]="passwordVisible() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            required
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'login.fields.showPassword' | translate"
+            [attr.aria-pressed]="passwordVisible()"
+          >
+            <mat-icon aria-hidden="true">{{
+              passwordVisible() ? 'visibility_off' : 'visibility'
+            }}</mat-icon>
+          </button>
+          <mat-error><app-field-error [control]="form.controls.password" /></mat-error>
+        </mat-form-field>
+
+        <button mat-flat-button type="submit" [disabled]="submitting()" class="login__submit">
+          {{ (submitting() ? 'login.submitting' : 'login.submit') | translate }}
+        </button>
+      </form>
+
+      <p class="login__register">
+        {{ 'login.noAccount' | translate }}
+        <a routerLink="/registro">{{ 'login.createAccount' | translate }}</a>
+      </p>
+    </mat-card-content>
+  </mat-card>
+</app-auth-shell>

@@ -1,0 +1,365 @@
+<section class="profile-page" data-testid="profile-page">
+  <header class="profile-page__header">
+    <h1>{{ 'profile.title' | translate }}</h1>
+    <p>{{ 'profile.intro' | translate }}</p>
+  </header>
+
+  <mat-card
+    appearance="outlined"
+    class="profile-page__card profile-page__card--upcoming"
+    data-testid="profile-personal-upcoming"
+  >
+    <mat-card-content>
+      <h2 class="profile-page__title">
+        {{ 'profile.personal.title' | translate }}
+        <span class="profile-page__badge">{{ 'profile.upcoming' | translate }}</span>
+      </h2>
+      <p class="profile-page__note">{{ 'profile.personal.upcoming' | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu005">
+    <mat-card-content>
+      <h2 class="profile-page__title">{{ 'profile.hu005.title' | translate }}</h2>
+      <p class="profile-page__note">{{ 'profile.hu005.intro' | translate }}</p>
+
+      <app-async-state [state]="state()" (retry)="load()">
+        @if (projectionStalled()) {
+          <div class="profile-page__pending" role="status" data-testid="profile-projection-pending">
+            <p>{{ 'profile.projection.pending' | translate }}</p>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="profile-refresh"
+              [disabled]="refreshing()"
+              (click)="refreshNow()"
+            >
+              {{ 'profile.projection.refresh' | translate }}
+            </button>
+          </div>
+        }
+
+        <section class="profile-section" data-testid="demographic-section">
+          <h3 class="profile-section__title">{{ 'profile.demographic.title' | translate }}</h3>
+          @if (demographic.mode() === 'edit') {
+            @if (demographic.retryAttempt(); as attempt) {
+              <p class="profile-page__note" role="status" data-testid="demographic-retrying">
+                {{
+                  'profile.demographic.retrying' | translate: { attempt: attempt, max: maxRetries }
+                }}
+              </p>
+            }
+            @if (demographic.failure(); as error) {
+              <div
+                class="profile-page__error"
+                role="alert"
+                tabindex="-1"
+                data-testid="demographic-error"
+              >
+                <p>{{ failureMessage(error) | translate }}</p>
+                @if (retryable(error)) {
+                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
+                }
+                @if (error.correlationId) {
+                  <p class="profile-page__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+              </div>
+            }
+            <app-demographic-form
+              [initial]="demographic.displayed()"
+              [submitting]="demographic.submitting()"
+              [serverErrors]="demographic.violations()"
+              (submitted)="saveDemographic($event)"
+              (edited)="onEdited(demographic)"
+              (cancelled)="cancelEdit(demographic)"
+            />
+          } @else {
+            @if (demographic.saved(); as saved) {
+              <div
+                class="profile-page__success"
+                role="status"
+                tabindex="-1"
+                data-testid="demographic-saved"
+              >
+                <p>
+                  {{
+                    (saved.created
+                      ? 'profile.demographic.saved.created'
+                      : 'profile.demographic.saved.replaced'
+                    ) | translate
+                  }}
+                </p>
+                @if (saved.replayed) {
+                  <p data-testid="demographic-replayed">
+                    {{ 'profile.saved.replayed' | translate }}
+                  </p>
+                }
+              </div>
+            }
+            @if (demographic.conflict()) {
+              <p
+                class="profile-page__warning"
+                role="alert"
+                tabindex="-1"
+                data-testid="demographic-conflict"
+              >
+                {{ 'profile.demographic.conflict' | translate }}
+              </p>
+            }
+            @if (demographic.displayed(); as section) {
+              <dl class="profile-page__facts" data-testid="demographic-summary">
+                <dt>{{ 'profile.demographic.summary.birthDate' | translate }}</dt>
+                <dd>{{ birthDate(section.birthDate) }}</dd>
+                <dt>{{ 'profile.demographic.summary.gender' | translate }}</dt>
+                <dd>{{ 'profile.demographic.genders.' + section.gender | translate }}</dd>
+                <dt>{{ 'profile.demographic.summary.country' | translate }}</dt>
+                <dd>{{ country(section.countryCode) }}</dd>
+                <dt>{{ 'profile.demographic.summary.city' | translate }}</dt>
+                <dd>{{ section.city }}</dd>
+                <dt>{{ 'profile.demographic.summary.maritalStatus' | translate }}</dt>
+                <dd>
+                  {{
+                    (section.maritalStatus
+                      ? 'profile.demographic.maritalStatuses.' + section.maritalStatus
+                      : 'profile.demographic.notSpecified'
+                    ) | translate
+                  }}
+                </dd>
+                <dt>{{ 'profile.demographic.summary.occupation' | translate }}</dt>
+                <dd>
+                  {{ section.occupation ?? ('profile.demographic.notSpecified' | translate) }}
+                </dd>
+                <dt>{{ 'profile.demographic.summary.incomeRange' | translate }}</dt>
+                <dd>
+                  {{
+                    (section.incomeRange
+                      ? 'profile.demographic.incomeRanges.' + section.incomeRange
+                      : 'profile.demographic.notSpecified'
+                    ) | translate
+                  }}
+                </dd>
+                <dt>{{ 'profile.demographic.summary.updatedAt' | translate }}</dt>
+                <dd>{{ instant(section.updatedAt) }}</dd>
+              </dl>
+              <div class="profile-page__actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="demographic.pending()"
+                  (click)="startEdit(demographic)"
+                >
+                  {{ 'profile.demographic.actions.edit' | translate }}
+                </button>
+              </div>
+            } @else {
+              <p class="profile-page__note" data-testid="demographic-empty">
+                {{ 'profile.demographic.empty' | translate }}
+              </p>
+              <div class="profile-page__actions">
+                <button
+                  mat-flat-button
+                  type="button"
+                  [disabled]="demographic.pending()"
+                  (click)="startEdit(demographic)"
+                >
+                  {{ 'profile.demographic.actions.register' | translate }}
+                </button>
+              </div>
+            }
+          }
+        </section>
+
+        <section class="profile-section" data-testid="physiological-section">
+          <h3 class="profile-section__title">{{ 'profile.physiological.title' | translate }}</h3>
+          @if (physiological.mode() === 'edit' && consentVersion !== null) {
+            @if (physiological.retryAttempt(); as attempt) {
+              <p class="profile-page__note" role="status" data-testid="physiological-retrying">
+                {{
+                  'profile.physiological.retrying'
+                    | translate: { attempt: attempt, max: maxRetries }
+                }}
+              </p>
+            }
+            @if (physiological.failure(); as error) {
+              <div
+                class="profile-page__error"
+                role="alert"
+                tabindex="-1"
+                data-testid="physiological-error"
+              >
+                <p>{{ failureMessage(error) | translate }}</p>
+                @if (retryable(error)) {
+                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
+                }
+                @if (error.correlationId) {
+                  <p class="profile-page__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+              </div>
+            }
+            <app-physiological-form
+              [initial]="physiological.displayed()"
+              [consentVersion]="consentVersion"
+              [submitting]="physiological.submitting()"
+              [serverErrors]="physiological.violations()"
+              (submitted)="savePhysiological($event)"
+              (edited)="onEdited(physiological)"
+              (cancelled)="cancelEdit(physiological)"
+            />
+          } @else {
+            @if (physiological.saved(); as saved) {
+              <div
+                class="profile-page__success"
+                role="status"
+                tabindex="-1"
+                data-testid="physiological-saved"
+              >
+                <p>
+                  {{
+                    (saved.created
+                      ? 'profile.physiological.saved.created'
+                      : 'profile.physiological.saved.replaced'
+                    ) | translate
+                  }}
+                </p>
+                @if (saved.replayed) {
+                  <p data-testid="physiological-replayed">
+                    {{ 'profile.saved.replayed' | translate }}
+                  </p>
+                }
+              </div>
+            }
+            @if (physiological.conflict()) {
+              <p
+                class="profile-page__warning"
+                role="alert"
+                tabindex="-1"
+                data-testid="physiological-conflict"
+              >
+                {{ 'profile.physiological.conflict' | translate }}
+              </p>
+            }
+            @if (consentVersion === null) {
+              <p class="profile-page__note" data-testid="physiological-unavailable">
+                {{ 'profile.physiological.unavailable' | translate }}
+              </p>
+            }
+            @if (physiological.displayed(); as section) {
+              <dl class="profile-page__facts" data-testid="physiological-summary">
+                <dt>{{ 'profile.physiological.summary.measuredAt' | translate }}</dt>
+                <dd>{{ instant(section.measuredAt) }}</dd>
+                <dt>{{ 'profile.physiological.summary.weight' | translate }}</dt>
+                <dd>
+                  {{
+                    'profile.physiological.values.weight'
+                      | translate: { value: decimal(section.weightKg) }
+                  }}
+                </dd>
+                <dt>{{ 'profile.physiological.summary.height' | translate }}</dt>
+                <dd>
+                  {{
+                    'profile.physiological.values.height' | translate: { value: section.heightCm }
+                  }}
+                </dd>
+                <dt>{{ 'profile.physiological.summary.bmi' | translate }}</dt>
+                <dd data-testid="physiological-bmi">{{ decimal(section.bmi) }}</dd>
+                <dt>{{ 'profile.physiological.summary.restingHeartRate' | translate }}</dt>
+                <dd>
+                  @if (section.restingHeartRateBpm !== null) {
+                    {{
+                      'profile.physiological.values.heartRate'
+                        | translate: { value: section.restingHeartRateBpm }
+                    }}
+                  } @else {
+                    {{ 'profile.physiological.summary.notProvided' | translate }}
+                  }
+                </dd>
+                <dt>{{ 'profile.physiological.summary.bloodPressure' | translate }}</dt>
+                <dd>
+                  @if (section.bloodPressure; as pressure) {
+                    {{
+                      'profile.physiological.values.bloodPressure'
+                        | translate: { systolic: pressure.systolic, diastolic: pressure.diastolic }
+                    }}
+                  } @else {
+                    {{ 'profile.physiological.summary.notProvided' | translate }}
+                  }
+                </dd>
+                <dt>{{ 'profile.physiological.summary.bodyTemperature' | translate }}</dt>
+                <dd>
+                  @if (section.bodyTemperatureC; as temperature) {
+                    {{
+                      'profile.physiological.values.temperature'
+                        | translate: { value: decimal(temperature) }
+                    }}
+                  } @else {
+                    {{ 'profile.physiological.summary.notProvided' | translate }}
+                  }
+                </dd>
+                <dt>{{ 'profile.physiological.summary.consent' | translate }}</dt>
+                <dd>
+                  {{
+                    'profile.physiological.values.consent'
+                      | translate
+                        : {
+                            version: section.consentVersion,
+                            date: instant(section.consentAcceptedAt),
+                          }
+                  }}
+                </dd>
+                <dt>{{ 'profile.physiological.summary.updatedAt' | translate }}</dt>
+                <dd>{{ instant(section.updatedAt) }}</dd>
+              </dl>
+              <p class="profile-page__note">{{ 'profile.physiological.bmiNote' | translate }}</p>
+              @if (consentVersion !== null) {
+                <div class="profile-page__actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="physiological.pending()"
+                    (click)="startEdit(physiological)"
+                  >
+                    {{ 'profile.physiological.actions.edit' | translate }}
+                  </button>
+                </div>
+              }
+            } @else {
+              <p class="profile-page__note" data-testid="physiological-empty">
+                {{ 'profile.physiological.empty' | translate }}
+              </p>
+              @if (consentVersion !== null) {
+                <div class="profile-page__actions">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="physiological.pending()"
+                    (click)="startEdit(physiological)"
+                  >
+                    {{ 'profile.physiological.actions.register' | translate }}
+                  </button>
+                </div>
+              }
+            }
+          }
+        </section>
+      </app-async-state>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card
+    appearance="outlined"
+    class="profile-page__card profile-page__card--upcoming"
+    data-testid="profile-habits-upcoming"
+  >
+    <mat-card-content>
+      <h2 class="profile-page__title">
+        {{ 'profile.habits.title' | translate }}
+        <span class="profile-page__badge">{{ 'profile.upcoming' | translate }}</span>
+      </h2>
+      <p class="profile-page__note">{{ 'profile.habits.upcoming' | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+</section>

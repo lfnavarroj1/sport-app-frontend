@@ -1,0 +1,80 @@
+<mat-sidenav-container class="actor-shell">
+  <mat-sidenav #sidenav id="actor-menu" class="actor-shell__menu" [mode]="mode()" [opened]="wide()">
+    <p class="actor-shell__role" data-testid="shell-role">
+      {{ 'registration.actorTypes.' + actor | translate }}
+    </p>
+
+    <div class="actor-shell__nav">
+      @for (section of sections(); track section.group) {
+        @if (section.group !== 'main') {
+          <h2 class="actor-shell__group" [id]="'menu-group-' + section.group">
+            {{ 'shell.groups.' + section.group | translate }}
+          </h2>
+        }
+        <mat-nav-list
+          [attr.aria-label]="section.group === 'main' ? ('shell.menuLabel' | translate) : null"
+          [attr.aria-labelledby]="section.group === 'main' ? null : 'menu-group-' + section.group"
+        >
+          @for (item of section.items; track item.id) {
+            @if (item.action === 'logout') {
+              <!-- HU004: acción, no ruta. -->
+              <app-logout-button />
+            } @else if (item.available && item.route) {
+              <a
+                mat-list-item
+                [routerLink]="item.route"
+                routerLinkActive="actor-shell__item--active"
+                ariaCurrentWhenActive="page"
+                [attr.data-menu-item]="item.id"
+                (click)="wide() || sidenav.close()"
+              >
+                <mat-icon matListItemIcon aria-hidden="true">{{ item.icon }}</mat-icon>
+                <span matListItemTitle>{{ 'shell.items.' + item.id | translate }}</span>
+              </a>
+            } @else {
+              <!-- Su HU aún no existe en la web: se muestra sin enlace ni acción. -->
+              <div class="actor-shell__upcoming" [attr.data-menu-item]="item.id">
+                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                <span class="actor-shell__upcoming-text">
+                  <span>{{ 'shell.items.' + item.id | translate }}</span>
+                  <span class="actor-shell__upcoming-line">{{ 'shell.upcoming' | translate }}</span>
+                </span>
+              </div>
+            }
+          }
+        </mat-nav-list>
+      }
+
+      @if (accessState(); as state) {
+        @if (state.status !== 'success') {
+          <!-- Sin la vista del BFF no se muestran opciones que exijan permiso o capacidad. -->
+          <div class="actor-shell__access" data-testid="shell-access">
+            <app-async-state [state]="state" (retry)="retry()" />
+          </div>
+        } @else if (planCapabilities && provisioning()) {
+          <section class="actor-shell__plan" role="status" data-testid="shell-plan-provisioning">
+            <h2 class="actor-shell__group">{{ 'shell.plan.title' | translate }}</h2>
+            <p>{{ 'shell.plan.provisioning' | translate }}</p>
+          </section>
+        }
+      }
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="actor-shell__content">
+    @if (!wide()) {
+      <button
+        mat-stroked-button
+        type="button"
+        class="actor-shell__toggle"
+        aria-controls="actor-menu"
+        [attr.aria-expanded]="sidenav.opened"
+        (click)="sidenav.toggle()"
+      >
+        <mat-icon aria-hidden="true">menu</mat-icon>
+        {{ 'shell.openMenu' | translate }}
+      </button>
+    }
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>
