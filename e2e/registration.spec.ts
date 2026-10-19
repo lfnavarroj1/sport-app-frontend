@@ -128,7 +128,12 @@ test.describe('HU001 Registrar usuario (simulador del contrato) @simulado', () =
     const alert = page.getByRole('alert').filter({ hasText: 'El servicio no está disponible' });
     await expect(alert).toContainText(SIMULATED_CORRELATION_ID);
 
-    await page.getByRole('button', { name: 'Registrarme' }).click();
+    // El aviso de error se inserta encima del formulario y desplaza el botón. En los
+    // runners de GitHub, el desplazamiento que hace Playwright antes de un clic llegó
+    // a aplicarse entre `mousedown` y `mouseup`: el `mouseup` caía fuera del botón y
+    // el navegador no generaba el `click` (CI 39137261093 y 39178032127). El reintento
+    // se activa con el teclado sobre el mismo botón, que no depende de coordenadas.
+    await page.getByRole('button', { name: 'Registrarme' }).press('Enter');
     await expect(page.getByText('Tu cuenta fue creada')).toBeVisible();
 
     expect(requests).toHaveLength(2);
