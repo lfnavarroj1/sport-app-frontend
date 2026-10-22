@@ -114,13 +114,13 @@ describe('ActorShell (ADR-025, HU003)', () => {
 
   it('las opciones «Próximamente» no son enlaces ni acciones', async () => {
     const element = await render('service_provider');
-    const create = item(element, 'service-create');
+    const publish = item(element, 'service-publish');
 
-    expect(create?.tagName).toBe('DIV');
-    expect(create?.querySelector('a, button')).toBeNull();
-    expect(create?.getAttribute('href')).toBeNull();
-    expect(create?.textContent).toContain('Crear servicio');
-    expect(create?.textContent).toContain('Próximamente');
+    expect(publish?.tagName).toBe('DIV');
+    expect(publish?.querySelector('a, button')).toBeNull();
+    expect(publish?.getAttribute('href')).toBeNull();
+    expect(publish?.textContent).toContain('Publicar servicios');
+    expect(publish?.textContent).toContain('Próximamente');
   });
 
   it('cada grupo del menú es una navegación etiquetada por su título', async () => {

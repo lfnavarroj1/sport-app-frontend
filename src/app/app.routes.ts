@@ -117,6 +117,14 @@ export const routes: Routes = [
   ]),
   actorArea('profesional', 'service_provider', [
     {
+      // HU015: el profesional crea un servicio en borrador (ADR-027).
+      path: 'servicios/nuevo',
+      loadChildren: () =>
+        import('./features/services/create-service/create-service.routes').then(
+          (module) => module.CREATE_SERVICE_ROUTES,
+        ),
+    },
+    {
       // HU010: el profesional crea, asigna y consulta planes de entrenamiento.
       path: 'entrenamientos/planes',
       loadChildren: () =>
