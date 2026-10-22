@@ -1,0 +1,268 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate class="service-form">
+  @if (summary().length > 0) {
+    <div class="service-form__errors" role="alert" tabindex="-1" data-testid="service-errors">
+      <p>{{ 'services.create.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          @let label = item.label;
+          <li>
+            @if (label.fieldKey) {
+              {{
+                'services.create.issues.item'
+                  | translate
+                    : {
+                        field:
+                          (label.key
+                          | translate
+                            : { number: label.number, field: (label.fieldKey | translate) }),
+                        rule: (item.issue | translate),
+                      }
+              }}
+            } @else {
+              {{
+                'services.create.issues.item'
+                  | translate: { field: (label.key | translate), rule: (item.issue | translate) }
+              }}
+            }
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <fieldset class="service-form__section">
+    <legend>{{ 'services.create.sections.service' | translate }}</legend>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'services.create.fields.name' | translate }}</mat-label>
+      <input matInput formControlName="name" [maxlength]="limits.nameMax" required />
+      <mat-error><app-service-field-error [control]="form.controls.name" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'services.create.fields.description' | translate }}</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        rows="4"
+        [maxlength]="limits.descriptionMax"
+        required
+      ></textarea>
+      <mat-hint>
+        {{
+          'services.create.hints.description'
+            | translate: { min: limits.descriptionMin, max: limits.descriptionMax }
+        }}
+      </mat-hint>
+      <mat-error><app-service-field-error [control]="form.controls.description" /></mat-error>
+    </mat-form-field>
+    <div class="service-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'services.create.fields.category' | translate }}</mat-label>
+        <mat-select formControlName="category" required>
+          @for (category of categories; track category) {
+            <mat-option [value]="category">
+              {{ 'services.availability.categories.' + category | translate }}
+            </mat-option>
+          }
+        </mat-select>
+        <mat-error><app-service-field-error [control]="form.controls.category" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'services.create.fields.modality' | translate }}</mat-label>
+        <mat-select formControlName="modality" required>
+          @for (modality of modalities; track modality) {
+            <mat-option [value]="modality">
+              {{ 'services.availability.modalities.' + modality | translate }}
+            </mat-option>
+          }
+        </mat-select>
+        <mat-error><app-service-field-error [control]="form.controls.modality" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="service-form__section">
+    <legend>{{ 'services.create.sections.price' | translate }}</legend>
+    <div class="service-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'services.create.fields.amount' | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="amount"
+          inputmode="decimal"
+          autocomplete="off"
+          maxlength="12"
+          required
+        />
+        <mat-hint data-testid="service-price-preview">
+          @if (pricePreview(); as preview) {
+            {{
+              (preview.free
+                ? 'services.create.hints.amountFree'
+                : 'services.create.hints.amountPreview'
+              ) | translate: { price: preview.formatted }
+            }}
+          } @else {
+            {{ 'services.create.hints.amount' | translate }}
+          }
+        </mat-hint>
+        <mat-error><app-service-field-error [control]="form.controls.amount" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'services.create.fields.currency' | translate }}</mat-label>
+        <mat-select formControlName="currency" required>
+          <mat-option [value]="currency">{{
+            'services.create.currencies.COP' | translate
+          }}</mat-option>
+        </mat-select>
+        <mat-hint>{{ 'services.create.hints.currency' | translate }}</mat-hint>
+        <mat-error><app-service-field-error [control]="form.controls.currency" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'services.create.fields.billingUnit' | translate }}</mat-label>
+        <mat-select formControlName="billingUnit" required>
+          @for (unit of billingUnits; track unit) {
+            <mat-option [value]="unit">
+              {{ 'services.create.billingUnits.' + unit | translate }}
+            </mat-option>
+          }
+        </mat-select>
+        <mat-error><app-service-field-error [control]="form.controls.billingUnit" /></mat-error>
+      </mat-form-field>
+    </div>
+    <p class="service-form__note">{{ 'services.create.hints.priceNote' | translate }}</p>
+  </fieldset>
+
+  <fieldset class="service-form__section" formArrayName="availability">
+    <legend>{{ 'services.create.sections.availability' | translate }}</legend>
+    <p class="service-form__note">
+      {{ 'services.create.intervals.rules' | translate: { max: limits.intervalsMax } }}
+    </p>
+
+    @if (intervals.length === 0) {
+      <p class="service-form__empty" data-testid="interval-empty">
+        {{ 'services.create.intervals.empty' | translate }}
+      </p>
+    }
+
+    @for (interval of intervals.controls; track interval; let index = $index) {
+      <fieldset
+        class="service-form__interval"
+        [formGroupName]="index"
+        [attr.data-interval]="index"
+        data-testid="interval"
+      >
+        <legend>
+          {{ 'services.create.intervals.item' | translate: { number: index + 1 } }}
+        </legend>
+        <div class="service-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'services.create.fields.startDate' | translate }}</mat-label>
+            <input matInput type="date" formControlName="startDate" required />
+            <mat-error>
+              <app-service-field-error [control]="interval.controls.startDate" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'services.create.fields.startTime' | translate }}</mat-label>
+            <input matInput type="time" formControlName="startTime" required />
+            <mat-error>
+              <app-service-field-error [control]="interval.controls.startTime" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'services.create.fields.endDate' | translate }}</mat-label>
+            <input matInput type="date" formControlName="endDate" required />
+            <mat-error>
+              <app-service-field-error [control]="interval.controls.endDate" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'services.create.fields.endTime' | translate }}</mat-label>
+            <input matInput type="time" formControlName="endTime" required />
+            <mat-error>
+              <app-service-field-error [control]="interval.controls.endTime" />
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="service-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'services.create.fields.timeZone' | translate }}</mat-label>
+            <input
+              matInput
+              formControlName="timeZone"
+              [matAutocomplete]="zones"
+              autocomplete="off"
+              required
+            />
+            <mat-autocomplete #zones="matAutocomplete">
+              @for (zone of timeZoneSuggestions(interval.controls.timeZone.value); track zone) {
+                <mat-option [value]="zone">{{ zone }}</mat-option>
+              }
+            </mat-autocomplete>
+            <mat-hint>{{ 'services.create.hints.timeZone' | translate }}</mat-hint>
+            <mat-error>
+              <app-service-field-error [control]="interval.controls.timeZone" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'services.create.fields.capacity' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="capacity"
+              [min]="limits.capacityMin"
+              [max]="limits.capacityMax"
+              step="1"
+              required
+            />
+            <mat-hint>
+              {{
+                'services.create.hints.capacity'
+                  | translate: { min: limits.capacityMin, max: limits.capacityMax }
+              }}
+            </mat-hint>
+            <mat-error>
+              <app-service-field-error [control]="interval.controls.capacity" />
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <button
+          mat-button
+          type="button"
+          class="service-form__remove"
+          data-testid="interval-remove"
+          (click)="removeInterval(index)"
+        >
+          <mat-icon aria-hidden="true">delete</mat-icon>
+          {{ 'services.create.intervals.remove' | translate: { number: index + 1 } }}
+        </button>
+      </fieldset>
+    }
+
+    <div class="service-form__add">
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="interval-add"
+        [disabled]="!canAddInterval()"
+        (click)="addInterval()"
+      >
+        <mat-icon aria-hidden="true">add</mat-icon>
+        {{ 'services.create.intervals.add' | translate }}
+      </button>
+      <span class="service-form__count" aria-live="polite" data-testid="interval-count">
+        {{
+          'services.create.intervals.count'
+            | translate: { count: intervals.length, max: limits.intervalsMax }
+        }}
+      </span>
+    </div>
+  </fieldset>
+
+  <button mat-flat-button type="submit" class="service-form__submit" [disabled]="submitting()">
+    {{
+      (submitting() ? 'services.create.actions.saving' : 'services.create.actions.save') | translate
+    }}
+  </button>
+</form>

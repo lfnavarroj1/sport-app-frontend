@@ -306,7 +306,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     planCapabilities: false,
     items: [
       home('/profesional/inicio'),
-      upcoming(
+      // HU015: el profesional crea un servicio en borrador (ADR-027).
+      permissionOption(
         'service-create',
         'services',
         100,

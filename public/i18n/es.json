@@ -857,6 +857,111 @@
     }
   },
   "services": {
+    "create": {
+      "title": "Crear servicio",
+      "intro": "Prepara la oferta de un servicio como borrador. Podrás revisarlo y publicarlo más adelante; mientras tanto, los deportistas no lo ven.",
+      "sections": {
+        "service": "Servicio",
+        "price": "Tarifa",
+        "availability": "Disponibilidad inicial (opcional)"
+      },
+      "fields": {
+        "name": "Nombre del servicio",
+        "description": "Descripción",
+        "category": "Categoría",
+        "modality": "Modalidad",
+        "amount": "Valor",
+        "currency": "Moneda",
+        "billingUnit": "Unidad de cobro",
+        "startDate": "Fecha de inicio",
+        "startTime": "Hora de inicio",
+        "endDate": "Fecha de fin",
+        "endTime": "Hora de fin",
+        "timeZone": "Zona horaria",
+        "capacity": "Cupo (personas)"
+      },
+      "currencies": {
+        "COP": "COP · Peso colombiano"
+      },
+      "billingUnits": {
+        "SERVICE": "Por servicio",
+        "SESSION": "Por sesión",
+        "HOUR": "Por hora",
+        "DAY": "Por día"
+      },
+      "hints": {
+        "description": "Entre {{min}} y {{max}} caracteres.",
+        "amount": "Sin separadores de miles; usa coma o punto para los decimales (hasta 2). Escribe 0 si el servicio es gratuito.",
+        "amountPreview": "Los deportistas verán {{price}}.",
+        "amountFree": "Los deportistas verán {{price}}: servicio gratuito.",
+        "currency": "Por ahora, las tarifas se publican solo en pesos colombianos.",
+        "priceNote": "La tarifa es un precio de referencia con los impuestos aplicables incluidos. No forma parte de los planes de afiliación y crear el servicio no genera cobros, facturas, pagos ni contrataciones.",
+        "timeZone": "Zona horaria en la que prestas el servicio; las fechas y horas se interpretan en ella.",
+        "capacity": "De {{min}} a {{max}} personas."
+      },
+      "validation": {
+        "amountFormat": "Usa un valor de hasta 9 cifras y 2 decimales, sin separadores de miles.",
+        "integer": "Ingresa un número entero."
+      },
+      "intervals": {
+        "rules": "Agrega hasta {{max}} horarios. Cada uno debe empezar en el futuro, durar como máximo 24 horas y terminar dentro de los próximos 365 días. Pueden ser seguidos, pero no superponerse.",
+        "empty": "Aún no agregas horarios. Puedes guardar el borrador sin disponibilidad; la necesitarás para publicar el servicio.",
+        "item": "Horario {{number}}",
+        "fieldOf": "Horario {{number}} · {{field}}",
+        "title": "Horario",
+        "add": "Agregar horario",
+        "remove": "Quitar horario {{number}}",
+        "count": "{{count}} de {{max}} horarios"
+      },
+      "actions": {
+        "save": "Guardar borrador",
+        "saving": "Guardando…",
+        "createAnother": "Crear otro servicio"
+      },
+      "retrying": "El servicio no respondió. Reintentando ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "El servicio no se guardó porque no cumple estas reglas:",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa los datos y vuelve a guardar el borrador.",
+        "retryHint": "Puedes volver a intentarlo: si el servicio ya se había guardado, no se creará otro."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "fieldRequest": "Solicitud",
+        "required": "es obligatorio.",
+        "field_not_allowed": "no está permitido.",
+        "unsupported_currency": "la moneda no está admitida; usa COP.",
+        "out_of_range": "está fuera del rango permitido.",
+        "too_many_decimals": "admite como máximo 2 decimales.",
+        "invalid_length": "la longitud no es válida.",
+        "unknown_value": "el valor no es válido.",
+        "not_in_future": "debe ser una fecha y hora futura.",
+        "ends_before_starts": "el fin debe ser posterior al inicio.",
+        "overlapping_interval": "se superpone con otro horario.",
+        "time_zone_unknown": "la zona horaria no es válida.",
+        "time_zone_offset_mismatch": "la hora no existe o no coincide con la zona horaria en esa fecha.",
+        "too_many_intervals": "supera el máximo de horarios permitido.",
+        "unknown": "no cumple las reglas del servicio."
+      },
+      "created": {
+        "title": "Borrador guardado",
+        "message": "El servicio «{{name}}» quedó guardado como borrador.",
+        "replayed": "Este borrador ya se había guardado con esta misma solicitud; no se creó otro.",
+        "noIntervals": "Sin horarios por ahora.",
+        "interval": "{{start}} – {{end}} ({{zone}}) · Cupo: {{capacity}}",
+        "draftNote": "Los borradores no aparecen en el catálogo de servicios hasta que los publiques."
+      },
+      "summary": {
+        "status": "Estado",
+        "price": "Tarifa",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "version": "Versión"
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado"
+      }
+    },
     "availability": {
       "title": "Servicios",
       "titleMedical": "Servicios médicos y deportivos",
