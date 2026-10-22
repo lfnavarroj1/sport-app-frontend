@@ -186,6 +186,16 @@ Feature `src/app/features/events/publish-event`, contrato `bff-web` 0.16.0 (`cor
 - No captura tarifa, inscritos ni notificaciones, ni edita el evento.
 - Pruebas: `e2e/publish-event.spec.ts` (`@simulado`) y `e2e/publish-event.integrated.spec.ts` (`@integrado`). La integrada crea el borrador por API con `POST /v1/events` de `bff-web` (la URL sale del `app-config.json` del ambiente), lo publica desde la pantalla y lo espera en publicados. También comprueba el `404` para un tercero, el `200` público y el `422 not_in_future`. Requiere `bff-web` 0.16.0 desplegado.
 
+## Crear servicio (HU015)
+
+Feature `src/app/features/services/create-service`, contrato `bff-web` 0.16.0 (`core/api/bff-web/services.api.ts`, `POST /v1/services`) y ADR-027.
+
+- `/profesional/servicios/nuevo` (permiso `services.create`): exactamente los campos de ADR-027. Categoría, modalidad, moneda (solo `COP`) y unidad de cobro son listas cerradas. El importe se escribe como texto con coma o punto y viaja como cadena decimal (`"85000.50"`), sin pasar por un número de punto flotante; el formato `es-CO` solo se usa para mostrarlo. `0` es un servicio gratuito.
+- Disponibilidad inicial opcional: hasta 100 horarios explícitos, cada uno con fecha y hora de inicio y fin locales, zona IANA (por defecto, la del navegador o la del horario anterior) y cupo de 1 a 100. La web compone cada instante con el desfase de su zona (`event-time.ts`). Sin horarios no se envía `availability`.
+- En la web solo se validan las restricciones del contrato (longitudes tras recortar, patrón del importe, catálogos, cupo y máximo de horarios). Futuro, duración de 24 h, horizonte de 365 días, orden, superposición y desfase los decide el backend: se listan desde `details[{field, issue}]` y se marcan en el horario indicado por `availability[i]`.
+- `Idempotency-Key` por intento lógico, con los mismos reintentos que HU021. `provider_id` nunca se envía. Se presenta el borrador devuelto por `201` (estado, versión, tarifa de referencia y horarios en su zona); no se publica, cobra ni contrata.
+- Pruebas: `e2e/create-service.spec.ts` (`@simulado`) y `e2e/create-service.integrated.spec.ts` (`@integrado`). La integrada pierde la primera respuesta en la red y comprueba que el reintento devuelve el mismo servicio con `Idempotent-Replayed`, que el borrador no aparece en el catálogo de un deportista, que el BFF rechaza al deportista con `403` y que las reglas de los horarios se marcan en su campo. Requiere `bff-web` 0.9.0 o superior desplegado.
+
 ## Disponibilidad de servicios (HU020)
 
 Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`core/api/bff-web/services-availability.api.ts`) y ADR-038.

@@ -1,0 +1,112 @@
+<section class="services-page">
+  <header class="services-page__header">
+    <h1>{{ 'services.create.title' | translate }}</h1>
+    <p>{{ 'services.create.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="services-page__card">
+    <mat-card-content>
+      @if (created(); as result) {
+        @let service = result.service;
+        <section role="status" data-testid="service-created">
+          <h2 #createdHeading tabindex="-1" class="services-page__step">
+            {{ 'services.create.created.title' | translate }}
+          </h2>
+          <p>{{ 'services.create.created.message' | translate: { name: service.name } }}</p>
+          @if (result.replayed) {
+            <p data-testid="service-replayed">
+              {{ 'services.create.created.replayed' | translate }}
+            </p>
+          }
+          <dl class="services-page__facts" data-testid="service-summary">
+            <dt>{{ 'services.create.summary.status' | translate }}</dt>
+            <dd data-testid="service-status">
+              {{ 'services.create.status.' + service.status | translate }}
+            </dd>
+            <dt>{{ 'services.create.fields.name' | translate }}</dt>
+            <dd>{{ service.name }}</dd>
+            <dt>{{ 'services.create.fields.description' | translate }}</dt>
+            <dd>{{ service.description }}</dd>
+            <dt>{{ 'services.create.fields.category' | translate }}</dt>
+            <dd>{{ 'services.availability.categories.' + service.category | translate }}</dd>
+            <dt>{{ 'services.create.fields.modality' | translate }}</dt>
+            <dd>{{ 'services.availability.modalities.' + service.modality | translate }}</dd>
+            <dt>{{ 'services.create.summary.price' | translate }}</dt>
+            <dd data-testid="service-price">
+              {{
+                'services.availability.price.value'
+                  | translate
+                    : {
+                        amount: price(service),
+                        unit:
+                          ('services.availability.billingUnits.' + service.price.billingUnit
+                          | translate),
+                      }
+              }}
+            </dd>
+            <dt>{{ 'services.create.summary.version' | translate }}</dt>
+            <dd>{{ service.version }}</dd>
+          </dl>
+          <p class="services-page__note">{{ 'services.create.hints.priceNote' | translate }}</p>
+
+          <h3 class="services-page__subtitle">
+            {{ 'services.create.sections.availability' | translate }}
+          </h3>
+          @if (service.intervals.length === 0) {
+            <p class="services-page__note" data-testid="service-no-intervals">
+              {{ 'services.create.created.noIntervals' | translate }}
+            </p>
+          } @else {
+            <ul class="services-page__intervals" data-testid="service-intervals">
+              @for (interval of service.intervals; track $index) {
+                <li>
+                  {{
+                    'services.create.created.interval'
+                      | translate
+                        : {
+                            start: inZone(interval.startsAt, interval.timeZone),
+                            end: inZone(interval.endsAt, interval.timeZone),
+                            zone: interval.timeZone,
+                            capacity: (interval.capacity | number),
+                          }
+                  }}
+                </li>
+              }
+            </ul>
+          }
+          <p class="services-page__note">{{ 'services.create.created.draftNote' | translate }}</p>
+          <div class="services-page__actions">
+            <button mat-flat-button type="button" (click)="createAnother()">
+              {{ 'services.create.actions.createAnother' | translate }}
+            </button>
+          </div>
+        </section>
+      } @else {
+        @if (retryAttempt(); as attempt) {
+          <p class="services-page__note" role="status" data-testid="service-retrying">
+            {{ 'services.create.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+          </p>
+        }
+        @if (failure(); as error) {
+          <div class="services-page__error" role="alert" data-testid="service-error">
+            <p>{{ failureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'services.create.errors.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="services-page__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        <app-create-service-form
+          [submitting]="submitting()"
+          [serverErrors]="violations()"
+          (submitted)="create($event)"
+          (edited)="onEdited()"
+        />
+      }
+    </mat-card-content>
+  </mat-card>
+</section>
