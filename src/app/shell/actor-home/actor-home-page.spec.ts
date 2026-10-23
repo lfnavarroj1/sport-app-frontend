@@ -79,7 +79,7 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     expect(features(element)).toContain('service-create');
     expect(features(element)).toContain('service-publish');
     expect(features(element)).not.toContain('event-create');
-    expect(element.querySelector('[data-feature="service-publish"]')?.textContent).toContain(
+    expect(element.querySelector('[data-feature="health-history"]')?.textContent).toContain(
       'Próximamente',
     );
   });

@@ -962,6 +962,74 @@
         "PUBLISHED": "Publicado"
       }
     },
+    "publish": {
+      "title": "Publicar servicios",
+      "intro": "Revisa tus servicios y publica un borrador para que los deportistas puedan encontrarlo en el catálogo.",
+      "list": {
+        "statusLabel": "Estado de los servicios",
+        "tabs": {
+          "DRAFT": "Borradores",
+          "PUBLISHED": "Publicados"
+        },
+        "label": {
+          "DRAFT": "Servicios en borrador",
+          "PUBLISHED": "Servicios publicados"
+        },
+        "empty": {
+          "DRAFT": "No tienes servicios en borrador. Crea uno desde «Crear servicio».",
+          "PUBLISHED": "Todavía no has publicado servicios."
+        },
+        "futureIntervals": "Horarios futuros: {{count}}",
+        "publishedAt": "Publicado el {{date}}",
+        "countAll": "Servicios mostrados: {{count}}.",
+        "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
+        "loadMore": "Cargar más"
+      },
+      "detail": {
+        "choose": "Elige un servicio de la lista para revisar sus requisitos y publicarlo."
+      },
+      "fields": {
+        "publishedAt": "Publicado el"
+      },
+      "requirements": {
+        "title": "Requisitos para publicar",
+        "price": "Tarifa en COP",
+        "availability": "Disponibilidad futura",
+        "noUpcoming": "Sin horarios futuros.",
+        "priceNote": "La tarifa es un precio de referencia con los impuestos aplicables incluidos. Publicar no confirma pagos ni la incluye en los planes de afiliación de los deportistas."
+      },
+      "warnings": {
+        "noUpcoming": "Este servicio no tiene horarios futuros. Para publicarlo necesita al menos uno; agrégalo al crear un nuevo borrador."
+      },
+      "confirm": {
+        "title": "¿Publicar «{{name}}»?",
+        "message": "Al publicarlo, los deportistas podrán verlo en el catálogo de servicios con su tarifa y sus horarios. Publicar no reserva cupos ni genera cobros."
+      },
+      "actions": {
+        "publish": "Publicar",
+        "confirm": "Sí, publicar",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar"
+      },
+      "retrying": "El servicio no respondió. Reintentando ({{attempt}} de {{max}})…",
+      "result": {
+        "title": "Servicio publicado",
+        "message": "El servicio «{{name}}» ya está publicado.",
+        "replayed": "Este servicio ya se había publicado con esta misma solicitud; no se publicó dos veces.",
+        "visibility": "Los deportistas ya pueden encontrarlo en el catálogo de servicios."
+      },
+      "violations": {
+        "title": "El servicio no se publicó porque le faltan estos requisitos:",
+        "stillDraft": "El servicio sigue como borrador.",
+        "availabilityRequired": "necesita al menos un horario futuro."
+      },
+      "alreadyPublished": "Este servicio ya está publicado.",
+      "errors": {
+        "notFound": "El servicio no existe o no es tuyo.",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Vuelve a publicar el servicio.",
+        "retryHint": "Si vuelves a intentarlo, el servicio no se publicará dos veces."
+      }
+    },
     "availability": {
       "title": "Servicios",
       "titleMedical": "Servicios médicos y deportivos",

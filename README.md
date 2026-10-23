@@ -196,6 +196,17 @@ Feature `src/app/features/services/create-service`, contrato `bff-web` 0.16.0 (`
 - `Idempotency-Key` por intento lógico, con los mismos reintentos que HU021. `provider_id` nunca se envía. Se presenta el borrador devuelto por `201` (estado, versión, tarifa de referencia y horarios en su zona); no se publica, cobra ni contrata.
 - Pruebas: `e2e/create-service.spec.ts` (`@simulado`) y `e2e/create-service.integrated.spec.ts` (`@integrado`). La integrada pierde la primera respuesta en la red y comprueba que el reintento devuelve el mismo servicio con `Idempotent-Replayed`, que el borrador no aparece en el catálogo de un deportista, que el BFF rechaza al deportista con `403` y que las reglas de los horarios se marcan en su campo. Requiere `bff-web` 0.9.0 o superior desplegado.
 
+## Publicar servicios (HU019)
+
+Feature `src/app/features/services/publish-service`, contrato `bff-web` 0.16.0 (`core/api/bff-web/services.api.ts`) y ADR-027.
+
+- `/profesional/servicios/publicacion` (permiso `services.publish`; la guarda `requirePermission` de HU024 rechaza la ruta cuando la vista de capacidades confirma que falta). Pestañas «Borradores» y «Publicados» con `GET /v1/me/services?status`, en el orden del backend y con «Cargar más» por cursor.
+- Elegir un servicio abre su detalle a la derecha (`/:serviceId`, `GET /v1/me/services/{service_id}`; uno ajeno o inexistente responde `404` y se informa sin datos). La tarifa en COP, la unidad de cobro y la disponibilidad futura se muestran como requisitos separados. Se aclara que publicar no confirma pagos ni incluye la tarifa en la afiliación.
+- «Publicar» pide confirmación y envía `POST /v1/services/{service_id}/publish` sin cuerpo. Se usa una `Idempotency-Key` por intento lógico, que se conserva en los reintentos automáticos (red, `502`, `503`, `504`; hasta tres) y manuales, y se renueva tras el éxito o ante `idempotency_key_reused`.
+- Un `422` lista los requisitos faltantes junto a cada fila y el servicio sigue como borrador. Sin horarios futuros se advierte antes de enviar, pero la regla es del backend.
+- Servicios complementarios no tiene proyección: tras el `200`, la lista vuelve a consultar el backend y el servicio ya aparece entre los publicados.
+- Pruebas: `e2e/publish-service.spec.ts` (`@simulado`) y `e2e/publish-service.integrated.spec.ts` (`@integrado`). La integrada crea los borradores por API con `POST /v1/services`, publica desde la pantalla perdiendo la primera respuesta en la red y comprueba la misma clave con `Idempotent-Replayed` y versión 2. También comprueba el `200` sin cambio de versión con otra clave, el `404` para otro profesional, la aparición en el catálogo de un deportista y el `422 availability required`. Requiere `bff-web` 0.11.0 o superior desplegado.
+
 ## Disponibilidad de servicios (HU020)
 
 Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`core/api/bff-web/services-availability.api.ts`) y ADR-038.

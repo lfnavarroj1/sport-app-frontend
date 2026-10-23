@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -9,13 +9,17 @@ import {
   ServiceModalityDto,
   ServicePriceDto,
 } from './services-availability.api';
+import { STRICT_CODEC } from './training-history.api';
 
 /**
- * Transporte de `POST /v1/services` (operationId `create_v1_services_post`) del
- * contrato bff-web 0.16.0 (ver `contract.ts`), conforme a ADR-027 (HU015). Solo
- * `service_provider` con `services.create`; se autentica con el access token y
- * `provider_id` sale del token: nunca viaja en la solicitud. Estos tipos son del
- * transporte: la interfaz los transforma antes de usarlos.
+ * Transporte de los servicios propios del profesional en el contrato bff-web
+ * 0.16.0 (ver `contract.ts`), conforme a ADR-027: `POST /v1/services`
+ * (operationId `create_v1_services_post`, HU015) y, para HU019,
+ * `GET /v1/me/services`, `GET /v1/me/services/{service_id}` y
+ * `POST /v1/services/{service_id}/publish`. Solo `service_provider`; se
+ * autentica con el access token y `provider_id` sale del token: nunca viaja en
+ * la solicitud. Estos tipos son del transporte: la interfaz los transforma antes
+ * de usarlos.
  */
 
 /** Esquema `CreateServiceRequest`: exactamente los campos de ADR-027. */
@@ -100,6 +104,69 @@ export const CREATE_SERVICE_ISSUES = [
 /** Cabecera de respuesta que marca el resultado de un reintento idempotente. */
 export const SERVICE_IDEMPOTENT_REPLAYED_HEADER = 'Idempotent-Replayed';
 
+/** Enumeración `status` del servicio (ADR-027): la única transición es `DRAFT` → `PUBLISHED`. */
+export type ServiceStatusDto = ServiceResponseDto['status'];
+
+/** Esquema `MyServicesResponse` de `GET /v1/me/services`. */
+export interface MyServicesResponseDto {
+  readonly items: readonly ServiceResponseDto[];
+  /** Cursor opaco de la página siguiente; `null` si no hay más. */
+  readonly next_cursor: string | null;
+}
+
+/** Parámetros de `GET /v1/me/services`; los ausentes no se envían. */
+export interface MyServicesQueryDto {
+  /** Sin él, el BFF devuelve `DRAFT` y `PUBLISHED`. */
+  readonly status?: ServiceStatusDto | null;
+  /** 1–100; el BFF usa 20 si no se envía. */
+  readonly limit?: number | null;
+  /** Cursor opaco de `next_cursor`; la web nunca lo interpreta. */
+  readonly cursor?: string | null;
+}
+
+/** Esquema `PublishServiceResponse`: estado, versión y marcas de tiempo en UTC (`Z`). */
+export interface PublishServiceResponseDto {
+  readonly service_id: string;
+  readonly provider_id: string;
+  readonly status: 'PUBLISHED';
+  readonly version: number;
+  readonly published_at: string;
+  readonly updated_at: string;
+}
+
+/** Límites del parámetro `limit` de `GET /v1/me/services`. */
+export const MY_SERVICES_LIMIT = { min: 1, max: 100, default: 20 } as const;
+
+/** Códigos de error que el contrato declara para `GET /v1/me/services`. */
+export const MY_SERVICES_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Códigos de error que el contrato declara para `GET /v1/me/services/{service_id}`. */
+export const MY_SERVICE_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  serviceNotFound: 'service_not_found',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Códigos de error que el contrato declara para `POST /v1/services/{service_id}/publish`. */
+export const PUBLISH_SERVICE_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  serviceNotFound: 'service_not_found',
+  idempotencyKeyReused: 'idempotency_key_reused',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
 @Injectable({ providedIn: 'root' })
 export class BffWebServicesApi {
   private readonly http = inject(HttpClient);
@@ -125,4 +192,55 @@ export class BffWebServicesApi {
       observe: 'response',
     });
   }
+
+  /** Servicios propios del profesional de la sesión (HU019, ADR-038). */
+  getMyServices(accessToken: string, query: MyServicesQueryDto): Observable<MyServicesResponseDto> {
+    let params = new HttpParams({ encoder: STRICT_CODEC });
+    for (const [name, value] of Object.entries(query)) {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(name, String(value));
+      }
+    }
+    return this.http.get<MyServicesResponseDto>(this.bffWebUrl.resolve('v1/me/services'), {
+      headers: bearer(accessToken),
+      params,
+    });
+  }
+
+  /** Servicio propio completo; uno ajeno o inexistente responde `404 service_not_found`. */
+  getMyService(accessToken: string, serviceId: string): Observable<ServiceResponseDto> {
+    return this.http.get<ServiceResponseDto>(
+      this.bffWebUrl.resolve(`v1/me/services/${encodeURIComponent(serviceId)}`),
+      { headers: bearer(accessToken) },
+    );
+  }
+
+  /**
+   * Publica el servicio (sin cuerpo). Se devuelve la respuesta completa para leer
+   * `Idempotent-Replayed`.
+   *
+   * @param idempotencyKey UUID (`Idempotency-Key`); igual en todos los reintentos
+   * del mismo intento lógico (ADR-027, contrato de publicación de HU019).
+   */
+  publishService(
+    accessToken: string,
+    serviceId: string,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<PublishServiceResponseDto>> {
+    return this.http.post<PublishServiceResponseDto>(
+      this.bffWebUrl.resolve(`v1/services/${encodeURIComponent(serviceId)}/publish`),
+      null,
+      {
+        headers: new HttpHeaders({
+          Authorization: `Bearer ${accessToken}`,
+          'Idempotency-Key': idempotencyKey,
+        }),
+        observe: 'response',
+      },
+    );
+  }
+}
+
+function bearer(accessToken: string): HttpHeaders {
+  return new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
 }
