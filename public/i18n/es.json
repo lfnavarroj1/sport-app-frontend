@@ -639,6 +639,159 @@
         "shortcut": "También puedes abrir el historial desde un plan que hayas asignado.",
         "goToPlans": "Ir a planes de entrenamiento"
       }
+    },
+    "nutrition": {
+      "editor": {
+        "title": "Crear plan de alimentación",
+        "intro": "Diseña un menú diario con alimentos del catálogo y asígnalo a un deportista que te haya autorizado.",
+        "catalogEmpty": "El catálogo de alimentos no está disponible en este momento."
+      },
+      "steps": {
+        "edit": "Datos del plan",
+        "review": "Confirma la asignación"
+      },
+      "sections": {
+        "athlete": "Deportista",
+        "plan": "Plan y periodo"
+      },
+      "fields": {
+        "athleteEmail": "Correo del deportista",
+        "title": "Título",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "objectives": "Objetivos",
+        "objectiveN": "Objetivo {{n}}",
+        "meals": "Menú diario",
+        "mealN": "Comida {{n}}",
+        "mealType": "Tipo de comida",
+        "itemN": "Alimento {{n}}",
+        "food": "Alimento",
+        "quantity": "Cantidad",
+        "unit": "Unidad"
+      },
+      "hints": {
+        "athleteEmail": "Correo exacto con el que el deportista se registró en SportApp.",
+        "period": "El periodo puede durar hasta 26 semanas.",
+        "objectives": "Entre {{min}} y {{max}} objetivos.",
+        "meals": "Entre {{min}} y {{max}} comidas. El menú se repite cada día del periodo.",
+        "items": "Entre {{min}} y {{max}} alimentos por comida.",
+        "quantity": "Entre 0,1 y 5000, con un decimal como máximo.",
+        "unit": "Elige primero el alimento."
+      },
+      "actions": {
+        "addObjective": "Agregar objetivo",
+        "removeObjective": "Quitar el objetivo {{n}}",
+        "addMeal": "Agregar comida",
+        "removeMeal": "Quitar la comida {{n}}",
+        "removeMealShort": "Quitar comida",
+        "addItem": "Agregar alimento",
+        "addItemTo": "Agregar alimento a la comida {{n}}",
+        "removeItem": "Quitar el alimento {{n}} de la comida {{meal}}",
+        "remove": "Quitar",
+        "review": "Revisar plan",
+        "backToEdit": "Volver a editar",
+        "assign": "Confirmar y asignar",
+        "assigning": "Asignando…",
+        "viewPlan": "Consultar el plan",
+        "createAnother": "Crear otro plan",
+        "loadMore": "Cargar más"
+      },
+      "errors": {
+        "rulesTitle": "El plan no se guardó porque no cumple estas reglas:",
+        "athleteNotAuthorized": "No puedes asignar planes a este correo: no corresponde a un deportista que te haya autorizado.",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa el plan y vuelve a confirmarlo.",
+        "notSaved": "El plan no se guardó."
+      },
+      "rules": {
+        "item": "{{field}}: {{rule}}",
+        "fieldPlan": "Plan",
+        "fieldObjective": "Objetivo {{n}}",
+        "fieldMealType": "Tipo de la comida {{n}}",
+        "fieldMealItems": "Alimentos de la comida {{n}}",
+        "fieldItem": {
+          "foodCode": "Comida {{meal}}, alimento {{item}}",
+          "quantity": "Cantidad del alimento {{item}} de la comida {{meal}}",
+          "unit": "Unidad del alimento {{item}} de la comida {{meal}}"
+        },
+        "end_date_before_start_date": "la fecha de fin es anterior a la de inicio.",
+        "period_too_long": "el periodo supera la duración máxima permitida.",
+        "unknown_value": "el valor no pertenece al catálogo.",
+        "unit_not_allowed": "la unidad no está permitida para este alimento.",
+        "out_of_range": "el valor está fuera del rango permitido.",
+        "conflicts_with_allergy": "contiene un alérgeno que el deportista registró.",
+        "conflicts_with_restriction": "no es compatible con una restricción alimentaria del deportista.",
+        "unknown": "no cumple las reglas del plan."
+      },
+      "review": {
+        "message": "Revisa el plan antes de asignarlo a {{email}}. Al confirmar, el deportista podrá consultarlo."
+      },
+      "summary": {
+        "period": "Periodo",
+        "periodValue": "Del {{start}} al {{end}}",
+        "meals": "Menú diario ({{count}})",
+        "mealsHint": "El menú se repite cada día del periodo.",
+        "mealCaption": "Comida {{n}}: {{meal}}",
+        "amount": "{{value}} {{unit}}",
+        "status": "Estado",
+        "version": "Versión",
+        "createdAt": "Creado"
+      },
+      "status": {
+        "ASSIGNED": "Asignado"
+      },
+      "created": {
+        "title": "Plan asignado",
+        "message": "El plan «{{title}}» quedó asignado a {{email}}.",
+        "replayed": "Este plan ya se había registrado con esta misma confirmación; no se creó otro."
+      },
+      "warnings": {
+        "nutrition_habits_missing": "El deportista aún no ha registrado sus hábitos alimenticios: el plan se creó sin poder validar alergias ni restricciones."
+      },
+      "detail": {
+        "title": "Plan de alimentación",
+        "notFound": "El plan aún no está disponible para consulta o no tienes acceso a él. Si acabas de crearlo, espera unos segundos y vuelve a intentarlo.",
+        "authorizationRevoked": "Ya no tienes una autorización vigente de este deportista, así que no puedes consultar el plan."
+      },
+      "athlete": {
+        "title": "Mi alimentación",
+        "intro": "Consulta los planes de alimentación que te asignaron los profesionales que autorizaste.",
+        "plansTitle": "Planes de alimentación",
+        "empty": "Aún no tienes planes de alimentación. Si un profesional acaba de asignarte uno, aparecerá en unos segundos.",
+        "countMore": "Planes mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Planes mostrados: {{count}}."
+      },
+      "mealTypes": {
+        "BREAKFAST": "Desayuno",
+        "LUNCH": "Almuerzo",
+        "DINNER": "Cena",
+        "SNACK": "Refrigerio",
+        "HYDRATION": "Hidratación"
+      },
+      "categories": {
+        "GRAIN": "Cereales y granos",
+        "PROTEIN": "Proteínas",
+        "DAIRY": "Lácteos",
+        "FRUIT": "Frutas",
+        "VEGETABLE": "Verduras",
+        "LEGUME": "Legumbres",
+        "FAT": "Grasas",
+        "BEVERAGE": "Bebidas",
+        "SUPPLEMENT": "Suplementos"
+      },
+      "units": {
+        "G": "Gramos (g)",
+        "ML": "Mililitros (ml)",
+        "UNIT": "Unidades",
+        "CUP": "Tazas",
+        "TBSP": "Cucharadas"
+      },
+      "unitsShort": {
+        "G": "g",
+        "ML": "ml",
+        "UNIT": "und.",
+        "CUP": "taza(s)",
+        "TBSP": "cda."
+      }
     }
   },
   "shell": {
@@ -674,6 +827,7 @@
       "nutrition-plans": "Crear planes de alimentación",
       "athlete-training-plans": "Planes de entrenamiento",
       "athlete-training-history": "Mi historial de entrenamiento",
+      "athlete-nutrition": "Mi alimentación",
       "athlete-services": "Servicios",
       "sport-calendar": "Calendario deportivo",
       "sports-medicine": "Servicios médicos y deportivos"
@@ -1086,5 +1240,48 @@
       "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
       "loadMore": "Cargar más"
     }
+  },
+  "food": {
+    "oats": "Avena",
+    "white_rice": "Arroz blanco",
+    "brown_rice": "Arroz integral",
+    "quinoa": "Quinua",
+    "whole_wheat_bread": "Pan integral",
+    "pasta": "Pasta",
+    "corn_arepa": "Arepa de maíz",
+    "chicken_breast": "Pechuga de pollo",
+    "beef": "Carne de res",
+    "pork_loin": "Lomo de cerdo",
+    "salmon": "Salmón",
+    "tuna": "Atún",
+    "shrimp": "Camarones",
+    "egg": "Huevo",
+    "tofu": "Tofu",
+    "milk": "Leche",
+    "greek_yogurt": "Yogur griego",
+    "fresh_cheese": "Queso fresco",
+    "banana": "Banano",
+    "apple": "Manzana",
+    "orange": "Naranja",
+    "berries": "Frutos rojos",
+    "spinach": "Espinaca",
+    "broccoli": "Brócoli",
+    "carrot": "Zanahoria",
+    "tomato": "Tomate",
+    "black_beans": "Fríjoles negros",
+    "lentils": "Lentejas",
+    "chickpeas": "Garbanzos",
+    "olive_oil": "Aceite de oliva",
+    "avocado": "Aguacate",
+    "peanut_butter": "Mantequilla de maní",
+    "almonds": "Almendras",
+    "tahini": "Tahini",
+    "water": "Agua",
+    "coffee": "Café",
+    "orange_juice": "Jugo de naranja",
+    "sports_drink": "Bebida deportiva",
+    "whey_protein": "Proteína de suero",
+    "plant_protein": "Proteína vegetal",
+    "electrolytes": "Electrolitos"
   }
 }

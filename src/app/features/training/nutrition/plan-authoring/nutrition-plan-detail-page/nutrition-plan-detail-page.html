@@ -1,0 +1,43 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.nutrition.detail.title' | translate }}</h1>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      @if (notFound()) {
+        <div role="alert" data-testid="nutrition-not-found">
+          <p>{{ 'training.nutrition.detail.notFound' | translate }}</p>
+          <button mat-stroked-button type="button" (click)="load()">
+            {{ 'common.state.retry' | translate }}
+          </button>
+        </div>
+      } @else if (authorizationRevoked()) {
+        <div role="alert" data-testid="nutrition-authorization-revoked">
+          <p>{{ 'training.nutrition.detail.authorizationRevoked' | translate }}</p>
+        </div>
+      } @else {
+        <app-async-state [state]="state()" (retry)="load()">
+          @if (plan(); as plan) {
+            <app-nutrition-plan-summary [plan]="plan" [catalog]="catalog()">
+              <dt>{{ 'training.nutrition.summary.status' | translate }}</dt>
+              <dd data-testid="nutrition-detail-status">
+                {{ 'training.nutrition.status.' + plan.status | translate }}
+              </dd>
+              <dt>{{ 'training.nutrition.summary.version' | translate }}</dt>
+              <dd>{{ plan.version }}</dd>
+              <dt>{{ 'training.nutrition.summary.createdAt' | translate }}</dt>
+              <dd>{{ plan.createdAt | date: 'medium' }}</dd>
+            </app-nutrition-plan-summary>
+          }
+        </app-async-state>
+      }
+
+      <div class="training-page__actions">
+        <a mat-stroked-button routerLink="..">
+          {{ 'training.nutrition.actions.createAnother' | translate }}
+        </a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</section>

@@ -1,0 +1,91 @@
+@let summary = plan();
+<div class="nutrition-summary" data-testid="nutrition-summary">
+  <dl class="nutrition-summary__facts">
+    <dt>{{ 'training.nutrition.fields.title' | translate }}</dt>
+    <dd data-testid="nutrition-summary-title">{{ summary.title }}</dd>
+    <dt>{{ 'training.nutrition.summary.period' | translate }}</dt>
+    <dd data-testid="nutrition-summary-period">
+      {{
+        'training.nutrition.summary.periodValue'
+          | translate
+            : {
+                start: summary.startDate | date: 'longDate' : 'UTC',
+                end: summary.endDate | date: 'longDate' : 'UTC',
+              }
+      }}
+    </dd>
+    <ng-content />
+  </dl>
+
+  <ng-container
+    *ngTemplateOutlet="
+      heading;
+      context: { $implicit: 'training.nutrition.fields.objectives' | translate }
+    "
+  />
+  <ul class="nutrition-summary__objectives">
+    @for (objective of summary.objectives; track $index) {
+      <li>{{ objective }}</li>
+    }
+  </ul>
+
+  <ng-container
+    *ngTemplateOutlet="
+      heading;
+      context: {
+        $implicit: 'training.nutrition.summary.meals' | translate: { count: summary.meals.length },
+      }
+    "
+  />
+  <p class="nutrition-summary__hint">{{ 'training.nutrition.summary.mealsHint' | translate }}</p>
+  @for (meal of summary.meals; track $index; let m = $index) {
+    <div class="nutrition-summary__table-wrapper">
+      <table class="nutrition-summary__meal" [attr.data-meal]="m">
+        <caption>
+          {{
+            'training.nutrition.summary.mealCaption'
+              | translate
+                : { n: m + 1, meal: ('training.nutrition.mealTypes.' + meal.mealType | translate) }
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ 'training.nutrition.fields.food' | translate }}</th>
+            <th scope="col">{{ 'training.nutrition.fields.quantity' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of meal.items; track $index) {
+            <tr>
+              <td>
+                @if (foodKey(item.foodCode); as key) {
+                  {{ key | translate }}
+                } @else {
+                  {{ item.foodCode }}
+                }
+              </td>
+              <td>
+                {{
+                  'training.nutrition.summary.amount'
+                    | translate
+                      : {
+                          value: amount(item.quantity) | number: '1.0-1',
+                          unit: ('training.nutrition.unitsShort.' + item.unit | translate),
+                        }
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<ng-template #heading let-text>
+  @if (headingLevel() === 2) {
+    <h2 class="nutrition-summary__heading">{{ text }}</h2>
+  } @else {
+    <h3 class="nutrition-summary__heading">{{ text }}</h3>
+  }
+</ng-template>

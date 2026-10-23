@@ -79,6 +79,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU014: sección «Planes de alimentación» de «Mi alimentación» (ADR-037).
+      path: 'alimentacion',
+      loadChildren: () =>
+        import('./features/training/nutrition/nutrition.routes').then(
+          (module) => module.ATHLETE_NUTRITION_ROUTES,
+        ),
+    },
+    {
       // HU020: la opción PREMIUM abre la misma pantalla de disponibilidad,
       // filtrada por medicina deportiva (ADR-038). Va antes de `servicios`.
       path: 'servicios/medico-deportivos',
@@ -138,6 +146,14 @@ export const routes: Routes = [
       loadChildren: () =>
         import('./features/training/plan-authoring/plan-authoring.routes').then(
           (module) => module.PLAN_AUTHORING_ROUTES,
+        ),
+    },
+    {
+      // HU014: el profesional crea, asigna y consulta planes de alimentación (ADR-037).
+      path: 'alimentacion/planes',
+      loadChildren: () =>
+        import('./features/training/nutrition/nutrition.routes').then(
+          (module) => module.NUTRITION_PLAN_AUTHORING_ROUTES,
         ),
     },
     {
