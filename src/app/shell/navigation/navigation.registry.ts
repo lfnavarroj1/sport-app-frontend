@@ -316,7 +316,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'services.create',
         'HU015',
       ),
-      upcoming(
+      // HU019: el profesional revisa sus servicios y publica un borrador (ADR-027).
+      permissionOption(
         'service-publish',
         'services',
         110,

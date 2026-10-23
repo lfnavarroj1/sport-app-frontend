@@ -69,6 +69,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(navigable('service_provider')).toEqual([
       ['home', homeFor('service_provider'), 'HU003'],
       ['service-create', '/profesional/servicios/nuevo', 'HU015'],
+      ['service-publish', '/profesional/servicios/publicacion', 'HU019'],
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
     ]);
@@ -272,6 +273,14 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
         route: '/profesional/servicios/nuevo',
         permission: 'services.create',
         hu: 'HU015',
+        available: true,
+      }),
+    );
+    expect(NAVIGATION.service_provider.items.find((item) => item.id === 'service-publish')).toEqual(
+      jasmine.objectContaining({
+        route: '/profesional/servicios/publicacion',
+        permission: 'services.publish',
+        hu: 'HU019',
         available: true,
       }),
     );

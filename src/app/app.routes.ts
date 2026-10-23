@@ -125,6 +125,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU019: el profesional revisa sus servicios y publica un borrador (ADR-027).
+      path: 'servicios/publicacion',
+      loadChildren: () =>
+        import('./features/services/publish-service/publish-service.routes').then(
+          (module) => module.PUBLISH_SERVICE_ROUTES,
+        ),
+    },
+    {
       // HU010: el profesional crea, asigna y consulta planes de entrenamiento.
       path: 'entrenamientos/planes',
       loadChildren: () =>
