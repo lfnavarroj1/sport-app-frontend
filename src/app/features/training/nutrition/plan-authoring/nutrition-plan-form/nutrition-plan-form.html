@@ -1,0 +1,244 @@
+<form [formGroup]="form" (ngSubmit)="review()" novalidate class="nutrition-form">
+  @if (summary().length > 0) {
+    <div class="nutrition-form__errors" role="alert" tabindex="-1" data-testid="nutrition-errors">
+      <p>{{ 'training.nutrition.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (message of summary(); track $index) {
+          <li>
+            {{
+              'training.nutrition.rules.item'
+                | translate
+                  : {
+                      field: (message.field.key | translate: message.field.params),
+                      rule: (message.rule.key | translate),
+                    }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <fieldset class="nutrition-form__section">
+    <legend>{{ 'training.nutrition.sections.athlete' | translate }}</legend>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'training.nutrition.fields.athleteEmail' | translate }}</mat-label>
+      <input matInput type="email" formControlName="athleteEmail" autocomplete="off" required />
+      <mat-hint>{{ 'training.nutrition.hints.athleteEmail' | translate }}</mat-hint>
+      <mat-error>
+        <app-nutrition-field-error [control]="form.controls.athleteEmail" />
+      </mat-error>
+    </mat-form-field>
+  </fieldset>
+
+  <fieldset class="nutrition-form__section">
+    <legend>{{ 'training.nutrition.sections.plan' | translate }}</legend>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.nutrition.fields.title' | translate }}</mat-label>
+      <input matInput formControlName="title" [maxlength]="limits.titleMax" required />
+      <mat-error><app-nutrition-field-error [control]="form.controls.title" /></mat-error>
+    </mat-form-field>
+
+    <div class="nutrition-form__grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.nutrition.fields.startDate' | translate }}</mat-label>
+        <input matInput type="date" formControlName="startDate" required />
+        <mat-error><app-nutrition-field-error [control]="form.controls.startDate" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'training.nutrition.fields.endDate' | translate }}</mat-label>
+        <input matInput type="date" formControlName="endDate" required />
+        <mat-hint>{{ 'training.nutrition.hints.period' | translate }}</mat-hint>
+        <mat-error><app-nutrition-field-error [control]="form.controls.endDate" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="nutrition-form__section" formArrayName="objectives">
+    <legend>{{ 'training.nutrition.fields.objectives' | translate }}</legend>
+    <p class="nutrition-form__hint">
+      {{
+        'training.nutrition.hints.objectives'
+          | translate: { min: limits.objectivesMin, max: limits.objectivesMax }
+      }}
+    </p>
+    @for (objective of objectives.controls; track $index; let i = $index) {
+      <div class="nutrition-form__row">
+        <mat-form-field appearance="outline" class="nutrition-form__grow">
+          <mat-label>{{
+            'training.nutrition.fields.objectiveN' | translate: { n: i + 1 }
+          }}</mat-label>
+          <input
+            matInput
+            [formControlName]="i"
+            [maxlength]="limits.objectiveMax"
+            data-focus="objective"
+            required
+          />
+          <mat-error><app-nutrition-field-error [control]="objective" /></mat-error>
+        </mat-form-field>
+        <button
+          mat-icon-button
+          type="button"
+          [disabled]="objectiveCount() <= limits.objectivesMin"
+          [attr.aria-label]="'training.nutrition.actions.removeObjective' | translate: { n: i + 1 }"
+          (click)="removeObjective(i)"
+        >
+          <mat-icon aria-hidden="true">delete</mat-icon>
+        </button>
+      </div>
+    }
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="objectiveCount() >= limits.objectivesMax"
+      (click)="addObjective()"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+      {{ 'training.nutrition.actions.addObjective' | translate }}
+    </button>
+  </fieldset>
+
+  <fieldset class="nutrition-form__section" formArrayName="meals">
+    <legend>{{ 'training.nutrition.fields.meals' | translate }}</legend>
+    <p class="nutrition-form__hint">
+      {{
+        'training.nutrition.hints.meals' | translate: { min: limits.mealsMin, max: limits.mealsMax }
+      }}
+    </p>
+    @for (meal of meals.controls; track meal; let m = $index) {
+      <fieldset class="nutrition-form__meal" [formGroupName]="m" [attr.data-meal]="m">
+        <legend>{{ 'training.nutrition.fields.mealN' | translate: { n: m + 1 } }}</legend>
+        <mat-form-field appearance="outline" class="nutrition-form__meal-type">
+          <mat-label>{{ 'training.nutrition.fields.mealType' | translate }}</mat-label>
+          <mat-select formControlName="mealType" data-focus="meal" required>
+            @for (type of mealTypes; track type) {
+              <mat-option [value]="type">{{
+                'training.nutrition.mealTypes.' + type | translate
+              }}</mat-option>
+            }
+          </mat-select>
+          <mat-error><app-nutrition-field-error [control]="meal.controls.mealType" /></mat-error>
+        </mat-form-field>
+
+        <div formArrayName="items" class="nutrition-form__items">
+          <p class="nutrition-form__hint">
+            {{
+              'training.nutrition.hints.items'
+                | translate: { min: limits.itemsMin, max: limits.itemsMax }
+            }}
+          </p>
+          @for (item of meal.controls.items.controls; track item; let i = $index) {
+            <fieldset
+              class="nutrition-form__item"
+              [formGroupName]="i"
+              [attr.data-item]="i"
+              [attr.data-testid]="'nutrition-item-' + m + '-' + i"
+            >
+              <legend>{{ 'training.nutrition.fields.itemN' | translate: { n: i + 1 } }}</legend>
+              <div class="nutrition-form__item-fields">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ 'training.nutrition.fields.food' | translate }}</mat-label>
+                  <mat-select formControlName="foodCode" data-focus="item" required>
+                    @for (group of foodGroups(); track group.category) {
+                      <mat-optgroup
+                        [label]="'training.nutrition.categories.' + group.category | translate"
+                      >
+                        @for (food of group.foods; track food.code) {
+                          <mat-option [value]="food.code">{{
+                            food.labelKey | translate
+                          }}</mat-option>
+                        }
+                      </mat-optgroup>
+                    }
+                  </mat-select>
+                  <mat-error>
+                    <app-nutrition-field-error [control]="item.controls.foodCode" />
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ 'training.nutrition.fields.quantity' | translate }}</mat-label>
+                  <input
+                    matInput
+                    inputmode="decimal"
+                    formControlName="quantity"
+                    [maxlength]="limits.quantityMax"
+                    autocomplete="off"
+                    required
+                  />
+                  <mat-hint>{{ 'training.nutrition.hints.quantity' | translate }}</mat-hint>
+                  <mat-error>
+                    <app-nutrition-field-error [control]="item.controls.quantity" />
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ 'training.nutrition.fields.unit' | translate }}</mat-label>
+                  <mat-select formControlName="unit" required>
+                    @for (unit of unitsFor(item); track unit) {
+                      <mat-option [value]="unit">{{
+                        'training.nutrition.units.' + unit | translate
+                      }}</mat-option>
+                    }
+                  </mat-select>
+                  @if (item.controls.foodCode.value === null) {
+                    <mat-hint>{{ 'training.nutrition.hints.unit' | translate }}</mat-hint>
+                  }
+                  <mat-error>
+                    <app-nutrition-field-error [control]="item.controls.unit" />
+                  </mat-error>
+                </mat-form-field>
+              </div>
+              <button
+                mat-button
+                type="button"
+                [disabled]="meal.controls.items.length <= limits.itemsMin"
+                [attr.aria-label]="
+                  'training.nutrition.actions.removeItem' | translate: { n: i + 1, meal: m + 1 }
+                "
+                (click)="removeItem(m, i)"
+              >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+                {{ 'training.nutrition.actions.remove' | translate }}
+              </button>
+            </fieldset>
+          }
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="meal.controls.items.length >= limits.itemsMax"
+            [attr.aria-label]="'training.nutrition.actions.addItemTo' | translate: { n: m + 1 }"
+            (click)="addItem(m)"
+          >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            {{ 'training.nutrition.actions.addItem' | translate }}
+          </button>
+        </div>
+
+        <button
+          mat-button
+          type="button"
+          class="nutrition-form__remove-meal"
+          [disabled]="mealCount() <= limits.mealsMin"
+          [attr.aria-label]="'training.nutrition.actions.removeMeal' | translate: { n: m + 1 }"
+          (click)="removeMeal(m)"
+        >
+          <mat-icon aria-hidden="true">delete</mat-icon>
+          {{ 'training.nutrition.actions.removeMealShort' | translate }}
+        </button>
+      </fieldset>
+    }
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="mealCount() >= limits.mealsMax"
+      (click)="addMeal()"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+      {{ 'training.nutrition.actions.addMeal' | translate }}
+    </button>
+  </fieldset>
+
+  <button mat-flat-button type="submit" class="nutrition-form__submit">
+    {{ 'training.nutrition.actions.review' | translate }}
+  </button>
+</form>

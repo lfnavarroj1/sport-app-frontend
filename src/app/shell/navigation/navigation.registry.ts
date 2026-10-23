@@ -203,6 +203,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         hu: 'HU020',
         available: true,
       },
+      // «Mi alimentación»: opción base del deportista, sin capacidad de plan (ADR-037).
+      // HU014 aporta la sección «Planes de alimentación»; los consumos serán HU013.
+      {
+        id: 'athlete-nutrition',
+        group: 'nutrition',
+        order: 60,
+        icon: 'restaurant_menu',
+        route: '/deportista/alimentacion',
+        permission: null,
+        capability: null,
+        hu: 'HU014',
+        available: true,
+      },
       // Capacidades del plan con HU aprobada para la web (ADR-024).
       planOption(
         'athlete-training-plans',
@@ -362,7 +375,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'nutrition.history.view_assigned',
         'HU013',
       ),
-      upcoming(
+      // HU014: el profesional crea y asigna planes de alimentación (ADR-037).
+      permissionOption(
         'nutrition-plans',
         'nutrition',
         160,

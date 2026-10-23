@@ -166,6 +166,18 @@ Feature `src/app/features/training/history`, contrato `bff-web` 0.8.0 para el hi
 - Filtros por fecha de fin (día UTC, inclusiva) y deporte (los que informa el backend en `filters.sports`). Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo (codificado con `encodeURIComponent`) y agrega la página tal como llega. Cada fila abre su detalle.
 - Pruebas: `e2e/training-history.spec.ts` (`@simulado`) y `e2e/training-history.integrated.spec.ts` (`@integrado`). La integrada produce 25 sesiones reales con HU032 en `bff-mobile` (`PLAYWRIGHT_BFF_MOBILE_URL`) y cubre los filtros, las dos páginas, el acceso del profesional autorizado y el rechazo a un tercero y tras revocar. Su recorrido de CA5 (lista por nombre y correo y retiro tras revocar) requiere `bff-web` 0.15.0 desplegado.
 
+## Planes de alimentación (HU014)
+
+Feature `src/app/features/training/nutrition`, contrato `bff-web` 0.18.0 (`core/api/bff-web/nutrition.api.ts`) y ADR-037.
+
+- **Profesional** (`/profesional/alimentacion/planes`, permiso `nutrition.plan.author`; la guarda `requirePermission` rechaza la ruta cuando la vista de capacidades confirma que falta). El editor se habilita con el catálogo cerrado de `GET /v1/food-catalog`, que se guarda solo en memoria y se revalida con `If-None-Match` (un `304` conserva el anterior). Captura el correo exacto del deportista, el título, 1–5 objetivos, el periodo y el menú diario: 1–8 comidas con su tipo y 1–15 alimentos por comida, con cantidad y una de las unidades permitidas del alimento (al elegirlo se propone su unidad por defecto). La cantidad acepta coma o punto y viaja como cadena decimal con punto.
+- En la web solo se validan las restricciones del contrato (obligatorios, longitudes, cantidades de elementos y formato de la cantidad). El periodo, el catálogo, las unidades, el rango y el **bloqueo por alergia o restricción** del deportista los decide el backend: `422 nutrition_plan_invalid` se lista arriba y se marca junto al ítem indicado por `meals[i].items[j]`, con todas sus causas, y nada se guarda.
+- El plan se revisa antes de `POST /v1/nutrition-plans`. La `Idempotency-Key` se conserva en los reintentos y se renueva si cambian los datos (como HU010). Se presenta el plan devuelto por `201` sin esperar la proyección; si el deportista no registró hábitos, se muestra el aviso `nutrition_habits_missing`. Un `503` (Usuarios caído) informa que el plan no se guardó.
+- `/profesional/alimentacion/planes/:planId` consulta el plan (`GET /v1/nutrition-plans/{plan_id}`): un `404` justo después de crearlo significa que aún se proyecta (o que el plan es ajeno), y `403 athlete_authorization_required` (autorización revocada) se muestra sin datos.
+- **Deportista** (`/deportista/alimentacion`, opción base «Mi alimentación», sin capacidad de plan): sección «Planes de alimentación» con `GET /v1/me/nutrition-plans`, en el orden del backend y con «Cargar más» por cursor. Cada plan muestra su estado confirmado, la versión y el menú. Los consumos de HU013 serán otra sección de la misma pantalla.
+- Sin calorías, nutrientes, recomendaciones ni juicios. Los nombres de los alimentos salen de `label_key` (`food.*` en `public/i18n/es.json`); si el catálogo no está disponible, se muestra el código.
+- Pruebas: `e2e/nutrition-plans.spec.ts` (`@simulado`: plan bloqueado por alergia, corregido y visible para el deportista) y `e2e/nutrition-plans.integrated.spec.ts` (`@integrado`: reintento idempotente, aviso sin hábitos, proyección y rechazo a un tercero). La integrada requiere `bff-web` 0.18.0, `training-management` 0.9.0 y `users-management` 0.8.0 desplegados. El bloqueo real por alergia solo podrá probarse integrado cuando HU009 registre hábitos.
+
 ## Crear evento (HU021)
 
 Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core/api/bff-web/events.api.ts`) y ADR-028.
@@ -322,3 +334,4 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).
+- HU014: despliegue de `bff-web` 0.18.0, `training-management` 0.9.0 y `users-management` 0.8.0 para el recorrido integrado; HU009 para probar el bloqueo real por alergia; ratificar el catálogo `food-catalog-2026-10-13.v1`, sus unidades y los nombres en español de los alimentos.

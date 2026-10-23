@@ -30,7 +30,7 @@ function accessOf(
 const visibleIds = (actor: ActorType, access: SessionAccess | null): string[] =>
   visibleItems(actor, access).map((item) => item.id);
 
-/** Opciones del deportista sin permiso ni capacidad; HU011 y HU020 no exigen capacidad de plan. */
+/** Opciones del deportista sin permiso ni capacidad; HU011, HU020 y HU014 no exigen capacidad de plan. */
 const ATHLETE_BASE = [
   'home',
   'profile',
@@ -38,6 +38,7 @@ const ATHLETE_BASE = [
   'plan',
   'athlete-training-history',
   'athlete-services',
+  'athlete-nutrition',
 ];
 
 describe('Registro de navegación por actor (ADR-025, HU003)', () => {
@@ -58,6 +59,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['profile', '/deportista/perfil', 'HU005'],
       ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
       ['athlete-services', '/deportista/servicios', 'HU020'],
+      ['athlete-nutrition', '/deportista/alimentacion', 'HU014'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
       ['sports-medicine', '/deportista/servicios/medico-deportivos', 'HU017'],
     ]);
@@ -72,6 +74,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['service-publish', '/profesional/servicios/publicacion', 'HU019'],
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
+      ['nutrition-plans', '/profesional/alimentacion/planes', 'HU014'],
     ]);
   });
 
@@ -112,6 +115,26 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(find('sports-medicine').capability).toBe('services.sports_medicine.access');
     expect(visibleIds('athlete', null)).toContain('athlete-services');
     expect(visibleIds('athlete', null)).not.toContain('sports-medicine');
+  });
+
+  it('HU014: «Mi alimentación» es opción base; crear planes exige nutrition.plan.author', () => {
+    const find = (actor: ActorType, id: string) =>
+      NAVIGATION[actor].items.find((item) => item.id === id)!;
+
+    expect(find('athlete', 'athlete-nutrition')).toEqual(
+      jasmine.objectContaining({ group: 'nutrition', permission: null, capability: null }),
+    );
+    expect(find('service_provider', 'nutrition-plans')).toEqual(
+      jasmine.objectContaining({ permission: 'nutrition.plan.author', available: true }),
+    );
+    expect(visibleIds('athlete', null)).toContain('athlete-nutrition');
+    expect(visibleIds('service_provider', null)).not.toContain('nutrition-plans');
+    expect(
+      visibleIds(
+        'service_provider',
+        accessOf('service_provider', 'NOT_APPLICABLE', ['nutrition.plan.author'], []),
+      ),
+    ).toContain('nutrition-plans');
   });
 
   it('HU005: «Mi perfil» navega solo para el deportista; los demás esperan HU002 (ADR-034)', () => {
@@ -317,6 +340,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       'main',
       'services',
       'training',
+      'nutrition',
       'account',
     ]);
     expect(ids('athlete')).toContain('plan');

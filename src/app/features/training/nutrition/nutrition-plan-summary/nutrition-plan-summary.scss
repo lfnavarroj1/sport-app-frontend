@@ -1,0 +1,65 @@
+.nutrition-summary__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 0 0 1.25rem;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.nutrition-summary__heading {
+  margin: 1rem 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+  font-weight: 700;
+}
+
+.nutrition-summary__objectives {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    overflow-wrap: anywhere;
+  }
+}
+
+.nutrition-summary__hint {
+  margin: 0 0 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.nutrition-summary__table-wrapper {
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.nutrition-summary__meal {
+  width: 100%;
+  border-collapse: collapse;
+
+  caption {
+    padding: 0.25rem 0;
+    font: var(--mat-sys-title-small);
+    text-align: left;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    text-align: left;
+  }
+
+  th {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+}
