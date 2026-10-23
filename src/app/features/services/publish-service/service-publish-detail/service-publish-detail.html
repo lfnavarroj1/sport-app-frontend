@@ -1,0 +1,237 @@
+<mat-card appearance="outlined" class="services-page__card" data-testid="service-publish-detail">
+  <mat-card-content>
+    @if (notFound()) {
+      <div class="services-page__error" role="alert" data-testid="service-not-found">
+        <p>{{ 'services.publish.errors.notFound' | translate }}</p>
+      </div>
+    } @else {
+      <app-async-state [state]="state()" (retry)="load()">
+        @if (service(); as service) {
+          @let confirmed = published();
+          <h2 class="services-page__step" data-testid="service-detail-name">{{ service.name }}</h2>
+          <ng-container *ngTemplateOutlet="rowViolations; context: { $implicit: 'name' }" />
+
+          @if (confirmed) {
+            <section role="status" class="publish-detail__result" data-testid="service-published">
+              <h3 #resultHeading tabindex="-1">
+                {{ 'services.publish.result.title' | translate }}
+              </h3>
+              <p>{{ 'services.publish.result.message' | translate: { name: service.name } }}</p>
+              @if (replayed()) {
+                <p data-testid="service-publish-replayed">
+                  {{ 'services.publish.result.replayed' | translate }}
+                </p>
+              }
+              <dl class="services-page__facts">
+                <dt>{{ 'services.create.summary.status' | translate }}</dt>
+                <dd>{{ 'services.create.status.' + confirmed.status | translate }}</dd>
+                <dt>{{ 'services.publish.fields.publishedAt' | translate }}</dt>
+                <dd data-testid="service-published-at">
+                  {{ confirmed.publishedAt | date: 'medium' }}
+                </dd>
+                <dt>{{ 'services.create.summary.version' | translate }}</dt>
+                <dd data-testid="service-published-version">{{ confirmed.version }}</dd>
+              </dl>
+              <p class="services-page__note">
+                {{ 'services.publish.result.visibility' | translate }}
+              </p>
+            </section>
+          }
+
+          @if (violations().length > 0) {
+            <div
+              #violationsSummary
+              class="services-page__error"
+              role="alert"
+              tabindex="-1"
+              data-testid="service-publish-violations"
+            >
+              <p>{{ 'services.publish.violations.title' | translate }}</p>
+              <ul>
+                @for (violation of violations(); track $index) {
+                  <li>
+                    {{
+                      'services.create.issues.item'
+                        | translate
+                          : {
+                              field: (fieldKey(violation) | translate),
+                              rule: (issueKey(violation) | translate),
+                            }
+                    }}
+                  </li>
+                }
+              </ul>
+              <p>{{ 'services.publish.violations.stillDraft' | translate }}</p>
+            </div>
+          }
+
+          <dl class="services-page__facts" data-testid="service-detail">
+            <dt>{{ 'services.create.summary.status' | translate }}</dt>
+            <dd data-testid="service-detail-status">
+              {{ 'services.create.status.' + (confirmed?.status ?? service.status) | translate }}
+            </dd>
+            <dt>{{ 'services.create.fields.description' | translate }}</dt>
+            <dd>
+              {{ service.description }}
+              <ng-container
+                *ngTemplateOutlet="rowViolations; context: { $implicit: 'description' }"
+              />
+            </dd>
+            <dt>{{ 'services.create.fields.category' | translate }}</dt>
+            <dd>
+              {{ 'services.availability.categories.' + service.category | translate }}
+              <ng-container *ngTemplateOutlet="rowViolations; context: { $implicit: 'category' }" />
+            </dd>
+            <dt>{{ 'services.create.fields.modality' | translate }}</dt>
+            <dd>
+              {{ 'services.availability.modalities.' + service.modality | translate }}
+              <ng-container *ngTemplateOutlet="rowViolations; context: { $implicit: 'modality' }" />
+            </dd>
+            <dt>{{ 'services.create.summary.version' | translate }}</dt>
+            <dd>{{ confirmed?.version ?? service.version }}</dd>
+          </dl>
+
+          <section
+            class="publish-detail__requirements"
+            aria-labelledby="service-requirements-heading"
+            data-testid="service-requirements"
+          >
+            <h3 id="service-requirements-heading">
+              {{ 'services.publish.requirements.title' | translate }}
+            </h3>
+            <dl class="services-page__facts">
+              <dt>{{ 'services.publish.requirements.price' | translate }}</dt>
+              <dd data-testid="requirement-price">
+                {{ price(service) }} ({{ service.price.currency }})
+                <ng-container *ngTemplateOutlet="rowViolations; context: { $implicit: 'price' }" />
+              </dd>
+              <dt>{{ 'services.create.fields.billingUnit' | translate }}</dt>
+              <dd data-testid="requirement-billing-unit">
+                {{ 'services.create.billingUnits.' + service.price.billingUnit | translate }}
+                <ng-container
+                  *ngTemplateOutlet="rowViolations; context: { $implicit: 'billingUnit' }"
+                />
+              </dd>
+              <dt>{{ 'services.publish.requirements.availability' | translate }}</dt>
+              <dd data-testid="requirement-availability">
+                @if (upcoming().length === 0) {
+                  <span>{{ 'services.publish.requirements.noUpcoming' | translate }}</span>
+                } @else {
+                  <span>
+                    {{
+                      'services.publish.list.futureIntervals'
+                        | translate: { count: upcoming().length }
+                    }}
+                  </span>
+                  <ul class="publish-detail__intervals">
+                    @for (interval of upcoming(); track $index) {
+                      <li>
+                        {{
+                          'services.create.created.interval'
+                            | translate
+                              : {
+                                  start: inZone(interval.startsAt, interval.timeZone),
+                                  end: inZone(interval.endsAt, interval.timeZone),
+                                  zone: interval.timeZone,
+                                  capacity: (interval.capacity | number),
+                                }
+                        }}
+                      </li>
+                    }
+                  </ul>
+                }
+                <ng-container
+                  *ngTemplateOutlet="rowViolations; context: { $implicit: 'availability' }"
+                />
+              </dd>
+            </dl>
+            <p class="services-page__note">
+              {{ 'services.publish.requirements.priceNote' | translate }}
+            </p>
+          </section>
+
+          <ng-template #rowViolations let-row>
+            @for (violation of violationsFor(row); track $index) {
+              <span class="publish-detail__field-error" data-testid="service-field-violation">
+                {{ issueKey(violation) | translate }}
+              </span>
+            }
+          </ng-template>
+
+          @if (canPublish()) {
+            @if (upcoming().length === 0) {
+              <p class="services-page__note" role="note" data-testid="service-no-upcoming">
+                {{ 'services.publish.warnings.noUpcoming' | translate }}
+              </p>
+            }
+            @if (retryAttempt(); as attempt) {
+              <p class="services-page__note" role="status" data-testid="service-publish-retrying">
+                {{ 'services.publish.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+              </p>
+            }
+            @if (failure(); as error) {
+              <div class="services-page__error" role="alert" data-testid="service-publish-error">
+                <p>{{ failureMessage(error) | translate }}</p>
+                @if (retryable(error)) {
+                  <p>{{ 'services.publish.errors.retryHint' | translate }}</p>
+                }
+                @if (error.correlationId) {
+                  <p class="services-page__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+              </div>
+            }
+
+            @if (step() === 'confirm') {
+              <div
+                class="publish-detail__confirm"
+                role="group"
+                aria-labelledby="service-publish-confirm-heading"
+                data-testid="service-publish-confirm"
+              >
+                <h3 #confirmHeading id="service-publish-confirm-heading" tabindex="-1">
+                  {{ 'services.publish.confirm.title' | translate: { name: service.name } }}
+                </h3>
+                <p>{{ 'services.publish.confirm.message' | translate }}</p>
+                <div class="services-page__actions">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="publish()"
+                  >
+                    {{
+                      (submitting()
+                        ? 'services.publish.actions.publishing'
+                        : 'services.publish.actions.confirm'
+                      ) | translate
+                    }}
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="cancel()"
+                  >
+                    {{ 'services.publish.actions.cancel' | translate }}
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="services-page__actions">
+                <button mat-flat-button type="button" (click)="askConfirmation()">
+                  {{ 'services.publish.actions.publish' | translate }}
+                </button>
+              </div>
+            }
+          } @else if (!confirmed) {
+            <p class="services-page__note" data-testid="service-already-published">
+              {{ 'services.publish.alreadyPublished' | translate }}
+            </p>
+          }
+        }
+      </app-async-state>
+    }
+  </mat-card-content>
+</mat-card>
