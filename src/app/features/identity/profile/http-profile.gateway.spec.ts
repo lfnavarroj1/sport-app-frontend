@@ -5,12 +5,14 @@ import { TestBed } from '@angular/core/testing';
 import {
   DEMOGRAPHIC_RESPONSES,
   GET_PROFILE_RESPONSES,
+  NUTRITION_HABITS_RESPONSES,
   PHYSIOLOGICAL_RESPONSES,
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_CORRELATION_ID,
   SIMULATED_PROFILE_USER_ID,
   SPORT_HABITS_RESPONSES,
   VALID_DEMOGRAPHIC_REQUEST,
+  VALID_NUTRITION_HABITS_REQUEST,
   VALID_PHYSIOLOGICAL_REQUEST,
   VALID_SPORT_HABITS_REQUEST,
 } from '../../../../testing/bff-web/profile.fixtures';
@@ -18,13 +20,29 @@ import { SimulatedResponse } from '../../../../testing/bff-web/register-user.fix
 import { APP_CONFIG, AppConfig } from '../../../core/config/app-config';
 import { SessionStore } from '../../../core/session/session.store';
 import { HttpProfileGateway, PROFILE_RETRY_DELAYS_MS } from './http-profile.gateway';
-import { DemographicDraft, PhysiologicalDraft, SportHabitsDraft } from './profile.model';
+import {
+  DemographicDraft,
+  NutritionHabitsDraft,
+  PhysiologicalDraft,
+  SportHabitsDraft,
+} from './profile.model';
 
 const BFF = 'http://bff.example.com';
 const PROFILE_URL = `${BFF}/v1/me/profile`;
 const DEMOGRAPHIC_URL = `${BFF}/v1/me/demographic-profile`;
 const PHYSIOLOGICAL_URL = `${BFF}/v1/me/physiological-profile`;
 const SPORT_HABITS_URL = `${BFF}/v1/me/sport-habits`;
+const NUTRITION_HABITS_URL = `${BFF}/v1/me/nutrition-habits`;
+
+/** Borrador con las listas fuera del orden del catálogo: el adaptador las ordena. */
+const NUTRITION_DRAFT: NutritionHabitsDraft = {
+  consentVersion: 'local-dev',
+  dietPattern: 'VEGETARIAN',
+  restrictions: ['LOW_SUGAR', 'LACTOSE_FREE'],
+  allergies: ['SHELLFISH', 'PEANUTS'],
+  mealsPerDay: 4,
+  hydrationLitersPerDay: '2.5',
+};
 const KEY = '5f0c3a2e-8b1d-4c6e-9a7f-2d4b6c8e0a1f';
 const TOKEN = 'token-sintetico';
 
@@ -160,6 +178,7 @@ describe('HttpProfileGateway (HU005 y HU006, contrato bff-web 0.19.0)', () => {
         demographic: null,
         physiological: null,
         sportHabits: null,
+        nutritionHabits: null,
         projectedAt: null,
       });
     });
@@ -445,6 +464,122 @@ describe('HttpProfileGateway (HU005 y HU006, contrato bff-web 0.19.0)', () => {
         'swimming',
       ]);
       expect(loaded.sportHabits?.days).toEqual(['MON', 'WED', 'SAT']);
+    });
+  });
+
+  describe('comando de hábitos alimenticios (HU009)', () => {
+    it('CA1: crea con token, clave, consentimiento y listas en el orden del catálogo', async () => {
+      const outcome = gateway.saveNutritionHabits(NUTRITION_DRAFT, null, KEY);
+      const request = await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.created);
+
+      expect(request.request.method).toBe('PUT');
+      expect(request.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
+      expect(request.request.headers.get('Idempotency-Key')).toBe(KEY);
+      // Sin `expected_version` ni `user_id`.
+      expect(request.request.body).toEqual(VALID_NUTRITION_HABITS_REQUEST);
+      expect(await outcome).toEqual({
+        kind: 'saved',
+        created: true,
+        replayed: false,
+        section: {
+          version: 1,
+          consentVersion: SIMULATED_HEALTH_CONSENT_VERSION,
+          consentAcceptedAt: NUTRITION_HABITS_RESPONSES.created.body.consent.accepted_at,
+          dietPattern: 'VEGETARIAN',
+          restrictions: ['LACTOSE_FREE', 'LOW_SUGAR'],
+          allergies: ['PEANUTS', 'SHELLFISH'],
+          mealsPerDay: 4,
+          hydrationLitersPerDay: '2.5',
+          updatedAt: NUTRITION_HABITS_RESPONSES.created.body.updated_at,
+        },
+      });
+    });
+
+    it('CA1: reemplaza con expected_version, listas vacías e hidratación null', async () => {
+      const outcome = gateway.saveNutritionHabits(
+        { ...NUTRITION_DRAFT, allergies: [], hydrationLitersPerDay: null },
+        1,
+        KEY,
+      );
+      const request = await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.replaced);
+
+      expect(request.request.body.expected_version).toBe(1);
+      expect(request.request.body.allergies).toEqual([]);
+      expect(request.request.body.hydration_liters_per_day).toBeNull();
+      expect(await outcome).toEqual(
+        jasmine.objectContaining({
+          kind: 'saved',
+          created: false,
+          section: jasmine.objectContaining({ version: 2, hydrationLitersPerDay: null }),
+        }),
+      );
+    });
+
+    it('CA6: reconoce el resultado de un reintento por Idempotent-Replayed', async () => {
+      const outcome = gateway.saveNutritionHabits(NUTRITION_DRAFT, null, KEY);
+      await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.created, {
+        'Idempotent-Replayed': 'true',
+      });
+
+      expect(await outcome).toEqual(jasmine.objectContaining({ kind: 'saved', replayed: true }));
+    });
+
+    it('CA2: traduce validation_error con la posición de las listas', async () => {
+      const outcome = gateway.saveNutritionHabits(NUTRITION_DRAFT, null, KEY);
+      await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.validationError);
+
+      expect(await outcome).toEqual({
+        kind: 'invalid',
+        violations: [
+          { field: 'allergies[1]', issue: 'duplicate_value' },
+          { field: 'meals_per_day', issue: 'out_of_range' },
+          { field: 'hydration_liters_per_day', issue: 'too_many_decimals' },
+        ],
+      });
+    });
+
+    it('CA6: version_conflict informa la versión vigente', async () => {
+      const outcome = gateway.saveNutritionHabits(NUTRITION_DRAFT, 1, KEY);
+      await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.versionConflict);
+
+      expect(await outcome).toEqual({ kind: 'conflict', currentVersion: 2 });
+    });
+
+    it('CA4: permission_required se informa como permiso denegado, sin reintentar', async () => {
+      const outcome = gateway.saveNutritionHabits(NUTRITION_DRAFT, null, KEY);
+      await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.permissionRequired);
+
+      expect(await outcome).toEqual(
+        jasmine.objectContaining({
+          kind: 'failed',
+          error: jasmine.objectContaining({ kind: 'forbidden', code: 'permission_required' }),
+        }),
+      );
+      http.expectNone(NUTRITION_HABITS_URL);
+    });
+
+    it('ante 504 reintenta con la misma clave y el mismo cuerpo', async () => {
+      const retries: number[] = [];
+      const outcome = gateway.saveNutritionHabits(NUTRITION_DRAFT, null, KEY, (attempt) =>
+        retries.push(attempt),
+      );
+      const first = await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.upstreamTimeout);
+      const second = await respond(NUTRITION_HABITS_URL, NUTRITION_HABITS_RESPONSES.created);
+
+      expect(second.request.headers.get('Idempotency-Key')).toBe(KEY);
+      expect(second.request.body).toEqual(first.request.body);
+      expect(retries).toEqual([1]);
+      expect(await outcome).toEqual(jasmine.objectContaining({ kind: 'saved', created: true }));
+    });
+
+    it('la consulta del perfil transforma los hábitos alimenticios proyectados', async () => {
+      const profile = gateway.loadProfile();
+      await respond(PROFILE_URL, GET_PROFILE_RESPONSES.withNutritionHabits);
+
+      const loaded = await profile;
+      expect(loaded.nutritionHabits?.version).toBe(1);
+      expect(loaded.nutritionHabits?.allergies).toEqual(['PEANUTS', 'SHELLFISH']);
+      expect(loaded.sportHabits?.version).toBe(1);
     });
   });
 

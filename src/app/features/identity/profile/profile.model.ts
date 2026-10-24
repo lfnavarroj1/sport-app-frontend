@@ -1,13 +1,20 @@
 import { ApiError } from '../../../core/api/api-error';
 import {
+  DIET_RESTRICTIONS,
   DemographicProfileRequestDto,
   DemographicProfileSectionDto,
+  DietPatternDto,
+  DietRestrictionDto,
+  FOOD_ALLERGIES,
+  FoodAllergyDto,
   GenderDto,
   HabitIntensityDto,
   HabitLevelDto,
   HabitSportDto,
   IncomeRangeDto,
   MaritalStatusDto,
+  NutritionHabitsRequestDto,
+  NutritionHabitsSectionDto,
   PROFILE_ISSUES,
   PhysiologicalProfileRequestDto,
   PhysiologicalProfileSectionDto,
@@ -30,6 +37,9 @@ export type HabitLevel = HabitLevelDto;
 export type WeekDay = WeekDayDto;
 export type TimeSlot = TimeSlotDto;
 export type PrimaryGoal = PrimaryGoalDto;
+export type DietPattern = DietPatternDto;
+export type DietRestriction = DietRestrictionDto;
+export type FoodAllergy = FoodAllergyDto;
 
 /** Sección demográfica confirmada por el backend (HU005). */
 export interface DemographicProfile {
@@ -97,11 +107,33 @@ export interface SportHabits {
   readonly updatedAt: string;
 }
 
+/**
+ * Hábitos alimenticios confirmados por el backend (HU009, ADR-035). Restricciones
+ * y alergias llegan en el orden de su catálogo; la hidratación conserva el texto
+ * del contrato (`"2.5"`). Son datos de salud: solo viven en memoria. No
+ * prescriben ni diagnostican.
+ */
+export interface NutritionHabits {
+  readonly version: number;
+  readonly consentVersion: string;
+  /** Instante UTC (`Z`) en que se aceptó el consentimiento. */
+  readonly consentAcceptedAt: string;
+  readonly dietPattern: DietPattern;
+  readonly restrictions: readonly DietRestriction[];
+  readonly allergies: readonly FoodAllergy[];
+  readonly mealsPerDay: number;
+  /** Litros por día con un decimal, o `null` si no se indicó. */
+  readonly hydrationLitersPerDay: string | null;
+  /** Instante UTC (`Z`). */
+  readonly updatedAt: string;
+}
+
 /** Perfil proyectado: `null` en las secciones aún sin datos (consistencia eventual). */
 export interface AthleteProfile {
   readonly demographic: DemographicProfile | null;
   readonly physiological: PhysiologicalProfile | null;
   readonly sportHabits: SportHabits | null;
+  readonly nutritionHabits: NutritionHabits | null;
   /** Instante UTC de la última proyección aplicada, o `null`. */
   readonly projectedAt: string | null;
 }
@@ -142,6 +174,18 @@ export interface SportHabitsDraft {
   readonly days: readonly WeekDay[];
   readonly timeSlots: readonly TimeSlot[];
   readonly primaryGoal: PrimaryGoal | null;
+}
+
+/** Hábitos alimenticios que captura el deportista (HU009), ya normalizados para el contrato. */
+export interface NutritionHabitsDraft {
+  /** Versión del consentimiento que aceptó (la de `healthDataConsentVersion`). */
+  readonly consentVersion: string;
+  readonly dietPattern: DietPattern;
+  readonly restrictions: readonly DietRestriction[];
+  readonly allergies: readonly FoodAllergy[];
+  readonly mealsPerDay: number;
+  /** Decimal como texto con punto (`"2.5"`), o `null` si no se indica. */
+  readonly hydrationLitersPerDay: string | null;
 }
 
 /** Regla incumplida (`details[{field, issue}]`, ADR-034). */
@@ -238,6 +282,39 @@ export function toSportHabitsRequest(
   };
 }
 
+/**
+ * Cuerpo de `PUT /v1/me/nutrition-habits` (ADR-035): restricciones y alergias sin
+ * repetir y en el orden de su catálogo; sin `user_id` ni texto libre.
+ */
+export function toNutritionHabitsRequest(
+  draft: NutritionHabitsDraft,
+  expectedVersion: number | null,
+): NutritionHabitsRequestDto {
+  return {
+    ...(expectedVersion === null ? {} : { expected_version: expectedVersion }),
+    consent: { version: draft.consentVersion },
+    diet_pattern: draft.dietPattern,
+    restrictions: inCatalogOrder(draft.restrictions, DIET_RESTRICTIONS),
+    allergies: inCatalogOrder(draft.allergies, FOOD_ALLERGIES),
+    meals_per_day: draft.mealsPerDay,
+    hydration_liters_per_day: draft.hydrationLitersPerDay,
+  };
+}
+
+export function toNutritionHabits(dto: NutritionHabitsSectionDto): NutritionHabits {
+  return {
+    version: dto.version,
+    consentVersion: dto.consent.version,
+    consentAcceptedAt: dto.consent.accepted_at,
+    dietPattern: dto.diet_pattern,
+    restrictions: dto.restrictions,
+    allergies: dto.allergies,
+    mealsPerDay: dto.meals_per_day,
+    hydrationLitersPerDay: dto.hydration_liters_per_day,
+    updatedAt: dto.updated_at,
+  };
+}
+
 /** Valores únicos de `values` en el orden de `catalog`; descarta los que no son del catálogo. */
 export function inCatalogOrder<T extends string>(values: readonly T[], catalog: readonly T[]): T[] {
   return catalog.filter((item) => values.includes(item));
@@ -302,6 +379,12 @@ export function toAthleteProfile(dto: ProfileResponseDto): AthleteProfile {
     demographic: dto.demographic === null ? null : toDemographicProfile(dto.demographic),
     physiological: dto.physiological === null ? null : toPhysiologicalProfile(dto.physiological),
     sportHabits: dto.sport_habits === null ? null : toSportHabits(dto.sport_habits),
+    // Un BFF anterior a 0.21.0 omite `nutrition_habits`: se trata como «sin hábitos»
+    // para no dejar sin perfil las demás secciones.
+    nutritionHabits:
+      dto.nutrition_habits === null || dto.nutrition_habits === undefined
+        ? null
+        : toNutritionHabits(dto.nutrition_habits),
     projectedAt: dto.projected_at,
   };
 }

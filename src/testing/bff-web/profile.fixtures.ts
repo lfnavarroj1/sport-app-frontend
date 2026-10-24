@@ -1,8 +1,9 @@
 /**
- * Simulador del perfil del deportista (HU005 y HU006) derivado del contrato
- * bff-web 0.19.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los
- * ejemplos de ADR-034: `GET /v1/me/profile`, `PUT /v1/me/demographic-profile`,
- * `PUT /v1/me/physiological-profile` y `PUT /v1/me/sport-habits`. Lo usan las pruebas unitarias y
+ * Simulador del perfil del deportista (HU005, HU006 y HU009) derivado del contrato
+ * bff-web 0.21.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los
+ * ejemplos de ADR-034 y ADR-035: `GET /v1/me/profile`, `PUT /v1/me/demographic-profile`,
+ * `PUT /v1/me/physiological-profile`, `PUT /v1/me/sport-habits` y
+ * `PUT /v1/me/nutrition-habits`. Lo usan las pruebas unitarias y
  * Playwright; `profile.contract.spec.ts` valida cada respuesta contra el esquema
  * del contrato. Datos sintéticos.
  *
@@ -14,6 +15,7 @@ export const PROFILE_PATH = '/v1/me/profile';
 export const DEMOGRAPHIC_PROFILE_PATH = '/v1/me/demographic-profile';
 export const PHYSIOLOGICAL_PROFILE_PATH = '/v1/me/physiological-profile';
 export const SPORT_HABITS_PATH = '/v1/me/sport-habits';
+export const NUTRITION_HABITS_PATH = '/v1/me/nutrition-habits';
 
 /** Mismo deportista que la sesión simulada de `create-session.fixtures.ts`. */
 export const SIMULATED_PROFILE_USER_ID = '0b9f6c1e-3d2a-4f5b-8c7d-1e2f3a4b5c6d';
@@ -119,6 +121,38 @@ export const SPORT_HABITS_RESPONSE = {
   ...SPORT_HABITS_SECTION,
 };
 
+/**
+ * Solicitud de hábitos alimenticios de creación (HU009, ADR-035), con las listas
+ * en el orden de su catálogo (sin `expected_version`).
+ */
+export const VALID_NUTRITION_HABITS_REQUEST = {
+  consent: { version: SIMULATED_HEALTH_CONSENT_VERSION },
+  diet_pattern: 'VEGETARIAN',
+  restrictions: ['LACTOSE_FREE', 'LOW_SUGAR'],
+  allergies: ['PEANUTS', 'SHELLFISH'],
+  meals_per_day: 4,
+  hydration_liters_per_day: '2.5',
+} as const;
+
+/** Hábitos alimenticios confirmados en la versión 1. */
+export const NUTRITION_HABITS_SECTION = {
+  version: 1,
+  consent: { version: SIMULATED_HEALTH_CONSENT_VERSION, accepted_at: '2026-10-12T13:08:00Z' },
+  diet_pattern: VALID_NUTRITION_HABITS_REQUEST.diet_pattern,
+  restrictions: VALID_NUTRITION_HABITS_REQUEST.restrictions,
+  allergies: VALID_NUTRITION_HABITS_REQUEST.allergies,
+  meals_per_day: VALID_NUTRITION_HABITS_REQUEST.meals_per_day,
+  hydration_liters_per_day: VALID_NUTRITION_HABITS_REQUEST.hydration_liters_per_day,
+  created_at: '2026-10-12T13:08:00Z',
+  updated_at: '2026-10-12T13:08:00Z',
+} as const;
+
+/** Respuesta del comando de hábitos alimenticios (`201` al crear). */
+export const NUTRITION_HABITS_RESPONSE = {
+  user_id: SIMULATED_PROFILE_USER_ID,
+  ...NUTRITION_HABITS_SECTION,
+};
+
 /** Respuesta del comando demográfico (`201` al crear). */
 export const DEMOGRAPHIC_RESPONSE = { user_id: SIMULATED_PROFILE_USER_ID, ...DEMOGRAPHIC_SECTION };
 /** Respuesta del comando fisiológico (`201` al crear). */
@@ -133,7 +167,8 @@ export const EMPTY_PROFILE = {
   demographic: null,
   physiological: null,
   sport_habits: null,
-  versions: { demographic: null, physiological: null, sport_habits: null },
+  nutrition_habits: null,
+  versions: { demographic: null, physiological: null, sport_habits: null, nutrition_habits: null },
   projected_at: null,
 } as const;
 
@@ -143,7 +178,8 @@ export const FULL_PROFILE = {
   demographic: DEMOGRAPHIC_SECTION,
   physiological: PHYSIOLOGICAL_SECTION,
   sport_habits: null,
-  versions: { demographic: 1, physiological: 1, sport_habits: null },
+  nutrition_habits: null,
+  versions: { demographic: 1, physiological: 1, sport_habits: null, nutrition_habits: null },
   projected_at: '2026-10-12T13:06:01Z',
 } as const;
 
@@ -151,8 +187,16 @@ export const FULL_PROFILE = {
 export const PROFILE_WITH_SPORT_HABITS = {
   ...FULL_PROFILE,
   sport_habits: SPORT_HABITS_SECTION,
-  versions: { demographic: 1, physiological: 1, sport_habits: 1 },
+  versions: { demographic: 1, physiological: 1, sport_habits: 1, nutrition_habits: null },
   projected_at: '2026-10-12T13:07:01Z',
+} as const;
+
+/** Perfil con las cuatro secciones proyectadas en la versión 1 (HU005, HU006 y HU009). */
+export const PROFILE_WITH_NUTRITION_HABITS = {
+  ...PROFILE_WITH_SPORT_HABITS,
+  nutrition_habits: NUTRITION_HABITS_SECTION,
+  versions: { demographic: 1, physiological: 1, sport_habits: 1, nutrition_habits: 1 },
+  projected_at: '2026-10-12T13:08:01Z',
 } as const;
 
 function error(
@@ -168,13 +212,14 @@ export const GET_PROFILE_RESPONSES = {
   empty: { status: 200, body: EMPTY_PROFILE },
   full: { status: 200, body: FULL_PROFILE },
   withSportHabits: { status: 200, body: PROFILE_WITH_SPORT_HABITS },
+  withNutritionHabits: { status: 200, body: PROFILE_WITH_NUTRITION_HABITS },
   invalidAccessToken: error(401, 'invalid_access_token', 'La sesión no es válida.'),
   permissionRequired: error(403, 'permission_required', 'Solo el deportista tiene perfil.'),
   upstreamUnavailable: error(503, 'upstream_unavailable', 'El servicio no está disponible.'),
   upstreamTimeout: error(504, 'upstream_timeout', 'El servicio tardó demasiado en responder.'),
 } as const satisfies Record<string, SimulatedResponse>;
 
-/** Errores comunes a los comandos de HU005 y HU006. */
+/** Errores comunes a los comandos de HU005, HU006 y HU009. */
 const COMMAND_ERRORS = {
   invalidAccessToken: error(401, 'invalid_access_token', 'La sesión no es válida.'),
   permissionRequired: error(403, 'permission_required', 'Solo el deportista tiene perfil.'),
@@ -268,6 +313,40 @@ export const SPORT_HABITS_RESPONSES = {
   /** Más de cinco deportes (CA2). */
   tooManySports: error(422, 'validation_error', 'La solicitud no es válida.', [
     { field: 'sports', issue: 'too_many_items' },
+  ]),
+} as const satisfies Record<string, SimulatedResponse>;
+
+export const NUTRITION_HABITS_RESPONSES = {
+  created: { status: 201, body: NUTRITION_HABITS_RESPONSE },
+  /** Reemplazo: sin alergias ni hidratación. */
+  replaced: {
+    status: 200,
+    body: {
+      ...NUTRITION_HABITS_RESPONSE,
+      version: 2,
+      consent: { version: SIMULATED_HEALTH_CONSENT_VERSION, accepted_at: '2026-10-13T08:03:00Z' },
+      diet_pattern: 'VEGAN',
+      restrictions: ['GLUTEN_FREE'],
+      allergies: [],
+      meals_per_day: 3,
+      hydration_liters_per_day: null,
+      updated_at: '2026-10-13T08:03:00Z',
+    },
+  },
+  ...COMMAND_ERRORS,
+  /** Alergia repetida, comidas fuera de rango e hidratación con dos decimales (CA2). */
+  validationError: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: 'allergies[1]', issue: 'duplicate_value' },
+    { field: 'meals_per_day', issue: 'out_of_range' },
+    { field: 'hydration_liters_per_day', issue: 'too_many_decimals' },
+  ]),
+  /** Consentimiento con una versión distinta de la vigente (CA2). */
+  unsupportedConsentVersion: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: 'consent.version', issue: 'unsupported_consent_version' },
+  ]),
+  /** Valor fuera del catálogo en las restricciones (CA2). */
+  unknownRestriction: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: 'restrictions[0]', issue: 'unknown_value' },
   ]),
 } as const satisfies Record<string, SimulatedResponse>;
 

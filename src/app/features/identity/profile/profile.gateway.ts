@@ -2,6 +2,8 @@ import {
   AthleteProfile,
   DemographicDraft,
   DemographicProfile,
+  NutritionHabits,
+  NutritionHabitsDraft,
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
@@ -10,8 +12,8 @@ import {
 } from './profile.model';
 
 /**
- * Puerto hacia el BFF web para el perfil del deportista (HU005 y HU006).
- * `HttpProfileGateway` traduce el contrato bff-web 0.19.0.
+ * Puerto hacia el BFF web para el perfil del deportista (HU005, HU006 y HU009).
+ * `HttpProfileGateway` traduce el contrato bff-web 0.21.0.
  */
 export abstract class ProfileGateway {
   /**
@@ -50,4 +52,15 @@ export abstract class ProfileGateway {
     idempotencyKey: string,
     onRetry?: (attempt: number) => void,
   ): Promise<SaveOutcome<SportHabits>>;
+
+  /**
+   * Registra o reemplaza los hábitos alimenticios (HU009), con el consentimiento
+   * de datos de salud; mismas reglas que las secciones de HU005.
+   */
+  abstract saveNutritionHabits(
+    draft: NutritionHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<NutritionHabits>>;
 }

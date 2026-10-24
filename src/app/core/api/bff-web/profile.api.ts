@@ -6,13 +6,14 @@ import { BffWebUrl } from '../bff-web-url';
 import { SPORTS, SportDto } from './training.api';
 
 /**
- * Transporte del perfil del deportista (HU005 y HU006, ADR-034) del contrato
- * bff-web 0.19.0 (ver `contract.ts`): `GET /v1/me/profile`
+ * Transporte del perfil del deportista (HU005 y HU006, ADR-034; HU009, ADR-035)
+ * del contrato bff-web 0.21.0 (ver `contract.ts`): `GET /v1/me/profile`
  * (`get_profile_v1_me_profile_get`), `PUT /v1/me/demographic-profile`
  * (`put_demographic_v1_me_demographic_profile_put`),
  * `PUT /v1/me/physiological-profile`
  * (`put_physiological_v1_me_physiological_profile_put`) y
- * `PUT /v1/me/sport-habits` (`put_sport_habits_v1_me_sport_habits_put`). Solo
+ * `PUT /v1/me/sport-habits` (`put_sport_habits_v1_me_sport_habits_put`) y
+ * `PUT /v1/me/nutrition-habits` (`put_nutrition_habits_v1_me_nutrition_habits_put`). Solo
  * `athlete`; la identidad sale del token y el cuerpo nunca lleva `user_id` ni
  * `bmi`. Estos tipos son del transporte: la interfaz los transforma antes de
  * usarlos.
@@ -206,11 +207,88 @@ export interface SportHabitsResponseDto extends SportHabitsSectionDto {
   readonly user_id: string;
 }
 
+/** Enumeración `diet_pattern` de los hábitos alimenticios (HU009, ADR-035). */
+export const DIET_PATTERNS = [
+  'OMNIVORE',
+  'VEGETARIAN',
+  'VEGAN',
+  'PESCATARIAN',
+  'FLEXITARIAN',
+] as const;
+export type DietPatternDto = (typeof DIET_PATTERNS)[number];
+
+/** Enumeración de `restrictions[]`, en el orden del catálogo. */
+export const DIET_RESTRICTIONS = [
+  'GLUTEN_FREE',
+  'LACTOSE_FREE',
+  'LOW_SODIUM',
+  'LOW_SUGAR',
+  'KETO',
+  'HALAL',
+  'KOSHER',
+] as const;
+export type DietRestrictionDto = (typeof DIET_RESTRICTIONS)[number];
+
+/** Enumeración de `allergies[]`, en el orden del catálogo. */
+export const FOOD_ALLERGIES = [
+  'PEANUTS',
+  'TREE_NUTS',
+  'MILK',
+  'EGGS',
+  'WHEAT',
+  'SOY',
+  'FISH',
+  'SHELLFISH',
+  'SESAME',
+] as const;
+export type FoodAllergyDto = (typeof FOOD_ALLERGIES)[number];
+
+/**
+ * Esquema `NutritionHabitsRequest`: hábitos completos (`PUT` de reemplazo), sin
+ * texto libre. `consent.version` debe ser la versión vigente
+ * (`HEALTH_DATA_CONSENT_VERSION`). `expected_version` se omite al crear y es
+ * obligatorio, igual a la versión vigente, al reemplazar. Los errores de una
+ * lista nombran la posición recibida (`allergies[1]`).
+ */
+export interface NutritionHabitsRequestDto {
+  readonly expected_version?: number;
+  readonly consent: { readonly version: string };
+  readonly diet_pattern: DietPatternDto;
+  readonly restrictions: readonly DietRestrictionDto[];
+  readonly allergies: readonly FoodAllergyDto[];
+  readonly meals_per_day: number;
+  /** Cadena decimal con hasta un decimal, de 0.5 a 10.0 litros; `null` si no se indica. */
+  readonly hydration_liters_per_day: string | null;
+}
+
+/**
+ * Esquema `NutritionHabitsSection`: restricciones y alergias en el orden de su
+ * catálogo, hidratación con un decimal, instantes en UTC (`Z`). No prescriben ni
+ * diagnostican.
+ */
+export interface NutritionHabitsSectionDto {
+  readonly version: number;
+  readonly consent: HealthConsentDto;
+  readonly diet_pattern: DietPatternDto;
+  readonly restrictions: readonly DietRestrictionDto[];
+  readonly allergies: readonly FoodAllergyDto[];
+  readonly meals_per_day: number;
+  readonly hydration_liters_per_day: string | null;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+/** Esquema `NutritionHabitsResponse`: la sección con el `user_id` del token. */
+export interface NutritionHabitsResponseDto extends NutritionHabitsSectionDto {
+  readonly user_id: string;
+}
+
 /** Esquema `ProfileVersions`. */
 export interface ProfileVersionsDto {
   readonly demographic: number | null;
   readonly physiological: number | null;
   readonly sport_habits: number | null;
+  readonly nutrition_habits: number | null;
 }
 
 /**
@@ -222,6 +300,7 @@ export interface ProfileResponseDto {
   readonly demographic: DemographicProfileSectionDto | null;
   readonly physiological: PhysiologicalProfileSectionDto | null;
   readonly sport_habits: SportHabitsSectionDto | null;
+  readonly nutrition_habits: NutritionHabitsSectionDto | null;
   readonly versions: ProfileVersionsDto;
   readonly projected_at: string | null;
 }
@@ -270,9 +349,22 @@ export const SPORT_HABITS_LIMITS = {
   timeSlotsMax: 4,
 } as const;
 
+/**
+ * Límites de `NutritionHabitsRequest` (ADR-035). Los de listas y enteros están en
+ * el esquema; el rango de la hidratación, en la descripción de su campo.
+ */
+export const NUTRITION_HABITS_LIMITS = {
+  restrictionsMax: 7,
+  allergiesMax: 9,
+  mealsMin: 1,
+  mealsMax: 8,
+  hydrationMin: '0.5',
+  hydrationMax: '10.0',
+} as const;
+
 /** Patrón de `country_code` en el contrato. */
 export const PROFILE_COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/;
-/** Patrón de `weight_kg` y `body_temperature_c` en la solicitud. */
+/** Patrón de `weight_kg`, `body_temperature_c` y `hydration_liters_per_day` en la solicitud. */
 export const PROFILE_DECIMAL_PATTERN = /^\d{1,3}(\.\d)?$/;
 /** Patrón de `measured_at` en la solicitud. */
 export const MEASURED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
@@ -318,7 +410,7 @@ export const VERSION_CONFLICT_FIELD = 'expected_version';
 /** Cabecera de respuesta que marca el resultado de un reintento idempotente. */
 export const PROFILE_IDEMPOTENT_REPLAYED_HEADER = 'Idempotent-Replayed';
 
-/** Cliente del BFF web para el perfil del deportista (HU005 y HU006). */
+/** Cliente del BFF web para el perfil del deportista (HU005, HU006 y HU009). */
 @Injectable({ providedIn: 'root' })
 export class BffWebProfileApi {
   private readonly http = inject(HttpClient);
@@ -371,6 +463,22 @@ export class BffWebProfileApi {
   ): Observable<HttpResponse<SportHabitsResponseDto>> {
     return this.http.put<SportHabitsResponseDto>(
       this.bffWebUrl.resolve('v1/me/sport-habits'),
+      body,
+      { headers: commandHeaders(accessToken, idempotencyKey), observe: 'response' },
+    );
+  }
+
+  /**
+   * Registra o reemplaza los hábitos alimenticios (HU009); mismas reglas que las
+   * secciones de HU005 y el consentimiento de datos de salud de la fisiológica.
+   */
+  putNutritionHabits(
+    accessToken: string,
+    body: NutritionHabitsRequestDto,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<NutritionHabitsResponseDto>> {
+    return this.http.put<NutritionHabitsResponseDto>(
+      this.bffWebUrl.resolve('v1/me/nutrition-habits'),
       body,
       { headers: commandHeaders(accessToken, idempotencyKey), observe: 'response' },
     );

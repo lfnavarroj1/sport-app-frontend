@@ -358,6 +358,82 @@
         "primaryGoal": "Objetivo principal"
       }
     },
+    "nutrition": {
+      "title": "Hábitos alimenticios",
+      "intro": "Cuéntanos cómo te alimentas: patrón, restricciones, alergias, comidas por día e hidratación. Son datos de salud: solo tú puedes consultarlos y registrarlos no crea planes ni recomendaciones.",
+      "empty": "Aún no has registrado tus hábitos alimenticios. Regístralos para que tu experiencia tenga en cuenta tus restricciones y alergias.",
+      "unavailable": "El registro de hábitos alimenticios no está disponible en este momento porque falta la versión vigente del consentimiento de datos de salud.",
+      "disclaimer": "Esta información es declarativa: no es un diagnóstico ni sustituye la valoración de un profesional de la salud.",
+      "conflict": "Tus hábitos alimenticios cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus hábitos alimenticios ({{attempt}} de {{max}})…",
+      "fields": {
+        "dietPattern": "Patrón alimentario",
+        "restrictions": "Restricciones alimentarias",
+        "allergies": "Alergias alimentarias",
+        "mealsPerDay": "Comidas por día",
+        "hydration": "Hidratación diaria (opcional)",
+        "consent": "Consentimiento de datos de salud"
+      },
+      "hints": {
+        "hydration": "Litros por día, entre {{min}} y {{max}}, con un decimal como máximo.",
+        "optionalList": "Marca todas las que apliquen; puedes no marcar ninguna."
+      },
+      "units": {
+        "liters": "L"
+      },
+      "patterns": {
+        "OMNIVORE": "Omnívoro",
+        "VEGETARIAN": "Vegetariano",
+        "VEGAN": "Vegano",
+        "PESCATARIAN": "Pescetariano",
+        "FLEXITARIAN": "Flexitariano"
+      },
+      "restrictions": {
+        "GLUTEN_FREE": "Sin gluten",
+        "LACTOSE_FREE": "Sin lactosa",
+        "LOW_SODIUM": "Bajo en sodio",
+        "LOW_SUGAR": "Bajo en azúcar",
+        "KETO": "Cetogénica",
+        "HALAL": "Halal",
+        "KOSHER": "Kosher"
+      },
+      "allergies": {
+        "PEANUTS": "Maní",
+        "TREE_NUTS": "Frutos secos de árbol",
+        "MILK": "Leche",
+        "EGGS": "Huevo",
+        "WHEAT": "Trigo",
+        "SOY": "Soya",
+        "FISH": "Pescado",
+        "SHELLFISH": "Mariscos",
+        "SESAME": "Ajonjolí"
+      },
+      "consent": {
+        "label": "Acepto que SportApp trate mis datos de salud, incluidas mis restricciones y alergias alimentarias, para personalizar mi experiencia (versión {{version}}).",
+        "hint": "Debes aceptarlo cada vez que guardes tus hábitos alimenticios.",
+        "requiredToSave": "Marca la casilla de consentimiento para habilitar «Guardar hábitos alimenticios».",
+        "issues": {
+          "required": "Debes aceptar el consentimiento de datos de salud para guardar tus hábitos alimenticios.",
+          "unsupported_consent_version": "La versión del consentimiento ya no está vigente. Recarga la página y acepta la versión actual para guardar."
+        }
+      },
+      "summary": {
+        "none": "Ninguna",
+        "notProvided": "Sin especificar",
+        "liters": "{{value}} L por día",
+        "updatedAt": "Última actualización"
+      },
+      "saved": {
+        "created": "Registramos tus hábitos alimenticios.",
+        "replaced": "Actualizamos tus hábitos alimenticios."
+      },
+      "actions": {
+        "register": "Registrar hábitos alimenticios",
+        "edit": "Editar hábitos alimenticios",
+        "save": "Guardar hábitos alimenticios",
+        "cancel": "Cancelar"
+      }
+    },
     "hu005": {
       "title": "Datos demográficos y fisiológicos",
       "intro": "Nos ayudan a personalizar tu experiencia. Solo tú puedes consultarlos."
