@@ -4,6 +4,8 @@ import {
   DEMOGRAPHIC_PROFILE_PATH,
   DEMOGRAPHIC_RESPONSES,
   GET_PROFILE_RESPONSES,
+  NUTRITION_HABITS_PATH,
+  NUTRITION_HABITS_RESPONSES,
   PHYSIOLOGICAL_PROFILE_PATH,
   PHYSIOLOGICAL_RESPONSES,
   PROFILE_PATH,
@@ -15,27 +17,29 @@ import {
 import { SimulatedResponse } from '../../src/testing/bff-web/register-user.fixtures';
 
 export interface ProfileSimulation {
-  /** Solicitudes recibidas en los tres `PUT`, en orden de llegada. */
+  /** Solicitudes recibidas en los cuatro `PUT`, en orden de llegada. */
   readonly requests: Request[];
   /** Solicitudes recibidas en `GET /v1/me/profile`. */
   readonly reads: Request[];
-  /** Respuestas de los próximos `PUT` (cualquiera de los tres), en orden; luego, el comportamiento normal. */
+  /** Respuestas de los próximos `PUT` (cualquiera de los cuatro), en orden; luego, el comportamiento normal. */
   readonly next: SimulatedResponse[];
   /** Secciones vigentes; `null` mientras no se registran. */
   readonly state: {
     demographic: Section | null;
     physiological: Section | null;
     sportHabits: Section | null;
+    nutritionHabits: Section | null;
   };
 }
 
 type Section = Readonly<Record<string, unknown>> & { readonly version: number };
-type SectionName = 'demographic' | 'physiological' | 'sportHabits';
+type SectionName = 'demographic' | 'physiological' | 'sportHabits' | 'nutritionHabits';
 
 const RESPONSES: Readonly<Record<SectionName, Readonly<Record<string, SimulatedResponse>>>> = {
   demographic: DEMOGRAPHIC_RESPONSES,
   physiological: PHYSIOLOGICAL_RESPONSES,
   sportHabits: SPORT_HABITS_RESPONSES,
+  nutritionHabits: NUTRITION_HABITS_RESPONSES,
 };
 
 /** Catálogos de HU006 (ADR-034), en su orden: el backend normaliza las listas a este orden. */
@@ -43,6 +47,27 @@ const SPORTS = ['running', 'cycling', 'swimming', 'strength', 'other'];
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const TIME_SLOTS = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
 const MAX_SPORTS = 5;
+/** Catálogos de HU009 (ADR-035), en su orden. */
+const RESTRICTIONS = [
+  'GLUTEN_FREE',
+  'LACTOSE_FREE',
+  'LOW_SODIUM',
+  'LOW_SUGAR',
+  'KETO',
+  'HALAL',
+  'KOSHER',
+];
+const ALLERGIES = [
+  'PEANUTS',
+  'TREE_NUTS',
+  'MILK',
+  'EGGS',
+  'WHEAT',
+  'SOY',
+  'FISH',
+  'SHELLFISH',
+  'SESAME',
+];
 interface Detail {
   readonly field: string | null;
   readonly issue: string;
@@ -53,8 +78,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DECIMAL = /^(\d{1,3})(?:\.(\d))?$/;
 
 /**
- * Reemplaza las cuatro operaciones del perfil de HU005 y HU006 con el simulador
- * del contrato bff-web 0.19.0 y ADR-034. Con el contexto como `target`, todas
+ * Reemplaza las cinco operaciones del perfil de HU005, HU006 y HU009 con el
+ * simulador del contrato bff-web 0.21.0, ADR-034 y ADR-035. Con el contexto como `target`, todas
  * sus pestañas comparten el mismo perfil (conflictos de versión entre pestañas).
  *
  * Como el BFF: sin `Bearer` responde `401`; los `PUT` exigen `Idempotency-Key`
@@ -68,14 +93,18 @@ const DECIMAL = /^(\d{1,3})(?:\.(\d))?$/;
  * `user_id` (`422 validation_error`). El IMC lo calcula el simulador como el
  * backend. Los hábitos rechazan un deporte repetido (`sports[i].sport`) o más de
  * cinco (`sports`), y se guardan con deportes, días y franjas en el orden de su
- * catálogo, como el backend. Las demás reglas de ADR-034 se fuerzan con `next`.
+ * catálogo, como el backend. Los hábitos alimenticios exigen el consentimiento
+ * vigente, rechazan valores repetidos o fuera del catálogo en restricciones y
+ * alergias (`allergies[i]`) y se guardan con las listas en el orden del catálogo
+ * y la hidratación con un decimal. Las demás reglas de ADR-034 y ADR-035 se
+ * fuerzan con `next`.
  */
 export async function simulateProfile(target: Page | BrowserContext): Promise<ProfileSimulation> {
   const simulation: ProfileSimulation = {
     requests: [],
     reads: [],
     next: [],
-    state: { demographic: null, physiological: null, sportHabits: null },
+    state: { demographic: null, physiological: null, sportHabits: null, nutritionHabits: null },
   };
   const replays = new Map<string, { body: string; response: SimulatedResponse }>();
   let clock = Date.parse('2026-10-12T13:05:00Z');
@@ -90,7 +119,7 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
     if (!(await authenticated(route))) {
       return fulfill(route, GET_PROFILE_RESPONSES.invalidAccessToken);
     }
-    const { demographic, physiological, sportHabits } = simulation.state;
+    const { demographic, physiological, sportHabits, nutritionHabits } = simulation.state;
     await fulfill(route, {
       status: 200,
       body: {
@@ -98,12 +127,14 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
         demographic,
         physiological,
         sport_habits: sportHabits,
+        nutrition_habits: nutritionHabits,
         versions: {
           demographic: demographic?.version ?? null,
           physiological: physiological?.version ?? null,
           sport_habits: sportHabits?.version ?? null,
+          nutrition_habits: nutritionHabits?.version ?? null,
         },
-        projected_at: demographic || physiological || sportHabits ? now() : null,
+        projected_at: demographic || physiological || sportHabits || nutritionHabits ? now() : null,
       },
     });
   });
@@ -161,7 +192,9 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
         ? values
         : name === 'physiological'
           ? physiologicalSection(values, instant)
-          : sportHabitsSection(values)),
+          : name === 'nutritionHabits'
+            ? nutritionHabitsSection(values, instant)
+            : sportHabitsSection(values)),
       version: (current?.version ?? 0) + 1,
       created_at: (current?.['created_at'] as string | undefined) ?? instant,
       updated_at: instant,
@@ -178,6 +211,7 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
   await target.route(`**${DEMOGRAPHIC_PROFILE_PATH}`, command('demographic'));
   await target.route(`**${PHYSIOLOGICAL_PROFILE_PATH}`, command('physiological'));
   await target.route(`**${SPORT_HABITS_PATH}`, command('sportHabits'));
+  await target.route(`**${NUTRITION_HABITS_PATH}`, command('nutritionHabits'));
 
   return simulation;
 }
@@ -202,6 +236,29 @@ function rejected(name: SectionName, request: Record<string, unknown>): Detail[]
       }
     });
   }
+  if (name === 'nutritionHabits') {
+    for (const [field, catalog] of [
+      ['restrictions', RESTRICTIONS],
+      ['allergies', ALLERGIES],
+    ] as const) {
+      const values = (request[field] ?? []) as unknown[];
+      values.forEach((value, index) => {
+        if (!catalog.includes(value as string)) {
+          details.push({ field: `${field}[${index}]`, issue: 'unknown_value' });
+        } else if (values.slice(0, index).includes(value)) {
+          details.push({ field: `${field}[${index}]`, issue: 'duplicate_value' });
+        }
+      });
+    }
+  }
+  if (name === 'physiological' || name === 'nutritionHabits') {
+    const consent = (request['consent'] ?? {}) as { version?: unknown };
+    if (consent.version === undefined || consent.version === null) {
+      details.push({ field: 'consent.version', issue: 'required' });
+    } else if (consent.version !== SIMULATED_HEALTH_CONSENT_VERSION) {
+      details.push({ field: 'consent.version', issue: 'unsupported_consent_version' });
+    }
+  }
   if (name === 'physiological') {
     if (tenths(request['weight_kg']) === null) {
       details.push({ field: 'weight_kg', issue: 'out_of_range' });
@@ -209,12 +266,6 @@ function rejected(name: SectionName, request: Record<string, unknown>): Detail[]
     const height = request['height_cm'];
     if (!Number.isInteger(height) || (height as number) <= 0) {
       details.push({ field: 'height_cm', issue: 'out_of_range' });
-    }
-    const consent = (request['consent'] ?? {}) as { version?: unknown };
-    if (consent.version === undefined || consent.version === null) {
-      details.push({ field: 'consent.version', issue: 'required' });
-    } else if (consent.version !== SIMULATED_HEALTH_CONSENT_VERSION) {
-      details.push({ field: 'consent.version', issue: 'unsupported_consent_version' });
     }
   }
   return details;
@@ -235,6 +286,30 @@ function sportHabitsSection(values: Record<string, unknown>): Record<string, unk
       time_slots: [...availability.time_slots].sort(byCatalog(TIME_SLOTS)),
     },
     primary_goal: values['primary_goal'] ?? null,
+  };
+}
+
+/**
+ * Hábitos alimenticios normalizados como el backend: listas en el orden de su
+ * catálogo e hidratación con un decimal (`"10"` → `"10.0"`).
+ */
+function nutritionHabitsSection(
+  values: Record<string, unknown>,
+  acceptedAt: string,
+): Record<string, unknown> {
+  const byCatalog = (catalog: string[]) => (list: unknown) =>
+    [...(list as string[])].sort((a, b) => catalog.indexOf(a) - catalog.indexOf(b));
+  const hydration = tenths(values['hydration_liters_per_day']);
+  return {
+    consent: {
+      version: (values['consent'] as { version: string }).version,
+      accepted_at: acceptedAt,
+    },
+    diet_pattern: values['diet_pattern'],
+    restrictions: byCatalog(RESTRICTIONS)(values['restrictions']),
+    allergies: byCatalog(ALLERGIES)(values['allergies']),
+    meals_per_day: values['meals_per_day'],
+    hydration_liters_per_day: hydration === null ? null : decimal(hydration),
   };
 }
 

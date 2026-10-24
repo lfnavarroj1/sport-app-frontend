@@ -15,6 +15,8 @@ import {
   AthleteProfile,
   DemographicDraft,
   DemographicProfile,
+  NutritionHabits,
+  NutritionHabitsDraft,
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
@@ -24,6 +26,8 @@ import {
   toAthleteProfile,
   toDemographicProfile,
   toDemographicRequest,
+  toNutritionHabits,
+  toNutritionHabitsRequest,
   toPhysiologicalProfile,
   toPhysiologicalRequest,
   toSportHabits,
@@ -43,9 +47,10 @@ export const PROFILE_RETRY_DELAYS_MS = new InjectionToken<readonly number[]>(
 );
 
 /**
- * Implementación de HU005 y HU006 sobre `GET /v1/me/profile`,
- * `PUT /v1/me/demographic-profile`, `PUT /v1/me/physiological-profile` y
- * `PUT /v1/me/sport-habits` del BFF web (contrato 0.19.0). Los valores del
+ * Implementación de HU005, HU006 y HU009 sobre `GET /v1/me/profile`,
+ * `PUT /v1/me/demographic-profile`, `PUT /v1/me/physiological-profile`,
+ * `PUT /v1/me/sport-habits` y `PUT /v1/me/nutrition-habits` del BFF web
+ * (contrato 0.21.0). Los valores del
  * perfil son datos sensibles: no se registran en consola ni se guardan fuera de
  * la memoria de la pestaña.
  */
@@ -108,6 +113,20 @@ export class HttpProfileGateway extends ProfileGateway {
     return this.save(
       (token) => this.api.putSportHabits(token, body, idempotencyKey),
       toSportHabits,
+      onRetry,
+    );
+  }
+
+  saveNutritionHabits(
+    draft: NutritionHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<NutritionHabits>> {
+    const body = toNutritionHabitsRequest(draft, expectedVersion);
+    return this.save(
+      (token) => this.api.putNutritionHabits(token, body, idempotencyKey),
+      toNutritionHabits,
       onRetry,
     );
   }

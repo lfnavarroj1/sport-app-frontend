@@ -21,6 +21,7 @@ import { APP_CONFIG } from '../../../../core/config/app-config';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
 import { DemographicForm } from '../demographic-form/demographic-form';
+import { NutritionHabitsForm } from '../nutrition-habits-form/nutrition-habits-form';
 import { PhysiologicalForm } from '../physiological-form/physiological-form';
 import { formatBirthDate, formatCountry, formatDecimal, formatInstant } from '../profile-format';
 import { ProfileGateway } from '../profile.gateway';
@@ -28,6 +29,8 @@ import {
   AthleteProfile,
   DemographicDraft,
   DemographicProfile,
+  NutritionHabits,
+  NutritionHabitsDraft,
   PhysiologicalDraft,
   PhysiologicalProfile,
   ProfileViolation,
@@ -100,8 +103,9 @@ class SectionState<T extends { readonly version: number }> {
 }
 
 /**
- * Mi perfil (HU005 y HU006) en `/deportista/perfil`. El deportista registra o
- * reemplaza sus datos demográficos y fisiológicos y sus hábitos deportivos, y ve
+ * Mi perfil (HU005, HU006 y HU009) en `/deportista/perfil`. El deportista registra o
+ * reemplaza sus datos demográficos y fisiológicos y sus hábitos deportivos y
+ * alimenticios, y ve
  * los valores que confirmó el backend, incluido el IMC estimado que este calcula
  * (HU005 CA1, HU006 CA1). Las reglas incumplidas llegan del backend y se marcan
  * por campo, con la fila del deporte cuando aplica (HU005 CA2 y CA3, HU006 CA2).
@@ -109,7 +113,9 @@ class SectionState<T extends { readonly version: number }> {
  * `409 version_conflict` no sobrescribe: se recarga el perfil y se muestran los
  * valores vigentes (HU005 CA6, HU006 CA4). La proyección es eventual: se
  * conserva la respuesta del comando mientras no la alcance. Registrar hábitos
- * no crea planes ni recomendaciones.
+ * no crea planes ni recomendaciones. Los hábitos alimenticios exigen el
+ * consentimiento de datos de salud, como la sección fisiológica (HU009, ADR-035),
+ * y no sustituyen la valoración de un profesional.
  */
 @Component({
   selector: 'app-profile-page',
@@ -118,6 +124,7 @@ class SectionState<T extends { readonly version: number }> {
     DemographicForm,
     MatButtonModule,
     MatCardModule,
+    NutritionHabitsForm,
     PhysiologicalForm,
     SportHabitsForm,
     TranslatePipe,
@@ -133,7 +140,10 @@ export class ProfilePage {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly projectionDelays = inject(PROFILE_PROJECTION_RETRY_DELAYS_MS);
 
-  /** Versión vigente del consentimiento; `null` deja la sección fisiológica no disponible. */
+  /**
+   * Versión vigente del consentimiento; `null` deja no disponibles la sección
+   * fisiológica y los hábitos alimenticios.
+   */
   protected readonly consentVersion = inject(APP_CONFIG).healthDataConsentVersion;
   protected readonly maxRetries = MAX_AUTOMATIC_RETRIES;
 
@@ -141,6 +151,7 @@ export class ProfilePage {
   protected readonly demographic = new SectionState<DemographicProfile>();
   protected readonly physiological = new SectionState<PhysiologicalProfile>();
   protected readonly sportHabits = new SectionState<SportHabits>();
+  protected readonly nutritionHabits = new SectionState<NutritionHabits>();
 
   /** Se agotaron las recargas automáticas o una recarga falló: se ofrece actualizar. */
   protected readonly projectionStalled = signal(false);
@@ -218,6 +229,12 @@ export class ProfilePage {
     );
   }
 
+  protected saveNutritionHabits(draft: NutritionHabitsDraft): Promise<void> {
+    return this.save(this.nutritionHabits, 'nutrition-habits', (expected, key, onRetry) =>
+      this.gateway.saveNutritionHabits(draft, expected, key, onRetry),
+    );
+  }
+
   /** Actualización manual cuando la proyección sigue atrasada. */
   protected refreshNow(): void {
     this.refreshRound = 0;
@@ -253,7 +270,7 @@ export class ProfilePage {
 
   private async save<T extends { readonly version: number }>(
     section: SectionState<T>,
-    prefix: 'demographic' | 'physiological' | 'sport-habits',
+    prefix: 'demographic' | 'physiological' | 'sport-habits' | 'nutrition-habits',
     send: (
       expectedVersion: number | null,
       idempotencyKey: string,
@@ -349,7 +366,10 @@ export class ProfilePage {
     this.refreshing.set(false);
 
     const pending =
-      this.demographic.pending() || this.physiological.pending() || this.sportHabits.pending();
+      this.demographic.pending() ||
+      this.physiological.pending() ||
+      this.sportHabits.pending() ||
+      this.nutritionHabits.pending();
     if (failed) {
       this.projectionStalled.set(true);
     } else if (!pending) {
@@ -366,6 +386,7 @@ export class ProfilePage {
     this.demographic.projected.set(profile.demographic);
     this.physiological.projected.set(profile.physiological);
     this.sportHabits.projected.set(profile.sportHabits);
+    this.nutritionHabits.projected.set(profile.nutritionHabits);
   }
 
   private clearRefreshTimer(): void {

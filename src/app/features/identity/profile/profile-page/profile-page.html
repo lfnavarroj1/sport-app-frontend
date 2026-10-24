@@ -536,4 +536,176 @@
       </app-async-state>
     </mat-card-content>
   </mat-card>
+  <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu009">
+    <mat-card-content>
+      <h2 class="profile-page__title">{{ 'profile.nutrition.title' | translate }}</h2>
+      <p class="profile-page__note">{{ 'profile.nutrition.intro' | translate }}</p>
+
+      <app-async-state [state]="state()" (retry)="load()">
+        <section class="profile-section" data-testid="nutrition-habits-section">
+          @if (nutritionHabits.mode() === 'edit' && consentVersion !== null) {
+            @if (nutritionHabits.retryAttempt(); as attempt) {
+              <p class="profile-page__note" role="status" data-testid="nutrition-habits-retrying">
+                {{
+                  'profile.nutrition.retrying' | translate: { attempt: attempt, max: maxRetries }
+                }}
+              </p>
+            }
+            @if (nutritionHabits.failure(); as error) {
+              <div
+                class="profile-page__error"
+                role="alert"
+                tabindex="-1"
+                data-testid="nutrition-habits-error"
+              >
+                <p>{{ failureMessage(error) | translate }}</p>
+                @if (retryable(error)) {
+                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
+                }
+                @if (error.correlationId) {
+                  <p class="profile-page__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+              </div>
+            }
+            <app-nutrition-habits-form
+              [initial]="nutritionHabits.displayed()"
+              [consentVersion]="consentVersion"
+              [submitting]="nutritionHabits.submitting()"
+              [serverErrors]="nutritionHabits.violations()"
+              (submitted)="saveNutritionHabits($event)"
+              (edited)="onEdited(nutritionHabits)"
+              (cancelled)="cancelEdit(nutritionHabits)"
+            />
+          } @else {
+            @if (nutritionHabits.saved(); as saved) {
+              <div
+                class="profile-page__success"
+                role="status"
+                tabindex="-1"
+                data-testid="nutrition-habits-saved"
+              >
+                <p>
+                  {{
+                    (saved.created
+                      ? 'profile.nutrition.saved.created'
+                      : 'profile.nutrition.saved.replaced'
+                    ) | translate
+                  }}
+                </p>
+                @if (saved.replayed) {
+                  <p data-testid="nutrition-habits-replayed">
+                    {{ 'profile.saved.replayed' | translate }}
+                  </p>
+                }
+              </div>
+            }
+            @if (nutritionHabits.conflict()) {
+              <p
+                class="profile-page__warning"
+                role="alert"
+                tabindex="-1"
+                data-testid="nutrition-habits-conflict"
+              >
+                {{ 'profile.nutrition.conflict' | translate }}
+              </p>
+            }
+            @if (consentVersion === null) {
+              <p class="profile-page__note" data-testid="nutrition-habits-unavailable">
+                {{ 'profile.nutrition.unavailable' | translate }}
+              </p>
+            }
+            @if (nutritionHabits.displayed(); as habits) {
+              <dl class="profile-page__facts" data-testid="nutrition-habits-summary">
+                <dt>{{ 'profile.nutrition.fields.dietPattern' | translate }}</dt>
+                <dd data-testid="nutrition-habits-pattern">
+                  {{ 'profile.nutrition.patterns.' + habits.dietPattern | translate }}
+                </dd>
+                <dt>{{ 'profile.nutrition.fields.restrictions' | translate }}</dt>
+                <dd data-testid="nutrition-habits-restrictions">
+                  @if (habits.restrictions.length === 0) {
+                    {{ 'profile.nutrition.summary.none' | translate }}
+                  } @else {
+                    <ul class="profile-page__tags">
+                      @for (restriction of habits.restrictions; track restriction) {
+                        <li>{{ 'profile.nutrition.restrictions.' + restriction | translate }}</li>
+                      }
+                    </ul>
+                  }
+                </dd>
+                <dt>{{ 'profile.nutrition.fields.allergies' | translate }}</dt>
+                <dd data-testid="nutrition-habits-allergies">
+                  @if (habits.allergies.length === 0) {
+                    {{ 'profile.nutrition.summary.none' | translate }}
+                  } @else {
+                    <ul class="profile-page__tags">
+                      @for (allergy of habits.allergies; track allergy) {
+                        <li>{{ 'profile.nutrition.allergies.' + allergy | translate }}</li>
+                      }
+                    </ul>
+                  }
+                </dd>
+                <dt>{{ 'profile.nutrition.fields.mealsPerDay' | translate }}</dt>
+                <dd data-testid="nutrition-habits-meals">{{ habits.mealsPerDay }}</dd>
+                <dt>{{ 'profile.nutrition.fields.hydration' | translate }}</dt>
+                <dd data-testid="nutrition-habits-hydration">
+                  @if (habits.hydrationLitersPerDay === null) {
+                    {{ 'profile.nutrition.summary.notProvided' | translate }}
+                  } @else {
+                    {{
+                      'profile.nutrition.summary.liters'
+                        | translate: { value: decimal(habits.hydrationLitersPerDay) }
+                    }}
+                  }
+                </dd>
+                <dt>{{ 'profile.nutrition.fields.consent' | translate }}</dt>
+                <dd>
+                  {{
+                    'profile.physiological.values.consent'
+                      | translate
+                        : {
+                            version: habits.consentVersion,
+                            date: instant(habits.consentAcceptedAt),
+                          }
+                  }}
+                </dd>
+                <dt>{{ 'profile.nutrition.summary.updatedAt' | translate }}</dt>
+                <dd>{{ instant(habits.updatedAt) }}</dd>
+              </dl>
+              <p class="profile-page__note">{{ 'profile.nutrition.disclaimer' | translate }}</p>
+              @if (consentVersion !== null) {
+                <div class="profile-page__actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="nutritionHabits.pending()"
+                    (click)="startEdit(nutritionHabits)"
+                  >
+                    {{ 'profile.nutrition.actions.edit' | translate }}
+                  </button>
+                </div>
+              }
+            } @else {
+              <p class="profile-page__note" data-testid="nutrition-habits-empty">
+                {{ 'profile.nutrition.empty' | translate }}
+              </p>
+              @if (consentVersion !== null) {
+                <div class="profile-page__actions">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="nutritionHabits.pending()"
+                    (click)="startEdit(nutritionHabits)"
+                  >
+                    {{ 'profile.nutrition.actions.register' | translate }}
+                  </button>
+                </div>
+              }
+            }
+          }
+        </section>
+      </app-async-state>
+    </mat-card-content>
+  </mat-card>
 </section>
