@@ -7,8 +7,11 @@ import {
   SERVICES_AVAILABILITY_RESPONSES,
   catalogService,
 } from '../../../../../testing/bff-web/services-availability.fixtures';
+import { FakeServiceAssociationsGateway } from '../../../../../testing/fake-service-associations.gateway';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { ServiceAvailabilityResponseDto } from '../../../../core/api/bff-web/services-availability.api';
+import { ServiceAssociationsGateway } from '../../associations/service-associations.gateway';
+import { ServiceAssociationsStore } from '../../associations/service-associations.store';
 import { browserTimeZone, formatIntervalRange } from '../availability-format';
 import { AvailabilityGateway } from '../availability.gateway';
 import {
@@ -115,6 +118,8 @@ describe('AvailabilityPage (HU020)', () => {
         provideTranslateTesting(),
         { provide: LOCALE_ID, useValue: LOCALE },
         { provide: AvailabilityGateway, useValue: { loadPage } },
+        ServiceAssociationsStore,
+        { provide: ServiceAssociationsGateway, useValue: new FakeServiceAssociationsGateway() },
         { provide: ActivatedRoute, useValue: {} },
       ],
     }).compileComponents();
@@ -153,6 +158,25 @@ describe('AvailabilityPage (HU020)', () => {
     await settle();
 
     expect(loadPage.calls.mostRecent().args).toEqual([defaultFilters(['SPORTS_MEDICINE']), null]);
+  });
+
+  it('HU017: la opción Premium agrega «Mis servicios asociados» y acciones solo en servicios médicos', async () => {
+    loadPage.and.resolveTo(page(SERVICES_AVAILABILITY_RESPONSES.premium.body));
+    await create({ presetCategory: 'SPORTS_MEDICINE' });
+    await settle();
+
+    expect(element.querySelector('[data-testid="my-associations"]')).not.toBeNull();
+    const [medical, other] = element.querySelectorAll('[data-testid="availability-list"] > li');
+    expect(medical.querySelector('[data-testid="association-action"]')).not.toBeNull();
+    expect(other.querySelector('[data-testid="association-action"]')).toBeNull();
+  });
+
+  it('HU017: «Servicios» sin la opción Premium no muestra asociaciones', async () => {
+    loadPage.and.resolveTo(page(SERVICES_AVAILABILITY_RESPONSES.premium.body));
+    await create();
+
+    expect(element.querySelector('[data-testid="my-associations"]')).toBeNull();
+    expect(element.querySelector('[data-testid="association-action"]')).toBeNull();
   });
 
   it('CA1–CA3, CA6: lista los servicios con categoría, modalidad, tarifa informativa e intervalos', async () => {

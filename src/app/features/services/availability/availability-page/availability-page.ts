@@ -36,6 +36,8 @@ import {
 import { FieldError } from '../../../../shared/forms/field-error/field-error';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
+import { AssociationAction } from '../../associations/association-action/association-action';
+import { MyAssociations } from '../../associations/my-associations/my-associations';
 import { browserTimeZone, formatIntervalRange, formatPrice } from '../availability-format';
 import { AvailabilityGateway } from '../availability.gateway';
 import {
@@ -86,10 +88,14 @@ function periodValidator(group: AbstractControl): ValidationErrors | null {
  * Qué categorías ve el deportista lo decide el backend según su plan: la web
  * solo informa `restricted_categories` (CA1). Los instantes se muestran en la
  * zona del navegador y se deja visible la zona del servicio (CA3).
+ *
+ * En la opción Premium (`presetCategory = SPORTS_MEDICINE`) agrega HU017: la lista
+ * «Mis servicios asociados» y, en cada servicio médico, «Asociar» o «Quitar».
  */
 @Component({
   selector: 'app-availability-page',
   imports: [
+    AssociationAction,
     AsyncState,
     FieldError,
     MatButtonModule,
@@ -98,6 +104,7 @@ function periodValidator(group: AbstractControl): ValidationErrors | null {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MyAssociations,
     ReactiveFormsModule,
     TranslatePipe,
   ],
@@ -117,6 +124,11 @@ export class AvailabilityPage {
   protected readonly titleKey = this.presetCategory
     ? 'services.availability.titleMedical'
     : 'services.availability.title';
+  /**
+   * La opción Premium reúne aquí la asociación de HU017: «Mis servicios asociados»
+   * y las acciones «Asociar»/«Quitar» de los servicios médicos (ADR-038).
+   */
+  protected readonly associations = this.presetCategory === 'SPORTS_MEDICINE';
 
   protected readonly categoryOptions = SERVICE_CATEGORIES;
   protected readonly modalityOptions = SERVICE_MODALITIES;
