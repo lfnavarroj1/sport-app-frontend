@@ -2,7 +2,7 @@
  * Versión del contrato bff-web que consume la aplicación, copiado sin cambios en
  * `contracts/bff-web.openapi.json`, y esquemas compartidos por sus operaciones.
  */
-export const BFF_WEB_CONTRACT_VERSION = '0.23.0';
+export const BFF_WEB_CONTRACT_VERSION = '0.25.0';
 
 /** Enumeración `actor_type` (`RegisterUserRequest` y `SessionUser`). */
 export const ACTOR_TYPES = ['athlete', 'organizer', 'service_provider'] as const;

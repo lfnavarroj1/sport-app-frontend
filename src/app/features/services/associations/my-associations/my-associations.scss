@@ -1,0 +1,139 @@
+// «Mis servicios asociados» (HU017) dentro de la pantalla médica de HU020.
+:host {
+  display: block;
+}
+
+.associations {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.associations__title {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+}
+
+.associations__intro,
+.associations__privacy {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.associations__notice {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.associations__capability {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+
+  p {
+    margin: 0;
+  }
+}
+
+.associations__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.associations__item {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+}
+
+.associations__item--highlighted {
+  border-color: var(--mat-sys-primary);
+  box-shadow: inset 0 0 0 1px var(--mat-sys-primary);
+}
+
+.associations__name {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.associations__status {
+  margin: 0;
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  font: var(--mat-sys-label-large);
+}
+
+.associations__status--inactive {
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.associations__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-small);
+  }
+
+  dd {
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+  }
+}
+
+.associations__confirm {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.associations__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.associations__error {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+  color: var(--mat-sys-error);
+
+  p {
+    margin: 0;
+  }
+}
+
+.associations__reference {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
