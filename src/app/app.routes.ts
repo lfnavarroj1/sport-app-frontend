@@ -144,6 +144,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU026: el organizador publica rutas y retira las propias (ADR-041).
+      path: 'rutas',
+      loadChildren: () =>
+        import('./features/training/routes/organizer-routes.routes').then(
+          (module) => module.ORGANIZER_ROUTES_ROUTES,
+        ),
+    },
+    {
       // HU023: el organizador consulta los eventos publicados y sus coincidencias (ADR-040).
       path: 'eventos/calendario',
       loadChildren: () =>

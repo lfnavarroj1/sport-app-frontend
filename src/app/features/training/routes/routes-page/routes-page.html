@@ -1,0 +1,274 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.routes.title' | translate }}</h1>
+    <p>{{ 'training.routes.intro' | translate }}</p>
+  </header>
+
+  @if (published(); as result) {
+    <div class="routes__success" role="status" tabindex="-1" data-testid="route-published">
+      <p>{{ 'training.routes.published.message' | translate: { name: result.route.name } }}</p>
+      @if (result.replayed) {
+        <p data-testid="route-published-replayed">
+          {{ 'training.routes.published.replayed' | translate }}
+        </p>
+      }
+    </div>
+  }
+
+  @if (composing()) {
+    <mat-card appearance="outlined" class="training-page__card routes__card">
+      <mat-card-content>
+        <h2 class="training-page__step">{{ 'training.routes.form.title' | translate }}</h2>
+        @if (retryAttempt(); as attempt) {
+          <p class="routes__note" role="status" data-testid="route-retrying">
+            {{ 'training.routes.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+          </p>
+        }
+        @if (publishFailure(); as error) {
+          <div
+            class="training-page__error"
+            role="alert"
+            tabindex="-1"
+            data-testid="route-publish-error"
+          >
+            <p>{{ publishFailureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'training.routes.errors.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="training-page__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        <app-route-form
+          [submitting]="submitting()"
+          [serverErrors]="violations()"
+          (submitted)="publish($event)"
+          (edited)="onEdited()"
+          (cancelled)="cancelCompose()"
+        />
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="training-page__actions routes__compose">
+      <button mat-flat-button type="button" (click)="compose()">
+        {{ 'training.routes.actions.new' | translate }}
+      </button>
+    </div>
+  }
+
+  <mat-card appearance="outlined" class="training-page__card routes__card">
+    <mat-card-content>
+      <h2 class="training-page__step">{{ 'training.routes.list.title' | translate }}</h2>
+      <app-async-state
+        [state]="state()"
+        emptyMessageKey="training.routes.list.empty"
+        (retry)="load()"
+      >
+        @if (list(); as data) {
+          <ul class="routes__items" data-testid="routes-list">
+            @for (route of data.routes; track route.id) {
+              <li class="routes__item" [attr.data-route]="route.id">
+                <div class="routes__heading">
+                  <h3>{{ route.name }}</h3>
+                  <span
+                    class="routes__status"
+                    [class.routes__status--retired]="route.status === 'RETIRED'"
+                    data-testid="route-status"
+                  >
+                    {{ 'training.routes.status.' + route.status | translate }}
+                  </span>
+                </div>
+                @if (route.description) {
+                  <p class="routes__description">{{ route.description }}</p>
+                }
+                <dl class="routes__facts">
+                  <dt>{{ 'training.routes.fields.sport' | translate }}</dt>
+                  <dd>{{ 'training.sports.' + route.sport | translate }}</dd>
+                  <dt>{{ 'training.routes.fields.distanceKm' | translate }}</dt>
+                  <dd data-testid="route-distance">
+                    {{
+                      'training.routes.values.distance'
+                        | translate: { value: distance(route.distanceKm) }
+                    }}
+                  </dd>
+                  <dt>{{ 'training.routes.fields.difficulty' | translate }}</dt>
+                  <dd>{{ 'training.routes.difficulties.' + route.difficulty | translate }}</dd>
+                  <dt>{{ 'training.routes.list.place' | translate }}</dt>
+                  <dd>{{ route.city }}, {{ route.countryCode }}</dd>
+                  <dt>{{ 'training.routes.sections.startPoint' | translate }}</dt>
+                  <dd data-testid="route-start">
+                    {{
+                      'training.routes.values.point'
+                        | translate
+                          : {
+                              lat: coordinate(route.startPoint.lat),
+                              lng: coordinate(route.startPoint.lng),
+                            }
+                    }}
+                  </dd>
+                  <dt>{{ 'training.routes.fields.waypoints' | translate }}</dt>
+                  <dd data-testid="route-waypoints">
+                    @if (route.waypoints.length === 0) {
+                      {{ 'training.routes.list.noWaypoints' | translate }}
+                    } @else {
+                      <ol class="routes__points">
+                        @for (point of route.waypoints; track $index) {
+                          <li>
+                            {{
+                              'training.routes.values.point'
+                                | translate
+                                  : { lat: coordinate(point.lat), lng: coordinate(point.lng) }
+                            }}
+                          </li>
+                        }
+                      </ol>
+                    }
+                  </dd>
+                  <dt>{{ 'training.routes.list.publishedAt' | translate }}</dt>
+                  <dd>{{ route.publishedAt | date: 'medium' }}</dd>
+                  @if (route.retiredAt) {
+                    <dt>{{ 'training.routes.list.retiredAt' | translate }}</dt>
+                    <dd data-testid="route-retired-at">{{ route.retiredAt | date: 'medium' }}</dd>
+                  }
+                  <dt>{{ 'training.routes.list.version' | translate }}</dt>
+                  <dd>{{ route.version | number }}</dd>
+                </dl>
+
+                @if (retireMessage(route.id); as message) {
+                  @switch (message.kind) {
+                    @case ('retired') {
+                      <p
+                        class="routes__note"
+                        role="status"
+                        tabindex="-1"
+                        [attr.data-testid]="'route-retire-message-' + route.id"
+                      >
+                        {{ 'training.routes.retired.message' | translate }}
+                      </p>
+                    }
+                    @case ('conflict') {
+                      <div
+                        class="training-page__error"
+                        role="alert"
+                        tabindex="-1"
+                        [attr.data-testid]="'route-retire-message-' + route.id"
+                      >
+                        <p>{{ 'training.routes.errors.versionConflict' | translate }}</p>
+                        <button mat-stroked-button type="button" (click)="load()">
+                          {{ 'training.routes.actions.refresh' | translate }}
+                        </button>
+                      </div>
+                    }
+                    @case ('failed') {
+                      @let error = retireError(message);
+                      <div
+                        class="training-page__error"
+                        role="alert"
+                        tabindex="-1"
+                        [attr.data-testid]="'route-retire-message-' + route.id"
+                      >
+                        <p>{{ retireFailureMessage(error!) | translate }}</p>
+                        @if (error!.correlationId) {
+                          <p class="training-page__reference">
+                            {{
+                              'common.errors.reference' | translate: { id: error!.correlationId }
+                            }}
+                          </p>
+                        }
+                      </div>
+                    }
+                  }
+                }
+
+                @if (route.status === 'PUBLISHED') {
+                  @if (confirming() === route.id) {
+                    <div
+                      class="routes__confirm"
+                      role="group"
+                      [attr.aria-labelledby]="'route-retire-title-' + route.id"
+                      tabindex="-1"
+                      [attr.data-testid]="'route-retire-confirm-' + route.id"
+                    >
+                      <p [id]="'route-retire-title-' + route.id">
+                        {{ 'training.routes.retire.confirm' | translate: { name: route.name } }}
+                      </p>
+                      <div class="training-page__actions">
+                        <button
+                          mat-flat-button
+                          type="button"
+                          [disabled]="retiring() !== null"
+                          (click)="retire(route)"
+                        >
+                          {{
+                            (retiring() === route.id
+                              ? 'training.routes.actions.retiring'
+                              : 'training.routes.actions.confirmRetire'
+                            ) | translate
+                          }}
+                        </button>
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          [disabled]="retiring() !== null"
+                          (click)="cancelRetire()"
+                        >
+                          {{ 'training.routes.actions.cancel' | translate }}
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="training-page__actions">
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [attr.aria-label]="
+                          'training.routes.actions.retireNamed' | translate: { name: route.name }
+                        "
+                        (click)="askRetire(route)"
+                      >
+                        {{ 'training.routes.actions.retire' | translate }}
+                      </button>
+                    </div>
+                  }
+                }
+              </li>
+            }
+          </ul>
+
+          @if (moreError(); as error) {
+            <div class="training-page__error" role="alert" data-testid="routes-more-error">
+              <p>{{ 'training.routes.list.moreError' | translate }}</p>
+              @if (error.correlationId) {
+                <p class="training-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (data.nextCursor !== null) {
+            <div class="training-page__actions">
+              <button
+                mat-stroked-button
+                type="button"
+                data-testid="routes-load-more"
+                [disabled]="loadingMore()"
+                (click)="loadMore()"
+              >
+                {{
+                  (loadingMore()
+                    ? 'training.routes.actions.loadingMore'
+                    : 'training.routes.actions.loadMore'
+                  ) | translate
+                }}
+              </button>
+            </div>
+          }
+        }
+      </app-async-state>
+      <p class="routes__note">{{ 'training.routes.list.note' | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+</section>

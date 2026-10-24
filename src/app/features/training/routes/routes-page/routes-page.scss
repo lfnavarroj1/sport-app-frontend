@@ -1,0 +1,108 @@
+// Rutas del organizador (HU026): publicación arriba y lista de rutas propias debajo.
+.routes__card {
+  margin-bottom: 1.5rem;
+}
+
+.routes__compose {
+  margin: 0 0 1.5rem;
+}
+
+.routes__success {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  p {
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: 0.25rem;
+  }
+}
+
+.routes__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routes__item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.routes__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font: var(--mat-sys-title-medium);
+    font-weight: 700;
+  }
+}
+
+.routes__status {
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+}
+
+.routes__status--retired {
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.routes__description {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.routes__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1.5rem;
+  margin: 0.75rem 0;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.routes__points {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.routes__confirm {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.routes__note {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
