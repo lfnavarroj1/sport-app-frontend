@@ -1,0 +1,213 @@
+// «Mi plan» (HU016) dentro del área del deportista.
+:host {
+  display: block;
+}
+
+.my-plan {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+}
+
+.my-plan__header {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  p {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-large);
+  }
+}
+
+.my-plan__card {
+  margin-bottom: 1.5rem;
+  border: 0;
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-card);
+}
+
+.my-plan__subtitle {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-large);
+  font-weight: 700;
+}
+
+.my-plan__current-name {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+.my-plan__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 1rem 0;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.my-plan__result {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font: var(--mat-sys-title-medium);
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+  }
+}
+
+.my-plan__payment {
+  margin: 1rem 0 0;
+  font: var(--mat-sys-body-medium);
+  font-weight: 600;
+}
+
+.my-plan__periodicities {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.my-plan__field-error {
+  margin: 0.25rem 0 0;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-small);
+}
+
+.my-plan__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.my-plan__note {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.my-plan__error {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+
+  p {
+    margin: 0 0 0.25rem;
+  }
+
+  button {
+    margin-top: 0.5rem;
+  }
+}
+
+.my-plan__reference {
+  font: var(--mat-sys-body-small);
+}
+
+.my-plan__plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.my-plan__plan {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--sa-radius-lg);
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+.my-plan__plan--current {
+  border: 2px solid var(--mat-sys-primary);
+}
+
+.my-plan__plan-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font: var(--mat-sys-title-large);
+    font-weight: 700;
+  }
+}
+
+.my-plan__badge {
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+}
+
+.my-plan__description {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.my-plan__list-title {
+  margin: 1rem 0 0.25rem;
+  font: var(--mat-sys-title-small);
+}
+
+.my-plan__offers,
+.my-plan__capabilities {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li + li {
+    margin-top: 0.125rem;
+  }
+}
+
+.my-plan__inherited {
+  margin-top: 0.5rem;
+
+  summary {
+    cursor: pointer;
+    color: var(--mat-sys-primary);
+    font: var(--mat-sys-label-large);
+  }
+
+  ul {
+    margin-top: 0.25rem;
+  }
+}
+
+.my-plan__plan-actions {
+  margin-top: auto;
+  padding-top: 1rem;
+}

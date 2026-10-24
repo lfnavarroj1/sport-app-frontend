@@ -175,8 +175,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     items: [
       home('/deportista/inicio'),
       ...account(ATHLETE_PROFILE),
-      // «Mi plan» solo existe para el deportista (navegacion/README.md).
-      upcoming('plan', 'account', 30, 'workspace_premium', null, null, 'HU016'),
+      // «Mi plan» solo existe para el deportista (navegacion/README.md). HU016: plan
+      // actual, comparación y cambio; opción base, sin capacidad (planes/05).
+      {
+        id: 'plan',
+        group: 'account',
+        order: 30,
+        icon: 'workspace_premium',
+        route: '/deportista/plan',
+        permission: null,
+        capability: null,
+        hu: 'HU016',
+        available: true,
+      },
       // HU011: historial propio, sin capacidad de plan (ADR-024 no define una);
       // decisión del responsable del 2026-10-12.
       {

@@ -1,0 +1,410 @@
+<section class="my-plan" aria-labelledby="my-plan-title">
+  <header class="my-plan__header">
+    <h1 id="my-plan-title">{{ 'affiliation.myPlan.title' | translate }}</h1>
+    <p>{{ 'affiliation.myPlan.intro' | translate }}</p>
+  </header>
+
+  <app-async-state [state]="state()" (retry)="load()">
+    @if (plan(); as data) {
+      @if (changed(); as result) {
+        <section role="status" class="my-plan__result" data-testid="my-plan-changed">
+          <h2 #resultHeading tabindex="-1">{{ 'affiliation.myPlan.result.title' | translate }}</h2>
+          <p>
+            {{
+              'affiliation.myPlan.result.message'
+                | translate: { name: planName(result.subscription.planCode) }
+            }}
+          </p>
+          @if (result.replayed) {
+            <p data-testid="my-plan-replayed">
+              {{ 'affiliation.myPlan.result.replayed' | translate }}
+            </p>
+          }
+          <p class="my-plan__payment" data-testid="my-plan-result-payment">
+            {{
+              (result.subscription.periodicity === 'NONE'
+                ? 'affiliation.myPlan.result.waived'
+                : 'affiliation.myPlan.result.commitment'
+              ) | translate
+            }}
+          </p>
+          @switch (menuStatus()) {
+            @case ('updating') {
+              <p data-testid="my-plan-menu-status">
+                {{ 'affiliation.myPlan.result.menuUpdating' | translate }}
+              </p>
+            }
+            @case ('updated') {
+              <p data-testid="my-plan-menu-status">
+                {{ 'affiliation.myPlan.result.menuUpdated' | translate }}
+              </p>
+            }
+            @case ('failed') {
+              <p data-testid="my-plan-menu-status">
+                {{ 'affiliation.myPlan.result.menuFailed' | translate }}
+              </p>
+            }
+          }
+        </section>
+      }
+
+      <mat-card appearance="outlined" class="my-plan__card" data-testid="my-plan-current">
+        <mat-card-content>
+          <h2 class="my-plan__subtitle">{{ 'affiliation.myPlan.current.title' | translate }}</h2>
+          @if (provisioning()) {
+            <div role="status" data-testid="my-plan-provisioning">
+              <p>{{ 'affiliation.myPlan.current.provisioning' | translate }}</p>
+              <button mat-stroked-button type="button" (click)="load()">
+                {{ 'affiliation.myPlan.actions.recheck' | translate }}
+              </button>
+            </div>
+          } @else {
+            @let subscription = data.subscription;
+            <p class="my-plan__current-name" data-testid="my-plan-current-name">
+              {{ planName(subscription.planCode) }}
+            </p>
+            <dl class="my-plan__facts">
+              <dt>{{ 'affiliation.myPlan.fields.periodicity' | translate }}</dt>
+              <dd data-testid="my-plan-current-periodicity">
+                {{ 'affiliation.periodicities.' + subscription.periodicity | translate }}
+              </dd>
+              <dt>{{ 'affiliation.myPlan.fields.price' | translate }}</dt>
+              <dd data-testid="my-plan-current-price">
+                @if (subscription.periodicity === 'NONE' || subscription.price === null) {
+                  {{ 'affiliation.myPlan.free' | translate }}
+                } @else {
+                  {{ price(subscription.price) }}
+                }
+              </dd>
+              <dt>{{ 'affiliation.myPlan.fields.periodStart' | translate }}</dt>
+              <dd data-testid="my-plan-current-start">
+                {{ subscription.periodStart | date: 'medium' }}
+              </dd>
+              <dt>{{ 'affiliation.myPlan.fields.periodEnd' | translate }}</dt>
+              <dd data-testid="my-plan-current-end">
+                @if (subscription.periodEnd) {
+                  {{ subscription.periodEnd | date: 'medium' }}
+                } @else {
+                  {{ 'affiliation.myPlan.noEnd' | translate }}
+                }
+              </dd>
+            </dl>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      @if (selection(); as chosen) {
+        <mat-card appearance="outlined" class="my-plan__card" data-testid="my-plan-selection">
+          <mat-card-content>
+            @if (step() === 'choose') {
+              <h2 #selectionHeading class="my-plan__subtitle" tabindex="-1">
+                {{ 'affiliation.myPlan.selection.title' | translate: { name: chosen.plan.name } }}
+              </h2>
+              @if (chosen.plan.paid) {
+                <p id="my-plan-periodicity-label">
+                  {{ 'affiliation.myPlan.selection.periodicity' | translate }}
+                </p>
+                <mat-radio-group
+                  class="my-plan__periodicities"
+                  aria-labelledby="my-plan-periodicity-label"
+                  [attr.aria-describedby]="
+                    periodicityMissing() ? 'my-plan-periodicity-error' : null
+                  "
+                  [value]="chosen.periodicity"
+                  (change)="selectPeriodicity($event.value)"
+                >
+                  @for (periodicity of periodicities(chosen.plan); track periodicity) {
+                    @let offer = offerFor(chosen.plan, periodicity);
+                    <mat-radio-button
+                      [value]="periodicity"
+                      [disabled]="isCurrentOffer(chosen.plan, periodicity)"
+                    >
+                      {{
+                        'affiliation.myPlan.offer'
+                          | translate
+                            : {
+                                periodicity:
+                                  ('affiliation.periodicities.' + periodicity | translate),
+                                price: price(offer?.price ?? '0'),
+                              }
+                      }}
+                      @if (isCurrentOffer(chosen.plan, periodicity)) {
+                        ({{ 'affiliation.myPlan.selection.currentOffer' | translate }})
+                      }
+                    </mat-radio-button>
+                  }
+                </mat-radio-group>
+                @if (periodicityMissing()) {
+                  <p
+                    id="my-plan-periodicity-error"
+                    class="my-plan__field-error"
+                    role="alert"
+                    data-testid="my-plan-periodicity-missing"
+                  >
+                    {{ 'affiliation.myPlan.selection.periodicityMissing' | translate }}
+                  </p>
+                }
+              } @else {
+                <p>{{ 'affiliation.myPlan.selection.free' | translate }}</p>
+              }
+              <div class="my-plan__actions">
+                <button mat-flat-button type="button" (click)="continueToConfirm()">
+                  {{ 'affiliation.myPlan.actions.continue' | translate }}
+                </button>
+                <button mat-stroked-button type="button" (click)="cancel()">
+                  {{ 'affiliation.myPlan.actions.cancel' | translate }}
+                </button>
+              </div>
+            } @else {
+              <div
+                role="group"
+                aria-labelledby="my-plan-confirm-heading"
+                data-testid="my-plan-confirm"
+              >
+                <h2
+                  #confirmHeading
+                  id="my-plan-confirm-heading"
+                  class="my-plan__subtitle"
+                  tabindex="-1"
+                >
+                  {{ 'affiliation.myPlan.confirm.title' | translate }}
+                </h2>
+                <dl class="my-plan__facts">
+                  <dt>{{ 'affiliation.myPlan.fields.plan' | translate }}</dt>
+                  <dd data-testid="my-plan-confirm-plan">{{ chosen.plan.name }}</dd>
+                  <dt>{{ 'affiliation.myPlan.fields.periodicity' | translate }}</dt>
+                  <dd data-testid="my-plan-confirm-periodicity">
+                    {{ 'affiliation.periodicities.' + chosen.periodicity | translate }}
+                  </dd>
+                  @if (selectedOffer(); as offer) {
+                    <dt>{{ 'affiliation.myPlan.fields.price' | translate }}</dt>
+                    <dd data-testid="my-plan-confirm-price">
+                      @if (offer.periodicity === 'NONE') {
+                        {{ 'affiliation.myPlan.free' | translate }}
+                      } @else {
+                        {{ price(offer.price) }}
+                      }
+                    </dd>
+                    @if (offer.durationMonths) {
+                      <dt>{{ 'affiliation.myPlan.fields.duration' | translate }}</dt>
+                      <dd>
+                        {{
+                          (offer.durationMonths === 1
+                            ? 'affiliation.myPlan.durationOne'
+                            : 'affiliation.myPlan.durationMany'
+                          ) | translate: { count: offer.durationMonths }
+                        }}
+                      </dd>
+                    }
+                  }
+                </dl>
+
+                @if (changes(); as diff) {
+                  @if (diff.gained.length > 0) {
+                    <h3 class="my-plan__list-title">
+                      {{ 'affiliation.myPlan.confirm.gained' | translate }}
+                    </h3>
+                    <ul class="my-plan__capabilities" data-testid="my-plan-gained">
+                      @for (code of diff.gained; track code) {
+                        <li>
+                          {{ capabilityKey(code) ? (capabilityKey(code)! | translate) : code }}
+                        </li>
+                      }
+                    </ul>
+                  }
+                  @if (diff.lost.length > 0) {
+                    <h3 class="my-plan__list-title">
+                      {{ 'affiliation.myPlan.confirm.lost' | translate }}
+                    </h3>
+                    <ul class="my-plan__capabilities" data-testid="my-plan-lost">
+                      @for (code of diff.lost; track code) {
+                        <li>
+                          {{ capabilityKey(code) ? (capabilityKey(code)! | translate) : code }}
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+
+                <p class="my-plan__payment" role="note" data-testid="my-plan-payment-notice">
+                  {{
+                    (chosen.plan.paid
+                      ? 'affiliation.myPlan.confirm.paymentNotice'
+                      : 'affiliation.myPlan.confirm.freeNotice'
+                    ) | translate
+                  }}
+                </p>
+
+                @if (retryAttempt(); as attempt) {
+                  <p class="my-plan__note" role="status" data-testid="my-plan-retrying">
+                    {{
+                      'affiliation.myPlan.retrying'
+                        | translate: { attempt: attempt, max: maxRetries }
+                    }}
+                  </p>
+                }
+
+                <div class="my-plan__actions">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="confirm()"
+                  >
+                    {{
+                      (submitting()
+                        ? 'affiliation.myPlan.actions.changing'
+                        : 'affiliation.myPlan.actions.confirm'
+                      ) | translate
+                    }}
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="back()"
+                  >
+                    {{ 'affiliation.myPlan.actions.back' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
+
+            @if (failure(); as error) {
+              <div
+                #failureAlert
+                class="my-plan__error"
+                role="alert"
+                tabindex="-1"
+                data-testid="my-plan-error"
+                [attr.data-error-code]="error.code"
+              >
+                <p>{{ failureMessage(error) | translate }}</p>
+                @if (retryable(error)) {
+                  <p>{{ 'affiliation.myPlan.errors.retryHint' | translate }}</p>
+                }
+                @if (error.correlationId) {
+                  <p class="my-plan__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+                @if (needsReload(error)) {
+                  <button mat-stroked-button type="button" (click)="load()">
+                    {{ 'affiliation.myPlan.actions.reload' | translate }}
+                  </button>
+                }
+              </div>
+            } @else if (invalid()) {
+              <div
+                #failureAlert
+                class="my-plan__error"
+                role="alert"
+                tabindex="-1"
+                data-testid="my-plan-error"
+                data-error-code="validation_error"
+              >
+                <p>{{ 'affiliation.myPlan.errors.validation' | translate }}</p>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <section class="my-plan__compare" aria-labelledby="my-plan-compare-title">
+        <h2 id="my-plan-compare-title" class="my-plan__subtitle">
+          {{ 'affiliation.myPlan.compare.title' | translate }}
+        </h2>
+        <p class="my-plan__note">{{ 'affiliation.myPlan.compare.priceNote' | translate }}</p>
+        <div class="my-plan__plans">
+          @for (option of data.catalog.plans; track option.code) {
+            <article
+              class="my-plan__plan"
+              [class.my-plan__plan--current]="isCurrent(option)"
+              [attr.aria-labelledby]="'my-plan-option-' + option.code"
+              [attr.data-plan]="option.code"
+            >
+              <header class="my-plan__plan-header">
+                <h3 [id]="'my-plan-option-' + option.code">{{ option.name }}</h3>
+                @if (isCurrent(option)) {
+                  <span class="my-plan__badge" data-testid="my-plan-current-badge">
+                    {{ 'affiliation.myPlan.compare.current' | translate }}
+                  </span>
+                }
+              </header>
+              <p class="my-plan__description">{{ option.description }}</p>
+
+              <h4 class="my-plan__list-title">
+                {{ 'affiliation.myPlan.compare.offers' | translate }}
+              </h4>
+              <ul class="my-plan__offers" data-testid="my-plan-offers">
+                @for (offer of option.offers; track offer.periodicity) {
+                  <li>
+                    @if (offer.periodicity === 'NONE') {
+                      {{ 'affiliation.myPlan.free' | translate }}
+                    } @else {
+                      {{
+                        'affiliation.myPlan.offer'
+                          | translate
+                            : {
+                                periodicity:
+                                  ('affiliation.periodicities.' + offer.periodicity | translate),
+                                price: price(offer.price),
+                              }
+                      }}
+                    }
+                  </li>
+                }
+              </ul>
+
+              <h4 class="my-plan__list-title">
+                {{
+                  (option.inheritedCapabilities.length === 0
+                    ? 'affiliation.myPlan.compare.includes'
+                    : 'affiliation.myPlan.compare.adds'
+                  ) | translate
+                }}
+              </h4>
+              <ul class="my-plan__capabilities" data-testid="my-plan-own-capabilities">
+                @for (code of option.ownCapabilities; track code) {
+                  <li>{{ capabilityKey(code) ? (capabilityKey(code)! | translate) : code }}</li>
+                }
+              </ul>
+              @if (option.inheritedCapabilities.length > 0) {
+                <details class="my-plan__inherited" data-testid="my-plan-inherited-capabilities">
+                  <summary>
+                    {{
+                      'affiliation.myPlan.compare.inherited'
+                        | translate: { count: option.inheritedCapabilities.length }
+                    }}
+                  </summary>
+                  <ul class="my-plan__capabilities">
+                    @for (code of option.inheritedCapabilities; track code) {
+                      <li>{{ capabilityKey(code) ? (capabilityKey(code)! | translate) : code }}</li>
+                    }
+                  </ul>
+                </details>
+              }
+
+              <div class="my-plan__plan-actions">
+                @if (choosable(option)) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="choose(option)"
+                  >
+                    {{ 'affiliation.myPlan.actions.choose' | translate: { name: option.name } }}
+                  </button>
+                } @else if (!option.selectable) {
+                  <p class="my-plan__note">
+                    {{ 'affiliation.myPlan.compare.notSelectable' | translate }}
+                  </p>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+  </app-async-state>
+</section>

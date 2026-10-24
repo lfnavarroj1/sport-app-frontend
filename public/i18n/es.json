@@ -1420,13 +1420,115 @@
       },
       "unavailable": "Sin espacios en el periodo",
       "restricted": {
-        "SPORTS_MEDICINE": "La categoría Medicina deportiva está disponible con el plan Premium. Podrás comparar los planes en «Mi plan» (Próximamente)."
+        "SPORTS_MEDICINE": "La categoría Medicina deportiva está disponible con el plan Premium. Puedes comparar los planes en «Mi plan»."
       },
       "listLabel": "Servicios disponibles",
       "empty": "No hay servicios disponibles para este periodo y estos filtros.",
       "countAll": "Servicios mostrados: {{count}}.",
       "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
       "loadMore": "Cargar más"
+    }
+  },
+  "affiliation": {
+    "periodicities": {
+      "NONE": "Sin periodicidad",
+      "MONTHLY": "Mensual",
+      "QUARTERLY": "Trimestral",
+      "ANNUAL": "Anual"
+    },
+    "capabilities": {
+      "training_plan_manage": "Planes de entrenamiento",
+      "training_routes_suggest": "Rutas sugeridas",
+      "events_suggest": "Eventos sugeridos",
+      "training_plans_suggest": "Entrenamientos sugeridos",
+      "services_support_suggest": "Acompañamiento y logística",
+      "nutrition_routines_suggest": "Rutinas de alimentación",
+      "integrations_strava_connect": "Conexión con Strava",
+      "training_session_record": "Registrar entrenamiento",
+      "training_dashboard_view": "Tablero de entrenamiento",
+      "training_metrics_ftp_vo2max": "FTP y VO₂max",
+      "calendar_sport_view": "Calendario deportivo",
+      "training_realtime_monitor": "Monitoreo en tiempo real",
+      "devices_measurement_connect": "Dispositivos de medición",
+      "nutrition_session_reminders": "Recordatorios de alimentación durante la sesión",
+      "services_sports_medicine_access": "Servicios médicos y deportivos",
+      "services_virtual_sessions_schedule": "Sesiones virtuales"
+    },
+    "myPlan": {
+      "title": "Mi plan",
+      "intro": "Consulta tu plan actual, compara los planes por lo que incluyen y cambia de plan cuando quieras.",
+      "free": "Sin costo",
+      "noEnd": "Sin vencimiento",
+      "offer": "{{periodicity}}: {{price}}",
+      "durationOne": "1 mes",
+      "durationMany": "{{count}} meses",
+      "retrying": "No pudimos confirmar el cambio. Reintentando ({{attempt}} de {{max}})…",
+      "fields": {
+        "plan": "Plan",
+        "periodicity": "Periodicidad",
+        "price": "Precio de referencia",
+        "duration": "Duración",
+        "periodStart": "Desde",
+        "periodEnd": "Hasta"
+      },
+      "current": {
+        "title": "Tu plan actual",
+        "provisioning": "Estamos activando tu plan gratuito. Podrás cambiar de plan en cuanto esté confirmado."
+      },
+      "compare": {
+        "title": "Comparar planes",
+        "priceNote": "Precios de referencia en pesos colombianos, antes de impuestos. Cada plan incluye todo lo de los planes anteriores.",
+        "current": "Plan actual",
+        "offers": "Precios",
+        "includes": "Incluye",
+        "adds": "Agrega a los planes anteriores",
+        "inherited": "Incluye además {{count}} funciones de los planes anteriores",
+        "notSelectable": "Este plan no está disponible para seleccionar."
+      },
+      "selection": {
+        "title": "Cambiar al plan {{name}}",
+        "periodicity": "Elige la periodicidad:",
+        "periodicityMissing": "Elige una periodicidad para continuar.",
+        "currentOffer": "tu periodicidad actual",
+        "free": "Este plan no tiene costo ni periodicidad."
+      },
+      "confirm": {
+        "title": "Confirma el cambio de plan",
+        "gained": "Obtendrás",
+        "lost": "Dejarás de tener",
+        "paymentNotice": "SportApp no procesa el pago; se registra un compromiso informativo.",
+        "freeNotice": "SportApp no procesa pagos. Al volver al plan gratuito, los compromisos informativos vigentes quedan sin efecto."
+      },
+      "result": {
+        "title": "Tu plan cambió",
+        "message": "Ahora tienes el plan {{name}}.",
+        "replayed": "Este cambio ya se había registrado; te mostramos el mismo resultado.",
+        "commitment": "SportApp no procesó ningún pago: se registró un compromiso informativo pendiente de pago externo.",
+        "waived": "SportApp no procesó ningún pago: los compromisos informativos vigentes quedaron sin efecto.",
+        "menuUpdating": "Actualizando las opciones de tu menú…",
+        "menuUpdated": "Tu menú ya muestra las opciones de tu plan.",
+        "menuFailed": "No pudimos actualizar las opciones de tu menú. Reintenta desde el menú."
+      },
+      "actions": {
+        "choose": "Elegir {{name}}",
+        "continue": "Continuar",
+        "cancel": "Cancelar",
+        "back": "Volver",
+        "confirm": "Confirmar cambio",
+        "changing": "Cambiando plan…",
+        "reload": "Recargar mi plan",
+        "recheck": "Volver a consultar"
+      },
+      "errors": {
+        "versionConflict": "Tu plan cambió mientras lo revisabas (quizá en otra pestaña). Recarga para ver tu plan vigente antes de elegir de nuevo.",
+        "subscriptionUnchanged": "Ya tienes ese plan con esa periodicidad: no hay nada que cambiar.",
+        "subscriptionProvisioning": "Tu plan gratuito aún se está activando. Vuelve a consultar en unos segundos.",
+        "planNotSelectable": "Ese plan ya no está disponible para seleccionar. Recarga los planes.",
+        "planNotFound": "Ese plan ya no existe. Recarga los planes.",
+        "idempotencyKeyReused": "No pudimos confirmar el cambio con esa solicitud. Inténtalo de nuevo: no se aplicó ningún cambio duplicado.",
+        "validation": "La periodicidad elegida no corresponde a ese plan. Elige otra.",
+        "retryHint": "Si lo intentas de nuevo, no se aplicará un cambio duplicado."
+      }
     }
   },
   "food": {
