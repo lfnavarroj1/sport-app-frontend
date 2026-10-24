@@ -73,7 +73,8 @@ test.describe('HU005 Datos demográficos y fisiológicos (simulador del contrato
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mi perfil');
     await expect(page.getByTestId('profile-personal-upcoming')).toContainText('Próximamente');
-    await expect(page.getByTestId('profile-habits-upcoming')).toContainText('Próximamente');
+    // Desde HU006 los hábitos son una sección propia, no «Próximamente».
+    await expect(page.getByTestId('profile-hu006')).not.toContainText('Próximamente');
     await expect(page.getByTestId('demographic-empty')).toHaveText(
       'Aún no has registrado tus datos demográficos.',
     );

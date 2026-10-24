@@ -1,0 +1,21 @@
+// Formulario de hábitos deportivos (HU006): mismo lenguaje visual que los de HU005.
+@use '../profile-form';
+
+.sport-habits-form__row {
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+}
+
+.sport-habits-form__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sport-habits-form__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}

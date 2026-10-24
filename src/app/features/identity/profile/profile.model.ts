@@ -3,17 +3,33 @@ import {
   DemographicProfileRequestDto,
   DemographicProfileSectionDto,
   GenderDto,
+  HabitIntensityDto,
+  HabitLevelDto,
+  HabitSportDto,
   IncomeRangeDto,
   MaritalStatusDto,
   PROFILE_ISSUES,
   PhysiologicalProfileRequestDto,
   PhysiologicalProfileSectionDto,
+  PrimaryGoalDto,
   ProfileResponseDto,
+  SportHabitsRequestDto,
+  SportHabitsSectionDto,
+  TIME_SLOTS,
+  TimeSlotDto,
+  WEEK_DAYS,
+  WeekDayDto,
 } from '../../../core/api/bff-web/profile.api';
 
 export type Gender = GenderDto;
 export type MaritalStatus = MaritalStatusDto;
 export type IncomeRange = IncomeRangeDto;
+export type HabitSport = HabitSportDto;
+export type HabitIntensity = HabitIntensityDto;
+export type HabitLevel = HabitLevelDto;
+export type WeekDay = WeekDayDto;
+export type TimeSlot = TimeSlotDto;
+export type PrimaryGoal = PrimaryGoalDto;
 
 /** Sección demográfica confirmada por el backend (HU005). */
 export interface DemographicProfile {
@@ -55,10 +71,37 @@ export interface PhysiologicalProfile {
   readonly updatedAt: string;
 }
 
+/** Un deporte declarado en los hábitos (HU006). */
+export interface SportHabit {
+  readonly sport: HabitSport;
+  readonly frequencyPerWeek: number;
+  readonly sessionDurationMinutes: number;
+  readonly intensity: HabitIntensity;
+  readonly level: HabitLevel;
+  /** Opcional: `null` si el deportista no lo indicó. */
+  readonly yearsPracticing: number | null;
+}
+
+/**
+ * Hábitos deportivos confirmados por el backend (HU006). Deportes, días y
+ * franjas llegan en el orden de su catálogo. Registrarlos no crea planes ni
+ * recomendaciones.
+ */
+export interface SportHabits {
+  readonly version: number;
+  readonly sports: readonly SportHabit[];
+  readonly days: readonly WeekDay[];
+  readonly timeSlots: readonly TimeSlot[];
+  readonly primaryGoal: PrimaryGoal | null;
+  /** Instante UTC (`Z`). */
+  readonly updatedAt: string;
+}
+
 /** Perfil proyectado: `null` en las secciones aún sin datos (consistencia eventual). */
 export interface AthleteProfile {
   readonly demographic: DemographicProfile | null;
   readonly physiological: PhysiologicalProfile | null;
+  readonly sportHabits: SportHabits | null;
   /** Instante UTC de la última proyección aplicada, o `null`. */
   readonly projectedAt: string | null;
 }
@@ -87,6 +130,18 @@ export interface PhysiologicalDraft {
   readonly restingHeartRateBpm: number | null;
   readonly bloodPressure: BloodPressure | null;
   readonly bodyTemperatureC: string | null;
+}
+
+/**
+ * Hábitos que captura el deportista (HU006). Los deportes van en el orden de
+ * las filas del formulario, para que la posición de `sports[i]` en un `422`
+ * corresponda a la fila que la causó.
+ */
+export interface SportHabitsDraft {
+  readonly sports: readonly SportHabit[];
+  readonly days: readonly WeekDay[];
+  readonly timeSlots: readonly TimeSlot[];
+  readonly primaryGoal: PrimaryGoal | null;
 }
 
 /** Regla incumplida (`details[{field, issue}]`, ADR-034). */
@@ -157,6 +212,55 @@ export function toPhysiologicalRequest(
   };
 }
 
+/**
+ * Cuerpo de `PUT /v1/me/sport-habits`: días y franjas sin repetir y en el orden
+ * de su catálogo (el que usa el backend); los deportes, en el orden capturado.
+ */
+export function toSportHabitsRequest(
+  draft: SportHabitsDraft,
+  expectedVersion: number | null,
+): SportHabitsRequestDto {
+  return {
+    ...(expectedVersion === null ? {} : { expected_version: expectedVersion }),
+    sports: draft.sports.map((habit) => ({
+      sport: habit.sport,
+      frequency_per_week: habit.frequencyPerWeek,
+      session_duration_minutes: habit.sessionDurationMinutes,
+      intensity: habit.intensity,
+      level: habit.level,
+      years_practicing: habit.yearsPracticing,
+    })),
+    availability: {
+      days: inCatalogOrder(draft.days, WEEK_DAYS),
+      time_slots: inCatalogOrder(draft.timeSlots, TIME_SLOTS),
+    },
+    primary_goal: draft.primaryGoal,
+  };
+}
+
+/** Valores únicos de `values` en el orden de `catalog`; descarta los que no son del catálogo. */
+export function inCatalogOrder<T extends string>(values: readonly T[], catalog: readonly T[]): T[] {
+  return catalog.filter((item) => values.includes(item));
+}
+
+export function toSportHabits(dto: SportHabitsSectionDto): SportHabits {
+  return {
+    version: dto.version,
+    sports: dto.sports.map((habit) => ({
+      sport: habit.sport,
+      frequencyPerWeek: habit.frequency_per_week,
+      sessionDurationMinutes: habit.session_duration_minutes,
+      intensity: habit.intensity,
+      level: habit.level,
+      yearsPracticing: habit.years_practicing,
+    })),
+    days: dto.availability.days,
+    timeSlots: dto.availability.time_slots,
+    primaryGoal: dto.primary_goal,
+    updatedAt: dto.updated_at,
+  };
+}
+
 export function toDemographicProfile(dto: DemographicProfileSectionDto): DemographicProfile {
   return {
     version: dto.version,
@@ -197,6 +301,7 @@ export function toAthleteProfile(dto: ProfileResponseDto): AthleteProfile {
   return {
     demographic: dto.demographic === null ? null : toDemographicProfile(dto.demographic),
     physiological: dto.physiological === null ? null : toPhysiologicalProfile(dto.physiological),
+    sportHabits: dto.sport_habits === null ? null : toSportHabits(dto.sport_habits),
     projectedAt: dto.projected_at,
   };
 }

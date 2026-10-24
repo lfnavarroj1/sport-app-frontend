@@ -71,7 +71,7 @@ const home = (route: string): NavItem => ({
 
 /**
  * «Mi perfil». El deportista lo abre en `/deportista/perfil`, donde HU005 registra
- * sus datos demográficos y fisiológicos (ADR-034). Los demás actores no tienen
+ * sus datos demográficos y fisiológicos y HU006 sus hábitos deportivos (ADR-034). Los demás actores no tienen
  * ruta de perfil hasta HU002, así que su opción sigue como «Próximamente».
  */
 const PROFILE: NavItem = {

@@ -9,19 +9,22 @@ import {
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_CORRELATION_ID,
   SIMULATED_PROFILE_USER_ID,
+  SPORT_HABITS_RESPONSES,
   VALID_DEMOGRAPHIC_REQUEST,
   VALID_PHYSIOLOGICAL_REQUEST,
+  VALID_SPORT_HABITS_REQUEST,
 } from '../../../../testing/bff-web/profile.fixtures';
 import { SimulatedResponse } from '../../../../testing/bff-web/register-user.fixtures';
 import { APP_CONFIG, AppConfig } from '../../../core/config/app-config';
 import { SessionStore } from '../../../core/session/session.store';
 import { HttpProfileGateway, PROFILE_RETRY_DELAYS_MS } from './http-profile.gateway';
-import { DemographicDraft, PhysiologicalDraft } from './profile.model';
+import { DemographicDraft, PhysiologicalDraft, SportHabitsDraft } from './profile.model';
 
 const BFF = 'http://bff.example.com';
 const PROFILE_URL = `${BFF}/v1/me/profile`;
 const DEMOGRAPHIC_URL = `${BFF}/v1/me/demographic-profile`;
 const PHYSIOLOGICAL_URL = `${BFF}/v1/me/physiological-profile`;
+const SPORT_HABITS_URL = `${BFF}/v1/me/sport-habits`;
 const KEY = '5f0c3a2e-8b1d-4c6e-9a7f-2d4b6c8e0a1f';
 const TOKEN = 'token-sintetico';
 
@@ -45,7 +48,32 @@ const PHYSIOLOGICAL_DRAFT: PhysiologicalDraft = {
   bodyTemperatureC: '36.6',
 };
 
-describe('HttpProfileGateway (HU005, contrato bff-web 0.16.0)', () => {
+/** Días y franjas fuera del orden del catálogo: el cuerpo los envía ordenados. */
+const SPORT_HABITS_DRAFT: SportHabitsDraft = {
+  sports: [
+    {
+      sport: 'running',
+      frequencyPerWeek: 3,
+      sessionDurationMinutes: 45,
+      intensity: 'MODERATE',
+      level: 'INTERMEDIATE',
+      yearsPracticing: 4,
+    },
+    {
+      sport: 'swimming',
+      frequencyPerWeek: 1,
+      sessionDurationMinutes: 60,
+      intensity: 'LOW',
+      level: 'BEGINNER',
+      yearsPracticing: null,
+    },
+  ],
+  days: ['SAT', 'MON', 'WED'],
+  timeSlots: ['MORNING'],
+  primaryGoal: 'HEALTH',
+};
+
+describe('HttpProfileGateway (HU005 y HU006, contrato bff-web 0.19.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpProfileGateway;
@@ -128,7 +156,12 @@ describe('HttpProfileGateway (HU005, contrato bff-web 0.16.0)', () => {
       const profile = gateway.loadProfile();
       await respond(PROFILE_URL, GET_PROFILE_RESPONSES.empty);
 
-      expect(await profile).toEqual({ demographic: null, physiological: null, projectedAt: null });
+      expect(await profile).toEqual({
+        demographic: null,
+        physiological: null,
+        sportHabits: null,
+        projectedAt: null,
+      });
     });
 
     it('CA5: 403 permission_required rechaza con el error original', async () => {
@@ -302,6 +335,116 @@ describe('HttpProfileGateway (HU005, contrato bff-web 0.16.0)', () => {
           { field: '', issue: 'required' },
         ],
       });
+    });
+  });
+
+  describe('comando de hábitos deportivos (HU006)', () => {
+    it('CA1: crea con token, clave y el cuerpo de ADR-034, y recibe la sección normalizada', async () => {
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, null, KEY);
+      const request = await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.created);
+
+      expect(request.request.method).toBe('PUT');
+      expect(request.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
+      expect(request.request.headers.get('Idempotency-Key')).toBe(KEY);
+      // Sin `expected_version` ni `user_id`; días y franjas en el orden del catálogo.
+      expect(request.request.body).toEqual(VALID_SPORT_HABITS_REQUEST);
+      expect(await outcome).toEqual({
+        kind: 'saved',
+        created: true,
+        replayed: false,
+        section: {
+          version: 1,
+          sports: SPORT_HABITS_DRAFT.sports,
+          days: ['MON', 'WED', 'SAT'],
+          timeSlots: ['MORNING'],
+          primaryGoal: 'HEALTH',
+          updatedAt: SPORT_HABITS_RESPONSES.created.body.updated_at,
+        },
+      });
+    });
+
+    it('CA1: reemplaza con expected_version y distingue 200', async () => {
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, 1, KEY);
+      const request = await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.replaced);
+
+      expect(request.request.body.expected_version).toBe(1);
+      expect(await outcome).toEqual(
+        jasmine.objectContaining({
+          kind: 'saved',
+          created: false,
+          section: jasmine.objectContaining({ version: 2, primaryGoal: null }),
+        }),
+      );
+    });
+
+    it('CA4: reconoce el resultado de un reintento por Idempotent-Replayed', async () => {
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, null, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.created, {
+        'Idempotent-Replayed': 'true',
+      });
+
+      expect(await outcome).toEqual(jasmine.objectContaining({ kind: 'saved', replayed: true }));
+    });
+
+    it('CA2: traduce validation_error conservando la posición de cada lista', async () => {
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, null, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.validationError);
+
+      expect(await outcome).toEqual({
+        kind: 'invalid',
+        violations: [
+          { field: 'sports[1].sport', issue: 'duplicate_value' },
+          { field: 'sports[0].frequency_per_week', issue: 'out_of_range' },
+          { field: 'availability.days[1]', issue: 'duplicate_value' },
+        ],
+      });
+    });
+
+    it('CA4: version_conflict informa la versión vigente', async () => {
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, 1, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.versionConflict);
+
+      expect(await outcome).toEqual({ kind: 'conflict', currentVersion: 2 });
+    });
+
+    it('CA5: permission_required se informa como permiso denegado, sin reintentar', async () => {
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, null, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.permissionRequired);
+
+      expect(await outcome).toEqual(
+        jasmine.objectContaining({
+          kind: 'failed',
+          error: jasmine.objectContaining({ kind: 'forbidden', code: 'permission_required' }),
+        }),
+      );
+      http.expectNone(SPORT_HABITS_URL);
+    });
+
+    it('CA4: ante 503 reintenta con la misma clave y el mismo cuerpo', async () => {
+      const retries: number[] = [];
+      const outcome = gateway.saveSportHabits(SPORT_HABITS_DRAFT, null, KEY, (attempt) =>
+        retries.push(attempt),
+      );
+      const first = await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.upstreamUnavailable);
+      const second = await respond(SPORT_HABITS_URL, SPORT_HABITS_RESPONSES.created);
+
+      expect(second.request.headers.get('Idempotency-Key')).toBe(KEY);
+      expect(second.request.body).toEqual(first.request.body);
+      expect(retries).toEqual([1]);
+      expect(await outcome).toEqual(jasmine.objectContaining({ kind: 'saved', created: true }));
+    });
+
+    it('la consulta del perfil transforma los hábitos proyectados', async () => {
+      const profile = gateway.loadProfile();
+      await respond(PROFILE_URL, GET_PROFILE_RESPONSES.withSportHabits);
+
+      const loaded = await profile;
+      expect(loaded.sportHabits?.version).toBe(1);
+      expect(loaded.sportHabits?.sports.map((habit) => habit.sport)).toEqual([
+        'running',
+        'swimming',
+      ]);
+      expect(loaded.sportHabits?.days).toEqual(['MON', 'WED', 'SAT']);
     });
   });
 

@@ -5,11 +5,13 @@ import {
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
 } from './profile.model';
 
 /**
- * Puerto hacia el BFF web para el perfil del deportista (HU005).
- * `HttpProfileGateway` traduce el contrato bff-web 0.16.0.
+ * Puerto hacia el BFF web para el perfil del deportista (HU005 y HU006).
+ * `HttpProfileGateway` traduce el contrato bff-web 0.19.0.
  */
 export abstract class ProfileGateway {
   /**
@@ -40,4 +42,12 @@ export abstract class ProfileGateway {
     idempotencyKey: string,
     onRetry?: (attempt: number) => void,
   ): Promise<SaveOutcome<PhysiologicalProfile>>;
+
+  /** Registra o reemplaza los hábitos deportivos (HU006); mismas reglas que las secciones de HU005. */
+  abstract saveSportHabits(
+    draft: SportHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>>;
 }

@@ -18,12 +18,16 @@ import {
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
   conflictVersion,
   toAthleteProfile,
   toDemographicProfile,
   toDemographicRequest,
   toPhysiologicalProfile,
   toPhysiologicalRequest,
+  toSportHabits,
+  toSportHabitsRequest,
 } from './profile.model';
 
 /** Estados transitorios que se reintentan automáticamente (sin red, 502, 503, 504). */
@@ -39,10 +43,11 @@ export const PROFILE_RETRY_DELAYS_MS = new InjectionToken<readonly number[]>(
 );
 
 /**
- * Implementación de HU005 sobre `GET /v1/me/profile`,
- * `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile` del BFF
- * web (contrato 0.16.0). Los valores del perfil son datos sensibles: no se
- * registran en consola ni se guardan fuera de la memoria de la pestaña.
+ * Implementación de HU005 y HU006 sobre `GET /v1/me/profile`,
+ * `PUT /v1/me/demographic-profile`, `PUT /v1/me/physiological-profile` y
+ * `PUT /v1/me/sport-habits` del BFF web (contrato 0.19.0). Los valores del
+ * perfil son datos sensibles: no se registran en consola ni se guardan fuera de
+ * la memoria de la pestaña.
  */
 @Injectable()
 export class HttpProfileGateway extends ProfileGateway {
@@ -89,6 +94,20 @@ export class HttpProfileGateway extends ProfileGateway {
     return this.save(
       (token) => this.api.putPhysiologicalProfile(token, body, idempotencyKey),
       toPhysiologicalProfile,
+      onRetry,
+    );
+  }
+
+  saveSportHabits(
+    draft: SportHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>> {
+    const body = toSportHabitsRequest(draft, expectedVersion);
+    return this.save(
+      (token) => this.api.putSportHabits(token, body, idempotencyKey),
+      toSportHabits,
       onRetry,
     );
   }
