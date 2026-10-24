@@ -245,13 +245,23 @@ Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`co
 
 Feature `src/app/features/identity/profile`, contrato `bff-web` 0.13.0 (`core/api/bff-web/profile.api.ts`) y ADR-034.
 
-- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. «Datos personales» (HU002) y «Hábitos deportivos» (HU006) aparecen como «Próximamente». Para el organizador y el profesional, «Mi perfil» sigue como «Próximamente» hasta HU002.
+- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. «Datos personales» (HU002) aparece como «Próximamente»; «Hábitos deportivos» es la sección de HU006 (ver la sección siguiente). Para el organizador y el profesional, «Mi perfil» sigue como «Próximamente» hasta HU002.
 - Una sección vacía (`null`) es una invitación a registrar, nunca un error. Se muestra la respuesta del comando mientras la proyección no la alcance; si no llega tras los reintentos, se avisa y se ofrece «Actualizar datos».
 - Catálogos cerrados en listas, unidades en la etiqueta de cada campo, decimales como texto (acepta coma o punto) y la fecha de la medición en la hora del navegador, enviada en UTC. La edad es informativa. En la web solo se validan las restricciones por campo del contrato; la edad permitida, la presión coherente y la ventana de la medición las decide el backend y se marcan desde `details[{field, issue}]`.
 - **Consentimiento:** «Guardar datos fisiológicos» solo se habilita al marcar la casilla con la versión de `healthDataConsentVersion`, y la casilla se vuelve a pedir en cada guardado. Sin esa versión (`null`) el registro fisiológico no está disponible. El texto de la política aún no existe: no hay enlace.
 - El IMC lo calcula el backend y se presenta como «IMC estimado», sin rangos ni clasificaciones: no es una evaluación médica. Los valores de salud no se escriben en consola ni en almacenamiento del navegador.
 - `expected_version` es la versión mostrada; `409 version_conflict` no sobrescribe: recarga y muestra los valores vigentes. `Idempotency-Key` por intento lógico, con hasta tres reintentos automáticos (1, 2 y 4 s) ante falta de red, `502`, `503` o `504`; un reintento manual tras un fallo transitorio usa la misma clave.
 - Pruebas: `e2e/profile.spec.ts` (`@simulado`, simulador `e2e/support/profile-simulator.ts`) y `e2e/profile.integrated.spec.ts` (`@integrado`), que requiere `bff-web` 0.13.0, `users-management` 0.6.0, `usuarios-read-projector` y `HEALTH_DATA_CONSENT_VERSION=local-dev` en `sportapp-runtime`. Hoy la composición local no cumple esos requisitos, así que el recorrido integrado está bloqueado.
+
+## Hábitos deportivos (HU006)
+
+Feature `src/app/features/identity/profile` (`sport-habits-form/`, `sport-habits-violations.ts`), contrato `bff-web` 0.19.0 (`core/api/bff-web/profile.api.ts`) y ADR-034.
+
+- **Deportista** (`/deportista/perfil`, sección «Hábitos deportivos»): lee los hábitos de `GET /v1/me/profile` (`sport_habits`) y los registra o reemplaza completos con `PUT /v1/me/sport-habits`. Sin hábitos (`null`) la sección invita a registrarlos. Registrar hábitos no crea planes ni recomendaciones, y la pantalla no los infiere.
+- De 1 a 5 deportes del catálogo de HU010, cada uno con veces por semana (1–7), duración por sesión (10–600 min), intensidad, nivel y, opcionalmente, años de práctica (0–80); días y franjas disponibles (al menos uno de cada uno) y objetivo principal opcional. Todos los catálogos son controles cerrados.
+- Un deporte elegido no se ofrece en otra fila y «Agregar deporte» se deshabilita en la quinta. En la web solo se validan las restricciones del contrato; las reglas del backend llegan en `details[{field, issue}]` y se marcan en la fila y el campo de su posición (`sports[1].sport`), porque los deportes se envían en el orden de las filas. Días y franjas viajan en el orden del catálogo.
+- Se muestra la respuesta del comando (`201`/`200`, con `Idempotent-Replayed`) mientras la proyección no la alcanza. `expected_version` es la versión mostrada; `409 version_conflict` no sobrescribe: recarga y muestra los hábitos vigentes. `Idempotency-Key` y reintentos como en HU005.
+- Pruebas: `e2e/sport-habits.spec.ts` (`@simulado`, mismo simulador de HU005) y `e2e/sport-habits.integrated.spec.ts` (`@integrado`: registro, recarga desde la proyección, conflicto entre pestañas y un `422` real del backend), que requiere `bff-web` 0.19.0, `users-management` 0.9.0 con la migración `0005_sport_habits` y el proyector compatible desplegados.
 
 ## Contenedor y Kubernetes
 
@@ -347,4 +357,5 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).
 - HU023: despliegue conjunto de `bff-web` 0.17.0 o posterior y `events-management` 0.6.0 para el recorrido integrado; ratificar en ADR-040 las decisiones del backend del 2026-10-20 (periodo y propiedad del evento en las coincidencias).
+- HU006: despliegue de `bff-web` 0.19.0, `users-management` 0.9.0 (migración `0005_sport_habits`) y el proyector compatible para el recorrido integrado.
 - HU014: despliegue de `bff-web` 0.18.0, `training-management` 0.9.0 y `users-management` 0.8.0 para el recorrido integrado; HU009 para probar el bloqueo real por alergia; ratificar el catálogo `food-catalog-2026-10-13.v1`, sus unidades y los nombres en español de los alimentos.

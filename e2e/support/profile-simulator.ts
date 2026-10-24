@@ -9,25 +9,40 @@ import {
   PROFILE_PATH,
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_USER_ID,
+  SPORT_HABITS_PATH,
+  SPORT_HABITS_RESPONSES,
 } from '../../src/testing/bff-web/profile.fixtures';
 import { SimulatedResponse } from '../../src/testing/bff-web/register-user.fixtures';
 
 export interface ProfileSimulation {
-  /** Solicitudes recibidas en los dos `PUT`, en orden de llegada. */
+  /** Solicitudes recibidas en los tres `PUT`, en orden de llegada. */
   readonly requests: Request[];
   /** Solicitudes recibidas en `GET /v1/me/profile`. */
   readonly reads: Request[];
-  /** Respuestas de los próximos `PUT` (cualquiera de los dos), en orden; luego, el comportamiento normal. */
+  /** Respuestas de los próximos `PUT` (cualquiera de los tres), en orden; luego, el comportamiento normal. */
   readonly next: SimulatedResponse[];
   /** Secciones vigentes; `null` mientras no se registran. */
   readonly state: {
     demographic: Section | null;
     physiological: Section | null;
+    sportHabits: Section | null;
   };
 }
 
 type Section = Readonly<Record<string, unknown>> & { readonly version: number };
-type SectionName = 'demographic' | 'physiological';
+type SectionName = 'demographic' | 'physiological' | 'sportHabits';
+
+const RESPONSES: Readonly<Record<SectionName, Readonly<Record<string, SimulatedResponse>>>> = {
+  demographic: DEMOGRAPHIC_RESPONSES,
+  physiological: PHYSIOLOGICAL_RESPONSES,
+  sportHabits: SPORT_HABITS_RESPONSES,
+};
+
+/** Catálogos de HU006 (ADR-034), en su orden: el backend normaliza las listas a este orden. */
+const SPORTS = ['running', 'cycling', 'swimming', 'strength', 'other'];
+const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const TIME_SLOTS = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
+const MAX_SPORTS = 5;
 interface Detail {
   readonly field: string | null;
   readonly issue: string;
@@ -38,9 +53,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DECIMAL = /^(\d{1,3})(?:\.(\d))?$/;
 
 /**
- * Reemplaza las tres operaciones del perfil de HU005 con el simulador del
- * contrato bff-web 0.13.0 y ADR-034. Con el contexto como `target`, todas sus
- * pestañas comparten el mismo perfil (conflictos de versión entre pestañas).
+ * Reemplaza las cuatro operaciones del perfil de HU005 y HU006 con el simulador
+ * del contrato bff-web 0.19.0 y ADR-034. Con el contexto como `target`, todas
+ * sus pestañas comparten el mismo perfil (conflictos de versión entre pestañas).
  *
  * Como el BFF: sin `Bearer` responde `401`; los `PUT` exigen `Idempotency-Key`
  * UUID; la misma clave con el mismo cuerpo devuelve la respuesta original con
@@ -51,14 +66,16 @@ const DECIMAL = /^(\d{1,3})(?:\.(\d))?$/;
  * (`409 version_conflict` con la versión vigente, o `"0"`). El consentimiento
  * fisiológico debe traer la versión vigente y el cuerpo nunca `bmi` ni
  * `user_id` (`422 validation_error`). El IMC lo calcula el simulador como el
- * backend. Las demás reglas de ADR-034 se fuerzan con `next`.
+ * backend. Los hábitos rechazan un deporte repetido (`sports[i].sport`) o más de
+ * cinco (`sports`), y se guardan con deportes, días y franjas en el orden de su
+ * catálogo, como el backend. Las demás reglas de ADR-034 se fuerzan con `next`.
  */
 export async function simulateProfile(target: Page | BrowserContext): Promise<ProfileSimulation> {
   const simulation: ProfileSimulation = {
     requests: [],
     reads: [],
     next: [],
-    state: { demographic: null, physiological: null },
+    state: { demographic: null, physiological: null, sportHabits: null },
   };
   const replays = new Map<string, { body: string; response: SimulatedResponse }>();
   let clock = Date.parse('2026-10-12T13:05:00Z');
@@ -73,20 +90,20 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
     if (!(await authenticated(route))) {
       return fulfill(route, GET_PROFILE_RESPONSES.invalidAccessToken);
     }
-    const { demographic, physiological } = simulation.state;
+    const { demographic, physiological, sportHabits } = simulation.state;
     await fulfill(route, {
       status: 200,
       body: {
         user_id: SIMULATED_PROFILE_USER_ID,
         demographic,
         physiological,
-        sport_habits: null,
+        sport_habits: sportHabits,
         versions: {
           demographic: demographic?.version ?? null,
           physiological: physiological?.version ?? null,
-          sport_habits: null,
+          sport_habits: sportHabits?.version ?? null,
         },
-        projected_at: demographic || physiological ? now() : null,
+        projected_at: demographic || physiological || sportHabits ? now() : null,
       },
     });
   });
@@ -96,7 +113,7 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
       return route.fallback();
     }
     simulation.requests.push(route.request());
-    const responses = name === 'demographic' ? DEMOGRAPHIC_RESPONSES : PHYSIOLOGICAL_RESPONSES;
+    const responses = RESPONSES[name];
     if (!(await authenticated(route))) {
       return fulfill(route, responses.invalidAccessToken);
     }
@@ -140,7 +157,11 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
     const values = { ...request };
     delete values['expected_version'];
     const section: Section = {
-      ...(name === 'demographic' ? values : physiologicalSection(values, instant)),
+      ...(name === 'demographic'
+        ? values
+        : name === 'physiological'
+          ? physiologicalSection(values, instant)
+          : sportHabitsSection(values)),
       version: (current?.version ?? 0) + 1,
       created_at: (current?.['created_at'] as string | undefined) ?? instant,
       updated_at: instant,
@@ -156,18 +177,31 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
 
   await target.route(`**${DEMOGRAPHIC_PROFILE_PATH}`, command('demographic'));
   await target.route(`**${PHYSIOLOGICAL_PROFILE_PATH}`, command('physiological'));
+  await target.route(`**${SPORT_HABITS_PATH}`, command('sportHabits'));
 
   return simulation;
 }
 
 /**
- * Reglas del simulador: campos no permitidos, consentimiento (CA2, CA3) y la
- * forma de peso y altura que necesita el IMC (patrón y entero del contrato).
+ * Reglas del simulador: campos no permitidos, consentimiento (CA2, CA3), la
+ * forma de peso y altura que necesita el IMC (patrón y entero del contrato) y,
+ * en los hábitos (HU006 CA2), deportes repetidos o de más.
  */
 function rejected(name: SectionName, request: Record<string, unknown>): Detail[] {
   const details: Detail[] = ['bmi', 'user_id']
     .filter((field) => field in request)
     .map((field) => ({ field, issue: 'field_not_allowed' }));
+  if (name === 'sportHabits') {
+    const sports = (request['sports'] ?? []) as { sport?: unknown }[];
+    if (sports.length > MAX_SPORTS) {
+      details.push({ field: 'sports', issue: 'too_many_items' });
+    }
+    sports.forEach((item, index) => {
+      if (sports.slice(0, index).some((previous) => previous.sport === item.sport)) {
+        details.push({ field: `sports[${index}].sport`, issue: 'duplicate_value' });
+      }
+    });
+  }
   if (name === 'physiological') {
     if (tenths(request['weight_kg']) === null) {
       details.push({ field: 'weight_kg', issue: 'out_of_range' });
@@ -184,6 +218,24 @@ function rejected(name: SectionName, request: Record<string, unknown>): Detail[]
     }
   }
   return details;
+}
+
+/** Hábitos normalizados como el backend: deportes, días y franjas en el orden de su catálogo. */
+function sportHabitsSection(values: Record<string, unknown>): Record<string, unknown> {
+  const sports = values['sports'] as { sport: string; years_practicing?: number | null }[];
+  const availability = values['availability'] as { days: string[]; time_slots: string[] };
+  const byCatalog = (catalog: string[]) => (a: string, b: string) =>
+    catalog.indexOf(a) - catalog.indexOf(b);
+  return {
+    sports: [...sports]
+      .sort((a, b) => byCatalog(SPORTS)(a.sport, b.sport))
+      .map((item) => ({ ...item, years_practicing: item.years_practicing ?? null })),
+    availability: {
+      days: [...availability.days].sort(byCatalog(DAYS)),
+      time_slots: [...availability.time_slots].sort(byCatalog(TIME_SLOTS)),
+    },
+    primary_goal: values['primary_goal'] ?? null,
+  };
 }
 
 /** Sección fisiológica con el consentimiento registrado y el IMC calculado. */

@@ -32,8 +32,11 @@ import {
   PhysiologicalProfile,
   ProfileViolation,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
   newerSection,
 } from '../profile.model';
+import { SportHabitsForm } from '../sport-habits-form/sport-habits-form';
 
 const IDEMPOTENCY_KEY_REUSED = PROFILE_ERROR_CODES.idempotencyKeyReused;
 /** Reintentos automáticos como máximo de un comando ante fallos transitorios. */
@@ -97,13 +100,16 @@ class SectionState<T extends { readonly version: number }> {
 }
 
 /**
- * Mi perfil (HU005) en `/deportista/perfil`. El deportista registra o reemplaza
- * sus datos demográficos y fisiológicos y ve los valores que confirmó el backend,
- * incluido el IMC estimado que este calcula (CA1). Las reglas incumplidas llegan
- * del backend y se marcan por campo (CA2, CA3). Los valores de salud solo viven
- * en la memoria de la pantalla (CA4). Un `409 version_conflict` no sobrescribe:
- * se recarga el perfil y se muestran los valores vigentes (CA6). La proyección es
- * eventual: se conserva la respuesta del comando mientras no la alcance.
+ * Mi perfil (HU005 y HU006) en `/deportista/perfil`. El deportista registra o
+ * reemplaza sus datos demográficos y fisiológicos y sus hábitos deportivos, y ve
+ * los valores que confirmó el backend, incluido el IMC estimado que este calcula
+ * (HU005 CA1, HU006 CA1). Las reglas incumplidas llegan del backend y se marcan
+ * por campo, con la fila del deporte cuando aplica (HU005 CA2 y CA3, HU006 CA2).
+ * Los valores solo viven en la memoria de la pantalla (HU005 CA4). Un
+ * `409 version_conflict` no sobrescribe: se recarga el perfil y se muestran los
+ * valores vigentes (HU005 CA6, HU006 CA4). La proyección es eventual: se
+ * conserva la respuesta del comando mientras no la alcance. Registrar hábitos
+ * no crea planes ni recomendaciones.
  */
 @Component({
   selector: 'app-profile-page',
@@ -113,6 +119,7 @@ class SectionState<T extends { readonly version: number }> {
     MatButtonModule,
     MatCardModule,
     PhysiologicalForm,
+    SportHabitsForm,
     TranslatePipe,
   ],
   templateUrl: './profile-page.html',
@@ -133,6 +140,7 @@ export class ProfilePage {
   protected readonly state = signal<ViewState<AthleteProfile>>(viewState.loading());
   protected readonly demographic = new SectionState<DemographicProfile>();
   protected readonly physiological = new SectionState<PhysiologicalProfile>();
+  protected readonly sportHabits = new SectionState<SportHabits>();
 
   /** Se agotaron las recargas automáticas o una recarga falló: se ofrece actualizar. */
   protected readonly projectionStalled = signal(false);
@@ -204,6 +212,12 @@ export class ProfilePage {
     );
   }
 
+  protected saveSportHabits(draft: SportHabitsDraft): Promise<void> {
+    return this.save(this.sportHabits, 'sport-habits', (expected, key, onRetry) =>
+      this.gateway.saveSportHabits(draft, expected, key, onRetry),
+    );
+  }
+
   /** Actualización manual cuando la proyección sigue atrasada. */
   protected refreshNow(): void {
     this.refreshRound = 0;
@@ -239,7 +253,7 @@ export class ProfilePage {
 
   private async save<T extends { readonly version: number }>(
     section: SectionState<T>,
-    prefix: 'demographic' | 'physiological',
+    prefix: 'demographic' | 'physiological' | 'sport-habits',
     send: (
       expectedVersion: number | null,
       idempotencyKey: string,
@@ -334,7 +348,8 @@ export class ProfilePage {
     }
     this.refreshing.set(false);
 
-    const pending = this.demographic.pending() || this.physiological.pending();
+    const pending =
+      this.demographic.pending() || this.physiological.pending() || this.sportHabits.pending();
     if (failed) {
       this.projectionStalled.set(true);
     } else if (!pending) {
@@ -350,6 +365,7 @@ export class ProfilePage {
   private applyProjection(profile: AthleteProfile): void {
     this.demographic.projected.set(profile.demographic);
     this.physiological.projected.set(profile.physiological);
+    this.sportHabits.projected.set(profile.sportHabits);
   }
 
   private clearRefreshTimer(): void {

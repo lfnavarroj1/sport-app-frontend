@@ -120,6 +120,7 @@ describe('profile.model (HU005)', () => {
       expect(toAthleteProfile(EMPTY_PROFILE)).toEqual({
         demographic: null,
         physiological: null,
+        sportHabits: null,
         projectedAt: null,
       });
     });

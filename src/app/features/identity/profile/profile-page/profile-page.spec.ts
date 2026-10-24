@@ -7,8 +7,10 @@ import {
   EMPTY_PROFILE,
   FULL_PROFILE,
   PHYSIOLOGICAL_RESPONSES,
+  PROFILE_WITH_SPORT_HABITS,
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_CORRELATION_ID,
+  SPORT_HABITS_RESPONSES,
 } from '../../../../../testing/bff-web/profile.fixtures';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { ApiError } from '../../../../core/api/api-error';
@@ -25,10 +27,14 @@ import {
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
   toAthleteProfile,
   toDemographicProfile,
   toPhysiologicalProfile,
+  toSportHabits,
 } from '../profile.model';
+import { SportHabitsForm } from '../sport-habits-form/sport-habits-form';
 import { PROFILE_PROJECTION_RETRY_DELAYS_MS, ProfilePage } from './profile-page';
 
 // Datos sintéticos de prueba, derivados de los fixtures del contrato bff-web 0.16.0.
@@ -42,6 +48,18 @@ const PHYSIOLOGICAL_V1: PhysiologicalProfile = FULL.physiological!;
 const PHYSIOLOGICAL_V2: PhysiologicalProfile = toPhysiologicalProfile(
   PHYSIOLOGICAL_RESPONSES.replaced.body,
 );
+const WITH_HABITS: AthleteProfile = toAthleteProfile(
+  PROFILE_WITH_SPORT_HABITS as unknown as ProfileResponseDto,
+);
+const HABITS_V1: SportHabits = WITH_HABITS.sportHabits!;
+const HABITS_V2: SportHabits = toSportHabits(SPORT_HABITS_RESPONSES.replaced.body);
+
+const HABITS_DRAFT: SportHabitsDraft = {
+  sports: HABITS_V1.sports,
+  days: HABITS_V1.days,
+  timeSlots: HABITS_V1.timeSlots,
+  primaryGoal: HABITS_V1.primaryGoal,
+};
 
 const DEMOGRAPHIC_DRAFT: DemographicDraft = {
   birthDate: '1992-04-18',
@@ -96,6 +114,7 @@ describe('ProfilePage (HU005)', () => {
       'loadProfile',
       'saveDemographic',
       'savePhysiological',
+      'saveSportHabits',
     ]);
     TestBed.configureTestingModule({
       imports: [ProfilePage],
@@ -245,16 +264,22 @@ describe('ProfilePage (HU005)', () => {
       expect(button('Editar datos fisiológicos')?.disabled).toBeFalse();
     });
 
-    it('presenta los datos personales y los hábitos como «Próximamente»', async () => {
+    it('presenta los datos personales como «Próximamente» y los hábitos como sección propia', async () => {
       await create(FULL);
 
-      for (const id of ['profile-personal-upcoming', 'profile-habits-upcoming']) {
-        const section = testId(id)!;
-        expect(section.querySelector('h2')?.textContent).toContain('Próximamente');
-        expect(section.querySelector('button')).toBeNull();
-      }
-      expect(testId('profile-personal-upcoming')?.textContent).toContain('Datos personales');
-      expect(testId('profile-habits-upcoming')?.textContent).toContain('Hábitos deportivos');
+      const personal = testId('profile-personal-upcoming')!;
+      expect(personal.querySelector('h2')?.textContent).toContain('Próximamente');
+      expect(personal.querySelector('button')).toBeNull();
+      expect(personal.textContent).toContain('Datos personales');
+      expect(testId('profile-habits-upcoming')).toBeNull();
+      const habits = testId('profile-hu006')!;
+      expect(habits.querySelector('h2')?.textContent?.trim()).toBe('Hábitos deportivos');
+      expect(habits.textContent).not.toContain('Próximamente');
+      expect([...element.querySelectorAll('h2')].map((h) => h.textContent?.trim())).toEqual([
+        'Datos personales Próximamente',
+        'Datos demográficos y fisiológicos',
+        'Hábitos deportivos',
+      ]);
       expect([...element.querySelectorAll('h3')].map((h) => h.textContent?.trim())).toEqual([
         'Datos demográficos',
         'Datos fisiológicos',
@@ -625,6 +650,265 @@ describe('ProfilePage (HU005)', () => {
       expect(testId('physiological-unavailable')).not.toBeNull();
       expect(button('Registrar datos fisiológicos')).toBeUndefined();
       expect(button('Registrar datos demográficos')).toBeDefined();
+    });
+  });
+
+  describe('hábitos deportivos (HU006)', () => {
+    beforeEach(() => configure());
+
+    function habitsForm(): SportHabitsForm {
+      return fixture.debugElement.query((el) => el.componentInstance instanceof SportHabitsForm)
+        .componentInstance as SportHabitsForm;
+    }
+
+    async function submitHabits(draft: SportHabitsDraft = HABITS_DRAFT): Promise<void> {
+      habitsForm().submitted.emit(draft);
+      await settle();
+    }
+
+    function habitKeys(): string[] {
+      return gateway.saveSportHabits.calls.allArgs().map(([, , key]) => key);
+    }
+
+    it('sin hábitos invita a registrarlos, sin error', async () => {
+      await create(FULL);
+
+      expect(testId('sport-habits-empty')?.textContent).toContain(
+        'Aún no has registrado tus hábitos deportivos.',
+      );
+      expect(button('Registrar hábitos deportivos')).toBeDefined();
+      expect(testId('profile-hu006')?.textContent).toContain(
+        'Registrarlos no crea planes ni recomendaciones.',
+      );
+      expect(testId('state-error')).toBeNull();
+    });
+
+    it('muestra la carga y el error del perfil también en la sección de hábitos', async () => {
+      await create(Promise.reject(new HttpErrorResponse({ status: 503 })));
+
+      const section = testId('profile-hu006')!;
+      expect(section.querySelector('[data-testid="state-error"]')).not.toBeNull();
+      expect(testId('sport-habits-section')).toBeNull();
+    });
+
+    it('CA1: muestra los hábitos proyectados con sus catálogos y unidades', async () => {
+      await create(WITH_HABITS);
+
+      const first = testId('sport-habit-0')!;
+      expect(first.textContent).toContain('Carrera');
+      expect(first.textContent).toContain('3 veces por semana');
+      expect(first.textContent).toContain('45 min por sesión');
+      expect(first.textContent).toContain('Intensidad: Moderada');
+      expect(first.textContent).toContain('Nivel: Intermedio');
+      expect(first.textContent).toContain('4 años practicándolo');
+      const second = testId('sport-habit-1')!;
+      expect(second.textContent).toContain('Natación');
+      expect(second.textContent).toContain('1 vez por semana');
+      expect(second.textContent).toContain('Años de práctica sin especificar');
+      expect(
+        [...testId('sport-habits-days')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Lunes', 'Miércoles', 'Sábado']);
+      expect(testId('sport-habits-time-slots')?.textContent?.trim()).toBe('Mañana');
+      expect(testId('sport-habits-goal')?.textContent?.trim()).toBe('Salud');
+      expect(button('Editar hábitos deportivos')?.disabled).toBeFalse();
+    });
+
+    it('CA1: registra (201) sin versión esperada y muestra la respuesta del comando', async () => {
+      await create(FULL);
+      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V1, true));
+      await click('Registrar hábitos deportivos');
+      await submitHabits();
+
+      expect(gateway.saveSportHabits).toHaveBeenCalledOnceWith(
+        HABITS_DRAFT,
+        null,
+        jasmine.stringMatching(/^[0-9a-f-]{36}$/),
+        jasmine.any(Function),
+      );
+      const message = testId('sport-habits-saved')!;
+      expect(message.getAttribute('role')).toBe('status');
+      expect(message.textContent).toContain('Registramos tus hábitos deportivos.');
+      expect(document.activeElement).toBe(message);
+      // La proyección aún no tiene hábitos: se conserva la sección que confirmó el comando.
+      expect(testId('sport-habit-0')?.textContent).toContain('Carrera');
+      expect(testId('sport-habits-form')).toBeNull();
+      // Las secciones de HU005 no cambian.
+      expect(gateway.saveDemographic).not.toHaveBeenCalled();
+      expect(testId('demographic-summary')?.textContent).toContain('Bogotá');
+    });
+
+    it('CA1: reemplaza (200) con la versión mostrada y presenta la nueva', async () => {
+      await create(WITH_HABITS);
+      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V2));
+      await click('Editar hábitos deportivos');
+
+      expect(habitsForm().initial()).toEqual(HABITS_V1);
+      await submitHabits();
+
+      expect(gateway.saveSportHabits.calls.mostRecent().args[1]).toBe(1);
+      expect(testId('sport-habits-saved')?.textContent).toContain(
+        'Actualizamos tus hábitos deportivos.',
+      );
+      expect(testId('sport-habit-0')?.textContent).toContain('4 veces por semana');
+      expect(testId('sport-habit-1')).toBeNull();
+      expect(testId('sport-habits-goal')?.textContent?.trim()).toBe('Sin especificar');
+
+      await click('Editar hábitos deportivos');
+      await submitHabits();
+      expect(gateway.saveSportHabits.calls.mostRecent().args[1]).toBe(2);
+      expect(habitKeys()[1]).not.toBe(habitKeys()[0]);
+    });
+
+    it('CA4: informa que la respuesta corresponde a un envío anterior', async () => {
+      await create(WITH_HABITS);
+      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V2, false, true));
+      await click('Editar hábitos deportivos');
+      await submitHabits();
+
+      expect(testId('sport-habits-replayed')?.textContent).toContain('no se duplicó el registro');
+    });
+
+    it('CA2: entrega al formulario las reglas incumplidas y conserva el estado anterior', async () => {
+      await create(WITH_HABITS);
+      const violations = [{ field: 'sports[1].sport', issue: 'duplicate_value' }];
+      gateway.saveSportHabits.and.resolveTo({ kind: 'invalid', violations });
+      await click('Editar hábitos deportivos');
+      await submitHabits();
+
+      expect(habitsForm().serverErrors()).toEqual(violations);
+      expect(testId('sport-habits-errors')?.textContent).toContain(
+        'Este deporte ya está en otra fila.',
+      );
+      expect(testId('sport-habits-saved')).toBeNull();
+
+      // Sin editar, volver a enviar es el mismo intento lógico.
+      await submitHabits();
+      expect(habitKeys()[1]).toBe(habitKeys()[0]);
+
+      // Al cancelar se ve el estado anterior, sin cambios.
+      await click('Cancelar');
+      expect(testId('sport-habit-1')?.textContent).toContain('Natación');
+    });
+
+    it('CA4: un conflicto no sobrescribe, recarga y muestra los hábitos vigentes', async () => {
+      await create(WITH_HABITS);
+      gateway.saveSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      gateway.loadProfile.and.resolveTo({ ...WITH_HABITS, sportHabits: HABITS_V2 });
+      await click('Editar hábitos deportivos');
+      await submitHabits();
+
+      const conflict = testId('sport-habits-conflict')!;
+      expect(conflict.getAttribute('role')).toBe('alert');
+      expect(conflict.textContent).toContain('no se sobrescribieron');
+      expect(document.activeElement).toBe(conflict);
+      expect(testId('sport-habits-form')).toBeNull();
+      expect(gateway.loadProfile).toHaveBeenCalledTimes(2);
+      expect(testId('sport-habit-0')?.textContent).toContain('4 veces por semana');
+      expect(testId('profile-projection-pending')).toBeNull();
+
+      gateway.saveSportHabits.and.resolveTo(saved({ ...HABITS_V2, version: 3 }));
+      await click('Editar hábitos deportivos');
+      await submitHabits();
+      expect(gateway.saveSportHabits.calls.mostRecent().args[1]).toBe(2);
+      expect(habitKeys()[1]).not.toBe(habitKeys()[0]);
+    });
+
+    it('tras un conflicto sin proyección al día, no permite editar a ciegas y ofrece actualizar', async () => {
+      await create(WITH_HABITS);
+      gateway.saveSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      await click('Editar hábitos deportivos');
+      await submitHabits();
+      await settleUntil(() => testId('profile-projection-pending') !== null);
+
+      expect(testId('profile-projection-pending')).not.toBeNull();
+      expect(button('Editar hábitos deportivos')?.disabled).toBeTrue();
+      expect(button('Editar datos demográficos')?.disabled).toBeFalse();
+    });
+
+    it('tras un fallo recuperable, reintentar usa la misma clave; editar la renueva', async () => {
+      await create(FULL);
+      gateway.saveSportHabits.and.resolveTo({ kind: 'failed', error: UNAVAILABLE });
+      await click('Registrar hábitos deportivos');
+      await submitHabits();
+
+      const error = testId('sport-habits-error')!;
+      expect(error.getAttribute('role')).toBe('alert');
+      expect(error.textContent).toContain('El servicio no está disponible');
+      expect(error.textContent).toContain('no se duplicará el registro');
+      expect(error.textContent).toContain(SIMULATED_PROFILE_CORRELATION_ID);
+      expect(testId('sport-habits-form')).not.toBeNull();
+
+      await submitHabits();
+      expect(habitKeys()[1]).toBe(habitKeys()[0]);
+
+      habitsForm().edited.emit();
+      await submitHabits();
+      expect(habitKeys()[2]).not.toBe(habitKeys()[1]);
+    });
+
+    it('CA5: un rechazo por permiso se informa sin datos', async () => {
+      await create(FULL);
+      gateway.saveSportHabits.and.resolveTo({
+        kind: 'failed',
+        error: { kind: 'forbidden', status: 403, code: 'permission_required', correlationId: null },
+      });
+      await click('Registrar hábitos deportivos');
+      await submitHabits();
+
+      expect(testId('sport-habits-error')?.textContent).toContain(
+        'No tienes permiso para realizar esta acción.',
+      );
+      expect(testId('sport-habits-saved')).toBeNull();
+    });
+
+    it('no envía dos veces y avisa los reintentos automáticos', async () => {
+      await create(FULL);
+      let finish!: (outcome: SaveOutcome<SportHabits>) => void;
+      gateway.saveSportHabits.and.callFake((_draft, _version, _key, onRetry) => {
+        onRetry?.(1);
+        return new Promise((resolve) => (finish = resolve));
+      });
+      await click('Registrar hábitos deportivos');
+      habitsForm().submitted.emit(HABITS_DRAFT);
+      habitsForm().submitted.emit(HABITS_DRAFT);
+      await settle();
+
+      expect(gateway.saveSportHabits).toHaveBeenCalledTimes(1);
+      expect(button('Guardar hábitos deportivos')?.disabled).toBeTrue();
+      expect(testId('sport-habits-retrying')?.textContent).toContain(
+        'Reintentando guardar tus hábitos deportivos (1 de 3)',
+      );
+      finish(saved(HABITS_V1, true));
+      await settle();
+      expect(testId('sport-habits-retrying')).toBeNull();
+      expect(testId('sport-habits-saved')).not.toBeNull();
+    });
+
+    it('no escribe los hábitos en consola ni en almacenamiento', async () => {
+      const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
+        spyOn(console, method),
+      );
+      const storage = spyOn(Storage.prototype, 'setItem');
+      await create(FULL);
+      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V1, true));
+      await click('Registrar hábitos deportivos');
+      await submitHabits();
+
+      expect(testId('sport-habits-saved')).not.toBeNull();
+      for (const spy of spies) {
+        expect(spy).not.toHaveBeenCalled();
+      }
+      expect(storage).not.toHaveBeenCalled();
+    });
+
+    it('no muestra planes, recomendaciones ni clasificaciones a partir de los hábitos', async () => {
+      await create(WITH_HABITS);
+
+      expect(testId('sport-habits-summary')?.textContent).not.toMatch(
+        /recomenda|plan de|sugerencia|diagn[oó]stico/i,
+      );
     });
   });
 

@@ -1,8 +1,8 @@
 /**
- * Simulador del perfil del deportista (HU005) derivado del contrato bff-web
- * 0.16.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los ejemplos de
- * ADR-034: `GET /v1/me/profile`, `PUT /v1/me/demographic-profile` y
- * `PUT /v1/me/physiological-profile`. Lo usan las pruebas unitarias y
+ * Simulador del perfil del deportista (HU005 y HU006) derivado del contrato
+ * bff-web 0.19.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los
+ * ejemplos de ADR-034: `GET /v1/me/profile`, `PUT /v1/me/demographic-profile`,
+ * `PUT /v1/me/physiological-profile` y `PUT /v1/me/sport-habits`. Lo usan las pruebas unitarias y
  * Playwright; `profile.contract.spec.ts` valida cada respuesta contra el esquema
  * del contrato. Datos sintéticos.
  *
@@ -13,6 +13,7 @@ import { SimulatedResponse } from './register-user.fixtures';
 export const PROFILE_PATH = '/v1/me/profile';
 export const DEMOGRAPHIC_PROFILE_PATH = '/v1/me/demographic-profile';
 export const PHYSIOLOGICAL_PROFILE_PATH = '/v1/me/physiological-profile';
+export const SPORT_HABITS_PATH = '/v1/me/sport-habits';
 
 /** Mismo deportista que la sesión simulada de `create-session.fixtures.ts`. */
 export const SIMULATED_PROFILE_USER_ID = '0b9f6c1e-3d2a-4f5b-8c7d-1e2f3a4b5c6d';
@@ -75,6 +76,49 @@ export const PHYSIOLOGICAL_SECTION = {
   updated_at: '2026-10-12T13:06:00Z',
 } as const;
 
+/**
+ * Solicitud de hábitos de creación (HU006), a partir del ejemplo de ADR-034 con
+ * un segundo deporte sin años de práctica (sin `expected_version`).
+ */
+export const VALID_SPORT_HABITS_REQUEST = {
+  sports: [
+    {
+      sport: 'running',
+      frequency_per_week: 3,
+      session_duration_minutes: 45,
+      intensity: 'MODERATE',
+      level: 'INTERMEDIATE',
+      years_practicing: 4,
+    },
+    {
+      sport: 'swimming',
+      frequency_per_week: 1,
+      session_duration_minutes: 60,
+      intensity: 'LOW',
+      level: 'BEGINNER',
+      years_practicing: null,
+    },
+  ],
+  availability: { days: ['MON', 'WED', 'SAT'], time_slots: ['MORNING'] },
+  primary_goal: 'HEALTH',
+} as const;
+
+/** Hábitos confirmados en la versión 1, ya en el orden de los catálogos. */
+export const SPORT_HABITS_SECTION = {
+  version: 1,
+  sports: VALID_SPORT_HABITS_REQUEST.sports,
+  availability: VALID_SPORT_HABITS_REQUEST.availability,
+  primary_goal: VALID_SPORT_HABITS_REQUEST.primary_goal,
+  created_at: '2026-10-12T13:07:00Z',
+  updated_at: '2026-10-12T13:07:00Z',
+} as const;
+
+/** Respuesta del comando de hábitos (`201` al crear). */
+export const SPORT_HABITS_RESPONSE = {
+  user_id: SIMULATED_PROFILE_USER_ID,
+  ...SPORT_HABITS_SECTION,
+};
+
 /** Respuesta del comando demográfico (`201` al crear). */
 export const DEMOGRAPHIC_RESPONSE = { user_id: SIMULATED_PROFILE_USER_ID, ...DEMOGRAPHIC_SECTION };
 /** Respuesta del comando fisiológico (`201` al crear). */
@@ -103,6 +147,14 @@ export const FULL_PROFILE = {
   projected_at: '2026-10-12T13:06:01Z',
 } as const;
 
+/** Perfil con las tres secciones proyectadas en la versión 1 (HU005 y HU006). */
+export const PROFILE_WITH_SPORT_HABITS = {
+  ...FULL_PROFILE,
+  sport_habits: SPORT_HABITS_SECTION,
+  versions: { demographic: 1, physiological: 1, sport_habits: 1 },
+  projected_at: '2026-10-12T13:07:01Z',
+} as const;
+
 function error(
   status: number,
   code: string,
@@ -115,13 +167,14 @@ function error(
 export const GET_PROFILE_RESPONSES = {
   empty: { status: 200, body: EMPTY_PROFILE },
   full: { status: 200, body: FULL_PROFILE },
+  withSportHabits: { status: 200, body: PROFILE_WITH_SPORT_HABITS },
   invalidAccessToken: error(401, 'invalid_access_token', 'La sesión no es válida.'),
   permissionRequired: error(403, 'permission_required', 'Solo el deportista tiene perfil.'),
   upstreamUnavailable: error(503, 'upstream_unavailable', 'El servicio no está disponible.'),
   upstreamTimeout: error(504, 'upstream_timeout', 'El servicio tardó demasiado en responder.'),
 } as const satisfies Record<string, SimulatedResponse>;
 
-/** Errores comunes a los dos comandos de HU005. */
+/** Errores comunes a los comandos de HU005 y HU006. */
 const COMMAND_ERRORS = {
   invalidAccessToken: error(401, 'invalid_access_token', 'La sesión no es válida.'),
   permissionRequired: error(403, 'permission_required', 'Solo el deportista tiene perfil.'),
@@ -189,6 +242,32 @@ export const PHYSIOLOGICAL_RESPONSES = {
   /** Consentimiento ausente (CA3). */
   consentRequired: error(422, 'validation_error', 'La solicitud no es válida.', [
     { field: 'consent.version', issue: 'required' },
+  ]),
+} as const satisfies Record<string, SimulatedResponse>;
+
+export const SPORT_HABITS_RESPONSES = {
+  created: { status: 201, body: SPORT_HABITS_RESPONSE },
+  replaced: {
+    status: 200,
+    body: {
+      ...SPORT_HABITS_RESPONSE,
+      version: 2,
+      sports: [{ ...VALID_SPORT_HABITS_REQUEST.sports[0], frequency_per_week: 4 }],
+      availability: { days: ['TUE', 'THU'], time_slots: ['MORNING', 'EVENING'] },
+      primary_goal: null,
+      updated_at: '2026-10-13T08:02:00Z',
+    },
+  },
+  ...COMMAND_ERRORS,
+  /** Deporte repetido en la segunda fila, día repetido y frecuencia fuera de rango (CA2). */
+  validationError: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: 'sports[1].sport', issue: 'duplicate_value' },
+    { field: 'sports[0].frequency_per_week', issue: 'out_of_range' },
+    { field: 'availability.days[1]', issue: 'duplicate_value' },
+  ]),
+  /** Más de cinco deportes (CA2). */
+  tooManySports: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: 'sports', issue: 'too_many_items' },
   ]),
 } as const satisfies Record<string, SimulatedResponse>;
 

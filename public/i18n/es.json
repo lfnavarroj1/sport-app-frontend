@@ -249,7 +249,114 @@
     },
     "habits": {
       "title": "Hábitos deportivos",
-      "upcoming": "Pronto podrás registrar los deportes que practicas y tu disponibilidad."
+      "intro": "Cuéntanos qué deportes practicas y cuándo tienes tiempo para entrenar. Registrarlos no crea planes ni recomendaciones.",
+      "empty": "Aún no has registrado tus hábitos deportivos. Regístralos para que tu experiencia se ajuste a cómo entrenas.",
+      "notSpecified": "Sin especificar",
+      "actions": {
+        "register": "Registrar hábitos deportivos",
+        "edit": "Editar hábitos deportivos",
+        "save": "Guardar hábitos deportivos",
+        "cancel": "Cancelar",
+        "addSport": "Agregar deporte",
+        "removeSport": "Quitar",
+        "removeSportN": "Quitar el deporte {{n}}"
+      },
+      "fields": {
+        "sports": "Deportes que practicas",
+        "sportN": "Deporte {{n}}",
+        "sport": "Deporte",
+        "frequencyPerWeek": "Veces por semana",
+        "sessionDurationMinutes": "Duración por sesión (min)",
+        "intensity": "Intensidad",
+        "level": "Nivel",
+        "yearsPracticing": "Años practicándolo (opcional)",
+        "days": "Días disponibles",
+        "timeSlots": "Franjas horarias disponibles",
+        "primaryGoal": "Objetivo principal (opcional)"
+      },
+      "hints": {
+        "sports": "Registra de {{min}} a {{max}} deportes, sin repetir ninguno.",
+        "maxSports": "Ya agregaste el máximo de {{max}} deportes.",
+        "range": "Entre {{min}} y {{max}}."
+      },
+      "units": {
+        "minutes": "min"
+      },
+      "validation": {
+        "daysRequired": "Marca al menos un día disponible.",
+        "timeSlotsRequired": "Marca al menos una franja horaria."
+      },
+      "intensities": {
+        "LOW": "Baja",
+        "MODERATE": "Moderada",
+        "HIGH": "Alta"
+      },
+      "levels": {
+        "BEGINNER": "Principiante",
+        "INTERMEDIATE": "Intermedio",
+        "ADVANCED": "Avanzado"
+      },
+      "days": {
+        "MON": "Lunes",
+        "TUE": "Martes",
+        "WED": "Miércoles",
+        "THU": "Jueves",
+        "FRI": "Viernes",
+        "SAT": "Sábado",
+        "SUN": "Domingo"
+      },
+      "timeSlots": {
+        "MORNING": "Mañana",
+        "AFTERNOON": "Tarde",
+        "EVENING": "Primeras horas de la noche",
+        "NIGHT": "Noche"
+      },
+      "goals": {
+        "HEALTH": "Salud",
+        "PERFORMANCE": "Rendimiento",
+        "WEIGHT_MANAGEMENT": "Control de peso",
+        "RECREATION": "Recreación",
+        "COMPETITION": "Competencia"
+      },
+      "summary": {
+        "sports": "Deportes",
+        "frequencyOne": "{{count}} vez por semana",
+        "frequencyOther": "{{count}} veces por semana",
+        "duration": "{{minutes}} min por sesión",
+        "intensity": "Intensidad: {{value}}",
+        "level": "Nivel: {{value}}",
+        "yearsOne": "{{count}} año practicándolo",
+        "yearsOther": "{{count}} años practicándolo",
+        "yearsNotSpecified": "Años de práctica sin especificar",
+        "days": "Días disponibles",
+        "timeSlots": "Franjas horarias",
+        "primaryGoal": "Objetivo principal",
+        "updatedAt": "Última actualización"
+      },
+      "saved": {
+        "created": "Registramos tus hábitos deportivos.",
+        "replaced": "Actualizamos tus hábitos deportivos."
+      },
+      "conflict": "Tus hábitos deportivos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus hábitos deportivos ({{attempt}} de {{max}})…",
+      "issues": {
+        "duplicateSport": "Este deporte ya está en otra fila.",
+        "tooManySports": "Puedes registrar como máximo {{max}} deportes."
+      },
+      "violationFields": {
+        "sports": "Deportes",
+        "row": "Deporte {{n}}",
+        "sport": "Deporte {{n}} (deporte)",
+        "frequencyPerWeek": "Deporte {{n}} (veces por semana)",
+        "sessionDurationMinutes": "Deporte {{n}} (duración por sesión)",
+        "intensity": "Deporte {{n}} (intensidad)",
+        "level": "Deporte {{n}} (nivel)",
+        "yearsPracticing": "Deporte {{n}} (años practicándolo)",
+        "days": "Días disponibles",
+        "timeSlots": "Franjas horarias",
+        "availability": "Disponibilidad",
+        "primaryGoal": "Objetivo principal"
+      }
     },
     "hu005": {
       "title": "Datos demográficos y fisiológicos",
