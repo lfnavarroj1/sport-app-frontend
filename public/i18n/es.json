@@ -1008,6 +1008,87 @@
         "idempotencyKeyReused": "No pudimos confirmar esta publicación. Inténtalo de nuevo.",
         "retryHint": "Si vuelves a intentarlo, el evento no se publicará dos veces."
       }
+    },
+    "calendar": {
+      "title": "Calendario de eventos",
+      "intro": "Consulta los eventos publicados para elegir fechas con menos coincidencias con tu público.",
+      "browserZone": "Los horarios se muestran en tu zona horaria ({{zone}}).",
+      "filtersLabel": "Periodo y filtros del calendario",
+      "modeLabel": "Vista del calendario",
+      "modes": {
+        "month": "Mes",
+        "list": "Lista"
+      },
+      "actions": {
+        "previousMonth": "Mes anterior",
+        "nextMonth": "Mes siguiente",
+        "apply": "Consultar",
+        "showOwnMonth": "Ver el mes de mi evento",
+        "loadMore": "Cargar más"
+      },
+      "fields": {
+        "from": "Desde",
+        "to": "Hasta",
+        "discipline": "Disciplina",
+        "city": "Ciudad",
+        "cursor": "Página",
+        "limit": "Tamaño de página",
+        "query": "Consulta"
+      },
+      "hints": {
+        "period": "Ambos días incluidos; hasta {{max}} días.",
+        "filter": "Opcional. No distingue mayúsculas ni tildes."
+      },
+      "own": {
+        "title": "Coincidencias con mi evento",
+        "intro": "Elige uno de tus eventos para ver qué eventos publicados se cruzan con él en fecha y comparten disciplina o ciudad.",
+        "select": "Mi evento",
+        "none": "Ninguno",
+        "option": "{{name}} — {{date}} ({{status}})",
+        "empty": "Aún no tienes eventos. Cuando crees uno, podrás comparar sus fechas aquí.",
+        "error": "No pudimos cargar tus eventos."
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado"
+      },
+      "conflicts": {
+        "title": "Eventos que coinciden: {{count}}",
+        "informative": "Es información de apoyo: no bloquea la publicación ni reserva fechas.",
+        "evaluatedAt": "Consultado el {{date}}.",
+        "none": "Ningún evento publicado coincide con este evento.",
+        "notFound": "Ese evento ya no está disponible entre tus eventos."
+      },
+      "results": {
+        "title": "Eventos publicados",
+        "empty": "No hay eventos publicados en este periodo con esos filtros.",
+        "countMore": "Eventos mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Eventos mostrados: {{count}}."
+      },
+      "issues": {
+        "title": "No pudimos consultar el calendario:",
+        "item": "{{field}}: {{rule}}",
+        "invalid_datetime": "la fecha no es válida.",
+        "ends_before_starts": "la fecha final es anterior a la inicial.",
+        "out_of_range": "el periodo supera los {{max}} días permitidos.",
+        "invalid_length": "debe tener entre 2 y 80 caracteres.",
+        "invalid_cursor": "la página solicitada ya no es válida; vuelve a consultar.",
+        "unknown": "el valor no es válido."
+      },
+      "event": {
+        "time": "{{start}} – {{end}}",
+        "zone": "Zona del evento: {{zone}}",
+        "zoneWithTime": "Hora del evento: {{time}} ({{zone}})",
+        "own": "Mi evento",
+        "conflict": "Coincide"
+      },
+      "reasons": {
+        "SAME_DISCIPLINE": "misma disciplina",
+        "SAME_CITY": "misma ciudad"
+      },
+      "month": {
+        "dayEvents": "Eventos del {{date}}"
+      }
     }
   },
   "services": {

@@ -122,6 +122,14 @@ export const routes: Routes = [
           (module) => module.PUBLISH_EVENT_ROUTES,
         ),
     },
+    {
+      // HU023: el organizador consulta los eventos publicados y sus coincidencias (ADR-040).
+      path: 'eventos/calendario',
+      loadChildren: () =>
+        import('./features/events/event-calendar/event-calendar.routes').then(
+          (module) => module.EVENT_CALENDAR_ROUTES,
+        ),
+    },
   ]),
   actorArea('profesional', 'service_provider', [
     {

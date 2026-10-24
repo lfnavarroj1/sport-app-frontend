@@ -1,0 +1,61 @@
+<div class="calendar-month__wrapper">
+  <table class="calendar-month" data-testid="calendar-month">
+    <caption>
+      {{
+        firstDay() | date: 'MMMM y'
+      }}
+    </caption>
+    <thead>
+      <tr>
+        @for (weekday of weekdays; track $index) {
+          <th scope="col">
+            <abbr [attr.title]="weekday | date: 'EEEE'">{{ weekday | date: 'EEE' }}</abbr>
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (week of weeks(); track $index) {
+        <tr>
+          @for (day of week; track day.key) {
+            <td
+              [class.calendar-month__day--outside]="!day.inMonth"
+              [attr.data-day]="day.inMonth ? day.key : null"
+            >
+              @if (day.inMonth) {
+                <time class="calendar-month__number" [attr.datetime]="day.key">{{ day.day }}</time>
+                @if (day.events.length > 0) {
+                  <ul
+                    class="calendar-month__events"
+                    [attr.aria-label]="
+                      'events.calendar.month.dayEvents'
+                        | translate: { date: (dayDate(day.key) | date: 'longDate') }
+                    "
+                  >
+                    @for (event of day.events; track event.id) {
+                      <li [attr.data-event]="event.id">
+                        <app-calendar-event-item
+                          [entry]="{
+                            name: event.name,
+                            discipline: event.discipline,
+                            city: event.location.city,
+                            startsAt: event.startsAt,
+                            endsAt: event.endsAt,
+                            timeZone: event.timeZone,
+                          }"
+                          [reasons]="reasonsFor(event.id)"
+                          [own]="event.id === ownEventId()"
+                          [compact]="true"
+                        />
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

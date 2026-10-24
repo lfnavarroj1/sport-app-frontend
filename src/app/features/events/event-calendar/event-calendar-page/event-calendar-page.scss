@@ -1,0 +1,106 @@
+// Calendario de eventos del organizador (HU023) sobre `events-page.scss`.
+.calendar-page {
+  max-width: 80rem;
+}
+
+.calendar-page__zone {
+  margin-top: 0.5rem !important;
+  font: var(--mat-sys-body-medium) !important;
+}
+
+.calendar-page__filters {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  > mat-button-toggle-group {
+    align-self: flex-start;
+  }
+}
+
+.calendar-page__month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-page__month-label {
+  min-width: 10rem;
+  font: var(--mat-sys-title-medium);
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.calendar-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.5rem 1rem;
+}
+
+.calendar-page__submit {
+  align-self: flex-start;
+  min-width: 10rem;
+}
+
+.calendar-page__own,
+.calendar-page__results {
+  margin-top: 1.5rem;
+}
+
+.calendar-page__own-select {
+  width: min(100%, 36rem);
+}
+
+.calendar-page__conflicts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.calendar-page__conflicts-title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.calendar-page__note {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.calendar-page__events {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-page__error {
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+
+  p {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+  }
+
+  button {
+    margin-top: 0.5rem;
+  }
+}
+
+[data-testid='calendar-count'] {
+  margin: 1rem 0 0.75rem;
+}
