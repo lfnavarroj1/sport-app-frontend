@@ -1,0 +1,311 @@
+<section class="events-page calendar-page">
+  <header class="events-page__header">
+    <h1>{{ 'events.calendar.title' | translate }}</h1>
+    <p>{{ 'events.calendar.intro' | translate }}</p>
+    <p class="calendar-page__zone" data-testid="calendar-browser-zone">
+      {{ 'events.calendar.browserZone' | translate: { zone: browserZone } }}
+    </p>
+  </header>
+
+  <mat-card appearance="outlined" class="events-page__card">
+    <mat-card-content>
+      <form
+        [formGroup]="filters"
+        (ngSubmit)="applyFilters()"
+        novalidate
+        class="calendar-page__filters"
+        [attr.aria-label]="'events.calendar.filtersLabel' | translate"
+      >
+        <mat-button-toggle-group
+          [value]="mode()"
+          (change)="setMode($event.value)"
+          [attr.aria-label]="'events.calendar.modeLabel' | translate"
+          [hideSingleSelectionIndicator]="true"
+        >
+          <mat-button-toggle value="month" data-testid="calendar-mode-month">
+            {{ 'events.calendar.modes.month' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle value="list" data-testid="calendar-mode-list">
+            {{ 'events.calendar.modes.list' | translate }}
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+
+        @if (mode() === 'month') {
+          <div class="calendar-page__month-nav">
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-label]="'events.calendar.actions.previousMonth' | translate"
+              (click)="shiftMonth(-1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <span
+              class="calendar-page__month-label"
+              aria-live="polite"
+              data-testid="calendar-month-label"
+            >
+              {{ monthStart() | date: 'MMMM y' }}
+            </span>
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-label]="'events.calendar.actions.nextMonth' | translate"
+              (click)="shiftMonth(1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <div class="calendar-page__grid">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'events.calendar.fields.from' | translate }}</mat-label>
+              <input matInput type="date" formControlName="from" required />
+              <mat-error><app-field-error [control]="filters.controls.from" /></mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'events.calendar.fields.to' | translate }}</mat-label>
+              <input matInput type="date" formControlName="to" required />
+              <mat-hint>{{
+                'events.calendar.hints.period' | translate: { max: maxDays }
+              }}</mat-hint>
+              <mat-error>
+                @let toErrors = filters.controls.to.errors;
+                @if (toErrors?.['period'] || toErrors?.['server']) {
+                  {{
+                    violationKey(toErrors!['period'] ?? toErrors!['server'])
+                      | translate: { max: maxDays }
+                  }}
+                } @else {
+                  <app-field-error [control]="filters.controls.to" />
+                }
+              </mat-error>
+            </mat-form-field>
+          </div>
+        }
+
+        <div class="calendar-page__grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'events.calendar.fields.discipline' | translate }}</mat-label>
+            <input matInput formControlName="discipline" autocomplete="off" />
+            <mat-hint>{{ 'events.calendar.hints.filter' | translate }}</mat-hint>
+            <mat-error>
+              @let disciplineErrors = filters.controls.discipline.errors;
+              @if (disciplineErrors?.['server']) {
+                {{ violationKey(disciplineErrors!['server']) | translate: { max: maxDays } }}
+              } @else {
+                <app-field-error [control]="filters.controls.discipline" />
+              }
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'events.calendar.fields.city' | translate }}</mat-label>
+            <input matInput formControlName="city" autocomplete="off" />
+            <mat-hint>{{ 'events.calendar.hints.filter' | translate }}</mat-hint>
+            <mat-error>
+              @let cityErrors = filters.controls.city.errors;
+              @if (cityErrors?.['server']) {
+                {{ violationKey(cityErrors!['server']) | translate: { max: maxDays } }}
+              } @else {
+                <app-field-error [control]="filters.controls.city" />
+              }
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <button mat-flat-button type="submit" class="calendar-page__submit">
+          {{ 'events.calendar.actions.apply' | translate }}
+        </button>
+      </form>
+
+      <section class="calendar-page__own" aria-labelledby="calendar-own-title">
+        <h2 id="calendar-own-title" class="events-page__step">
+          {{ 'events.calendar.own.title' | translate }}
+        </h2>
+        <p class="calendar-page__note">{{ 'events.calendar.own.intro' | translate }}</p>
+        @switch (ownEvents().status) {
+          @case ('loading') {
+            <p role="status">{{ 'common.state.loading' | translate }}</p>
+          }
+          @case ('error') {
+            <div class="calendar-page__error" role="alert" data-testid="calendar-own-error">
+              <p>{{ 'events.calendar.own.error' | translate }}</p>
+              <button mat-stroked-button type="button" (click)="loadOwnEvents()">
+                {{ 'common.state.retry' | translate }}
+              </button>
+            </div>
+          }
+          @case ('empty') {
+            <p data-testid="calendar-own-empty">{{ 'events.calendar.own.empty' | translate }}</p>
+          }
+          @default {
+            <mat-form-field appearance="outline" class="calendar-page__own-select">
+              <mat-label>{{ 'events.calendar.own.select' | translate }}</mat-label>
+              <mat-select [formControl]="selectedOwn" data-testid="calendar-own-select">
+                <mat-option [value]="null">{{ 'events.calendar.own.none' | translate }}</mat-option>
+                @for (event of ownEventList(); track event.id) {
+                  <mat-option [value]="event.id">
+                    {{
+                      'events.calendar.own.option'
+                        | translate
+                          : {
+                              name: event.name,
+                              date: (event.startsAt | date: 'mediumDate'),
+                              status: ('events.calendar.status.' + event.status | translate),
+                            }
+                    }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        }
+
+        @if (conflictsState(); as conflicts) {
+          <div class="calendar-page__conflicts" data-testid="calendar-conflicts" aria-live="polite">
+            @if (conflictsNotFound()) {
+              <p role="alert" data-testid="calendar-conflicts-not-found">
+                {{ 'events.calendar.conflicts.notFound' | translate }}
+              </p>
+            } @else {
+              <app-async-state [state]="conflicts" (retry)="reloadConflicts()">
+                @if (conflicts.status === 'success') {
+                  <h3 class="calendar-page__conflicts-title">
+                    {{
+                      'events.calendar.conflicts.title'
+                        | translate: { count: conflicts.data.conflicts.length }
+                    }}
+                  </h3>
+                  <p class="calendar-page__note">
+                    {{ 'events.calendar.conflicts.informative' | translate }}
+                    {{
+                      'events.calendar.conflicts.evaluatedAt'
+                        | translate: { date: (conflicts.data.evaluatedAt | date: 'medium') }
+                    }}
+                  </p>
+                  @if (conflicts.data.conflicts.length === 0) {
+                    <p data-testid="calendar-conflicts-none">
+                      {{ 'events.calendar.conflicts.none' | translate }}
+                    </p>
+                  } @else {
+                    <ul class="calendar-page__events" data-testid="calendar-conflicts-list">
+                      @for (conflict of conflicts.data.conflicts; track conflict.id) {
+                        <li [attr.data-conflict]="conflict.id">
+                          <app-calendar-event-item
+                            [entry]="conflict"
+                            [reasons]="conflict.reasons"
+                          />
+                        </li>
+                      }
+                    </ul>
+                  }
+                  <button mat-stroked-button type="button" (click)="showOwnEventMonth()">
+                    {{ 'events.calendar.actions.showOwnMonth' | translate }}
+                  </button>
+                }
+              </app-async-state>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="calendar-page__results" aria-labelledby="calendar-results-title">
+        <h2 id="calendar-results-title" class="events-page__step">
+          {{ 'events.calendar.results.title' | translate }}
+        </h2>
+
+        @if (violations().length > 0) {
+          <div class="calendar-page__error" role="alert" data-testid="calendar-violations">
+            <p>{{ 'events.calendar.issues.title' | translate }}</p>
+            <ul>
+              @for (violation of violations(); track $index) {
+                <li>
+                  {{
+                    'events.calendar.issues.item'
+                      | translate
+                        : {
+                            field: (violationFieldKey(violation.field) | translate),
+                            rule: (violationKey(violation.issue) | translate: { max: maxDays }),
+                          }
+                  }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <app-async-state
+          [state]="state()"
+          emptyMessageKey="events.calendar.results.empty"
+          (retry)="loadFirst()"
+        >
+          <div #list>
+            @if (mode() === 'month') {
+              <app-calendar-month
+                [year]="month().year"
+                [month]="month().month"
+                [events]="events()"
+                [conflicts]="conflictReasons()"
+                [ownEventId]="selectedOwnEvent()?.id ?? null"
+              />
+            } @else {
+              <ol class="calendar-page__events" data-testid="calendar-list">
+                @for (event of events(); track event.id) {
+                  <li [attr.data-event]="event.id" tabindex="-1">
+                    <app-calendar-event-item
+                      [entry]="{
+                        name: event.name,
+                        discipline: event.discipline,
+                        city: event.location.city,
+                        startsAt: event.startsAt,
+                        endsAt: event.endsAt,
+                        timeZone: event.timeZone,
+                      }"
+                      [reasons]="reasonsFor(event.id)"
+                      [own]="event.id === selectedOwnEvent()?.id"
+                    />
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+
+          <p class="calendar-page__note" role="status" data-testid="calendar-count">
+            {{
+              (nextCursor()
+                ? 'events.calendar.results.countMore'
+                : 'events.calendar.results.countAll'
+              ) | translate: { count: events().length }
+            }}
+          </p>
+
+          @if (moreError(); as error) {
+            <div class="calendar-page__error" role="alert" data-testid="calendar-more-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p>{{ 'common.errors.reference' | translate: { id: error.correlationId } }}</p>
+              }
+            </div>
+          }
+          @if (nextCursor()) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
+              {{
+                (loadingMore()
+                  ? 'common.state.loading'
+                  : moreError()
+                    ? 'common.state.retry'
+                    : 'events.calendar.actions.loadMore'
+                ) | translate
+              }}
+            </button>
+          }
+        </app-async-state>
+      </section>
+    </mat-card-content>
+  </mat-card>
+</section>

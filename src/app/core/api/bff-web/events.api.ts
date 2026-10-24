@@ -9,7 +9,9 @@ import { STRICT_CODEC } from './training-history.api';
  * Transporte de las operaciones de eventos del contrato bff-web 0.16.0 (ver
  * `contract.ts`): `POST /v1/events` (operationId `create_v1_events_post`,
  * ADR-028, HU021) y, para HU024 (ADR-033), `GET /v1/me/events`,
- * `GET /v1/events/{event_id}` y `POST /v1/events/{event_id}/publish`. Todas se
+ * `GET /v1/events/{event_id}` y `POST /v1/events/{event_id}/publish`; desde 0.17.0,
+ * para HU023 (ADR-040), `GET /v1/events` (calendario de publicados) y
+ * `GET /v1/me/events/{event_id}/conflicts` (coincidencias). Todas se
  * autentican con el access token; `organizer_id` sale del token y nunca viaja en
  * la solicitud. Estos tipos son del transporte: la interfaz los transforma antes
  * de usarlos.
@@ -216,7 +218,101 @@ export const PUBLISH_EVENT_ERROR_CODES = {
   upstreamTimeout: 'upstream_timeout',
 } as const;
 
-/** Cliente del BFF web para los eventos del organizador (HU021 y HU024). */
+/** Esquema `PublishedEventLocation`: sin dirección. */
+export interface PublishedEventLocationDto {
+  readonly name: string;
+  readonly city: string;
+  readonly country_code: string;
+}
+
+/** Esquema `PublishedEventItem` de `GET /v1/events`: sin `organizer_id` (HU023 CA1). */
+export interface PublishedEventItemDto {
+  readonly event_id: string;
+  readonly name: string;
+  readonly discipline: string;
+  readonly location: PublishedEventLocationDto;
+  readonly starts_at: string;
+  readonly ends_at: string;
+  readonly time_zone: string;
+  readonly status: 'PUBLISHED';
+  readonly version: number;
+}
+
+/** Esquema `PublishedEventsResponse`: orden `starts_at` y `event_id` ascendentes. */
+export interface PublishedEventsResponseDto {
+  readonly items: readonly PublishedEventItemDto[];
+  readonly next_cursor: string | null;
+}
+
+/** Parámetros de `GET /v1/events`; los opcionales ausentes no se envían. */
+export interface PublishedEventsQueryDto {
+  /** Instante ISO 8601 con desfase UTC explícito. */
+  readonly from: string;
+  readonly to: string;
+  readonly discipline?: string | null;
+  readonly city?: string | null;
+  /** 1–200; el BFF usa 200 si no se envía. */
+  readonly limit?: number | null;
+  /** Cursor opaco de `next_cursor`, reenviado con los mismos filtros. */
+  readonly cursor?: string | null;
+}
+
+/** Límites del parámetro `limit` de `GET /v1/events`. */
+export const PUBLISHED_EVENTS_LIMIT = { min: 1, max: 200, default: 200 } as const;
+
+/** Motivos de una coincidencia, en el orden del contrato. */
+export const CONFLICT_REASONS = ['SAME_DISCIPLINE', 'SAME_CITY'] as const;
+export type ConflictReasonDto = (typeof CONFLICT_REASONS)[number];
+
+/** Esquema `EventConflict`. */
+export interface EventConflictDto {
+  readonly event_id: string;
+  readonly name: string;
+  readonly discipline: string;
+  readonly city: string;
+  readonly starts_at: string;
+  readonly ends_at: string;
+  readonly time_zone: string;
+  readonly reasons: readonly ConflictReasonDto[];
+}
+
+/** Esquema `EventConflictsResponse`. */
+export interface EventConflictsResponseDto {
+  readonly conflicts: readonly EventConflictDto[];
+  readonly evaluated_at: string;
+}
+
+/** Códigos de error que el contrato declara para `GET /v1/events`. */
+export const PUBLISHED_EVENTS_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/**
+ * Motivos de `details[].issue` del `422` de `GET /v1/events`, enumerados en la
+ * descripción de la respuesta.
+ */
+export const PUBLISHED_EVENTS_ISSUES = [
+  'invalid_datetime',
+  'ends_before_starts',
+  'out_of_range',
+  'invalid_length',
+  'invalid_cursor',
+] as const;
+
+/** Códigos de error que el contrato declara para `GET /v1/me/events/{event_id}/conflicts`. */
+export const EVENT_CONFLICTS_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  eventNotFound: 'event_not_found',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Cliente del BFF web para los eventos del organizador (HU021, HU023 y HU024). */
 @Injectable({ providedIn: 'root' })
 export class BffWebEventsApi {
   private readonly http = inject(HttpClient);
@@ -255,6 +351,31 @@ export class BffWebEventsApi {
       headers: bearer(accessToken),
       params,
     });
+  }
+
+  /** Eventos publicados del periodo, con filtros opcionales (HU023, ADR-040). */
+  getPublishedEvents(
+    accessToken: string,
+    query: PublishedEventsQueryDto,
+  ): Observable<PublishedEventsResponseDto> {
+    let params = new HttpParams({ encoder: STRICT_CODEC });
+    for (const [name, value] of Object.entries(query)) {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(name, String(value));
+      }
+    }
+    return this.http.get<PublishedEventsResponseDto>(this.bffWebUrl.resolve('v1/events'), {
+      headers: bearer(accessToken),
+      params,
+    });
+  }
+
+  /** Coincidencias de un evento propio con los eventos publicados (HU023 CA2). */
+  getEventConflicts(accessToken: string, eventId: string): Observable<EventConflictsResponseDto> {
+    return this.http.get<EventConflictsResponseDto>(
+      this.bffWebUrl.resolve(`v1/me/events/${encodeURIComponent(eventId)}/conflicts`),
+      { headers: bearer(accessToken) },
+    );
   }
 
   /** Detalle de un evento: `DRAFT` solo para su organizador; si no, `404`. */

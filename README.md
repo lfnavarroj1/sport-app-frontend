@@ -187,6 +187,18 @@ Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core
 - `Idempotency-Key` por intento lógico: se reintenta automáticamente hasta tres veces (1, 2 y 4 s) solo ante falta de red, `502`, `503` o `504`; nunca ante `4xx`. Al agotar los reintentos, volver a crear usa la misma clave.
 - Se presenta el borrador devuelto por `201` en la hora local del evento, sin consultar la proyección.
 
+## Calendario de eventos (HU023)
+
+Feature `src/app/features/events/event-calendar`, contrato `bff-web` 0.18.0 (las operaciones son las de 0.17.0; `core/api/bff-web/events.api.ts`) y ADR-040.
+
+- `/organizador/eventos/calendario` (permiso `events.calendar.view`; la guarda `requirePermission` de HU024 rechaza la ruta cuando la vista de capacidades confirma que falta). Muestra los eventos **publicados** de `GET /v1/events` en vista de mes (tabla de lunes a domingo, cada evento en su día de inicio) o de lista, en el orden del backend y con «Cargar más» por cursor. No hay organizador ni dirección en la respuesta.
+- Periodo: en el mes, de la medianoche del día 1 a la del mes siguiente; en la lista, «Desde» y «Hasta» con ambos días incluidos. Todo en la zona del navegador, enviado en UTC. La web valida con la regla del backend (el fin no puede ser anterior al inicio, hasta 92 días) y no consulta un periodo inválido. Un `422` del backend se lista y se marca en su campo.
+- Filtros opcionales por disciplina y ciudad, recortados; la igualdad sin mayúsculas ni tildes la aplica el backend.
+- Horarios en la zona del navegador, que la pantalla declara; la zona del evento siempre es visible y, si difiere, también su hora local.
+- «Mi evento» lista los eventos propios (`GET /v1/me/events`, borradores y publicados). Al elegir uno, `GET /v1/me/events/{event_id}/conflicts` trae las coincidencias, que se listan y se resaltan en el mes y la lista con sus motivos en texto («misma disciplina», «misma ciudad»). Son información de apoyo: no bloquean la publicación ni reservan fechas. Un `404 event_not_found` se informa sin datos. «Ver el mes de mi evento» lleva el calendario a su mes.
+- Sin inscripción, edición ni publicación desde esta pantalla.
+- Pruebas: `e2e/event-calendar.spec.ts` (`@simulado`) y `e2e/event-calendar.integrated.spec.ts` (`@integrado`: otro organizador crea y publica por API dos eventos que se solapan con el borrador propio, uno en la misma ciudad y otro sin relación; se comprueban la proyección, el filtro por ciudad, la coincidencia por ciudad, el `404` de un evento ajeno y el `422` de más de 92 días). La integrada requiere `bff-web` 0.17.0 o posterior y `events-management` 0.6.0 desplegados.
+
 ## Publicar eventos (HU024)
 
 Feature `src/app/features/events/publish-event`, contrato `bff-web` 0.16.0 (`core/api/bff-web/events.api.ts`) y ADR-033.
@@ -334,4 +346,5 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).
+- HU023: despliegue conjunto de `bff-web` 0.17.0 o posterior y `events-management` 0.6.0 para el recorrido integrado; ratificar en ADR-040 las decisiones del backend del 2026-10-20 (periodo y propiedad del evento en las coincidencias).
 - HU014: despliegue de `bff-web` 0.18.0, `training-management` 0.9.0 y `users-management` 0.8.0 para el recorrido integrado; HU009 para probar el bloqueo real por alergia; ratificar el catálogo `food-catalog-2026-10-13.v1`, sus unidades y los nombres en español de los alimentos.

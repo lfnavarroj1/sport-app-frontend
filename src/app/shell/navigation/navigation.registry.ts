@@ -274,7 +274,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.attendees.view',
         'HU022',
       ),
-      upcoming(
+      // HU023: calendario de eventos publicados con coincidencias (ADR-040).
+      permissionOption(
         'event-calendar',
         'events',
         120,
