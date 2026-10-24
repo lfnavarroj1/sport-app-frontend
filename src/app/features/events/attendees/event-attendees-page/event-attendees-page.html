@@ -1,0 +1,70 @@
+<section class="events-page">
+  <header class="events-page__header">
+    <h1>{{ 'events.attendees.title' | translate }}</h1>
+    <p>{{ 'events.attendees.intro' | translate }}</p>
+  </header>
+
+  <div class="attendees">
+    <mat-card appearance="outlined" class="events-page__card attendees__selector">
+      <mat-card-content>
+        <h2 class="events-page__step" id="attendees-select-title">
+          {{ 'events.attendees.select.title' | translate }}
+        </h2>
+        @switch (events().status) {
+          @case ('loading') {
+            <p role="status" data-testid="attendees-events-loading">
+              {{ 'common.state.loading' | translate }}
+            </p>
+          }
+          @case ('error') {
+            <div class="events-page__error" role="alert" data-testid="attendees-events-error">
+              <p>{{ 'events.attendees.select.error' | translate }}</p>
+              <button mat-stroked-button type="button" (click)="reload()">
+                {{ 'common.state.retry' | translate }}
+              </button>
+            </div>
+          }
+          @case ('empty') {
+            <p data-testid="attendees-events-empty">
+              {{ 'events.attendees.select.empty' | translate }}
+            </p>
+          }
+          @default {
+            <mat-form-field appearance="outline" class="attendees__select">
+              <mat-label>{{ 'events.attendees.select.label' | translate }}</mat-label>
+              <mat-select
+                data-testid="attendees-event-select"
+                [value]="selectedId()"
+                (selectionChange)="select($event.value)"
+              >
+                @for (event of list(); track event.id) {
+                  <mat-option [value]="event.id">
+                    {{
+                      'events.attendees.select.option'
+                        | translate
+                          : {
+                              name: event.name,
+                              date: (event.startsAt | date: 'mediumDate'),
+                              status: ('events.calendar.status.' + event.status | translate),
+                            }
+                    }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (selectedId() === null) {
+              <p class="events-page__note" data-testid="attendees-choose">
+                {{ 'events.attendees.select.hint' | translate }}
+              </p>
+            }
+          }
+        }
+        <p class="events-page__note">{{ 'events.attendees.privacy' | translate }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="attendees__detail">
+      <router-outlet />
+    </div>
+  </div>
+</section>

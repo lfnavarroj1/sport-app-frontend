@@ -1272,6 +1272,56 @@
       "month": {
         "dayEvents": "Eventos del {{date}}"
       }
+    },
+    "attendees": {
+      "title": "Inscritos de mis eventos",
+      "intro": "Elige uno de tus eventos para ver quiénes se inscribieron, cuántas inscripciones tiene y su estado.",
+      "privacy": "Solo ves el nombre de cada inscrito, su estado, la fecha de inscripción y la tarifa aplicada: sin datos de contacto ni exportación.",
+      "select": {
+        "title": "Evento",
+        "label": "Tu evento",
+        "option": "{{name}} · {{date}} · {{status}}",
+        "hint": "Elige uno de tus eventos para ver sus inscritos.",
+        "empty": "Aún no tienes eventos. Cuando crees y publiques uno, aquí verás sus inscritos.",
+        "error": "No pudimos consultar tus eventos."
+      },
+      "list": {
+        "title": "Inscritos de «{{name}}»",
+        "titleGeneric": "Inscritos del evento",
+        "caption": "Inscritos de «{{name}}», en orden de inscripción"
+      },
+      "filter": {
+        "label": "Filtrar inscripciones por estado",
+        "REGISTERED": "Inscritos",
+        "ALL": "Todos los estados"
+      },
+      "status": {
+        "REGISTERED": "Inscrito"
+      },
+      "counts": {
+        "byStatus": "Total del evento · {{status}}",
+        "filtered": "Según el filtro"
+      },
+      "columns": {
+        "name": "Nombre",
+        "status": "Estado",
+        "registeredAt": "Fecha de inscripción",
+        "fee": "Tarifa aplicada (informativa)"
+      },
+      "noName": "Nombre no disponible",
+      "noFee": "Sin tarifa",
+      "feeNote": "La tarifa aplicada es informativa: no indica que la inscripción esté pagada.",
+      "shown": "Mostrando {{count}} de {{total}} inscripciones.",
+      "empty": "Este evento aún no tiene inscritos.",
+      "emptyPage": "No hay más inscripciones para mostrar.",
+      "namesUnavailable": "No pudimos obtener los nombres de los inscritos en este momento. El estado, la fecha y la tarifa sí están completos.",
+      "notFound": "El evento no existe o no es tuyo: no hay inscritos que mostrar.",
+      "moreError": "No pudimos cargar más inscritos. Inténtalo de nuevo.",
+      "actions": {
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando…",
+        "recheck": "Volver a consultar"
+      }
     }
   },
   "services": {

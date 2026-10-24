@@ -276,7 +276,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.create',
         'HU021',
       ),
-      upcoming(
+      // HU022: el organizador consulta los inscritos de sus eventos (ADR-039).
+      permissionOption(
         'event-attendees',
         'events',
         110,

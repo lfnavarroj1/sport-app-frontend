@@ -128,6 +128,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU022: el organizador consulta los inscritos de sus eventos (ADR-039).
+      path: 'eventos/inscritos',
+      loadChildren: () =>
+        import('./features/events/attendees/attendees.routes').then(
+          (module) => module.ATTENDEES_ROUTES,
+        ),
+    },
+    {
       // HU024: el organizador revisa sus eventos y publica un borrador (ADR-033).
       path: 'eventos/publicacion',
       loadChildren: () =>
