@@ -10,8 +10,12 @@ import { NAVIGATION, homeFor, navigationSections, visibleItems } from './navigat
 
 const ids = (actor: ActorType): string[] => NAVIGATION[actor].items.map((item) => item.id);
 
-/** HU aprobadas solo para el canal móvil (catálogo: HU026–HU040). */
-const MOBILE_ONLY = /^HU0(2[6-9]|3\d|40)$/;
+/**
+ * HU aprobadas solo para el canal móvil (catálogo: HU026–HU040). ADR-041 hace de
+ * web y móvil a HU026, HU028 y HU030: el profesional y el organizador publican en
+ * la web el contenido que el deportista recibe en el móvil.
+ */
+const MOBILE_ONLY = /^HU0(27|29|3\d|40)$/;
 
 function accessOf(
   actorType: ActorType,
@@ -70,6 +74,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['event-attendees', '/organizador/eventos/inscritos', 'HU022'],
       ['event-calendar', '/organizador/eventos/calendario', 'HU023'],
       ['event-publish', '/organizador/eventos/publicacion', 'HU024'],
+      ['organizer-routes', '/organizador/rutas', 'HU026'],
     ]);
     expect(navigable('service_provider')).toEqual([
       ['home', homeFor('service_provider'), 'HU003'],

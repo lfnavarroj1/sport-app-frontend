@@ -1,0 +1,213 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="route-form"
+  data-testid="route-form"
+>
+  @if (summary().length > 0) {
+    <div class="route-form__errors" role="alert" tabindex="-1" data-testid="route-errors">
+      <p>{{ 'training.routes.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'training.routes.issues.item'
+                | translate
+                  : {
+                      field: (item.field.key | translate: item.field.params),
+                      rule: (item.issue | translate),
+                    }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <fieldset class="route-form__group">
+    <legend>{{ 'training.routes.sections.route' | translate }}</legend>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.routes.fields.name' | translate }}</mat-label>
+      <input matInput formControlName="name" [maxlength]="limits.nameMax" required />
+      <mat-error><app-route-field-error [control]="form.controls.name" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.routes.fields.description' | translate }}</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        rows="3"
+        [maxlength]="limits.descriptionMax"
+      ></textarea>
+      <mat-error><app-route-field-error [control]="form.controls.description" /></mat-error>
+    </mat-form-field>
+    <div class="route-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.sport' | translate }}</mat-label>
+        <mat-select formControlName="sport" required>
+          @for (sport of sports; track sport) {
+            <mat-option [value]="sport">{{ 'training.sports.' + sport | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-route-field-error [control]="form.controls.sport" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.distanceKm' | translate }}</mat-label>
+        <input
+          matInput
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          formControlName="distanceKm"
+          required
+        />
+        <span matTextSuffix aria-hidden="true">{{ 'training.routes.units.km' | translate }}</span>
+        <mat-hint>{{ 'training.routes.hints.distanceKm' | translate }}</mat-hint>
+        <mat-error><app-route-field-error [control]="form.controls.distanceKm" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.difficulty' | translate }}</mat-label>
+        <mat-select formControlName="difficulty" required>
+          @for (difficulty of difficulties; track difficulty) {
+            <mat-option [value]="difficulty">{{
+              'training.routes.difficulties.' + difficulty | translate
+            }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-route-field-error [control]="form.controls.difficulty" /></mat-error>
+      </mat-form-field>
+    </div>
+    <div class="route-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.city' | translate }}</mat-label>
+        <input matInput formControlName="city" [maxlength]="limits.cityMax" required />
+        <mat-error><app-route-field-error [control]="form.controls.city" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.countryCode' | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="countryCode"
+          maxlength="2"
+          autocomplete="off"
+          (input)="uppercaseCountry()"
+          required
+        />
+        <mat-hint>{{ 'training.routes.hints.countryCode' | translate }}</mat-hint>
+        <mat-error><app-route-field-error [control]="form.controls.countryCode" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="route-form__group" formGroupName="startPoint" data-testid="route-start-point">
+    <legend>{{ 'training.routes.sections.startPoint' | translate }}</legend>
+    <p class="route-form__note">{{ 'training.routes.hints.coordinates' | translate }}</p>
+    <div class="route-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.startLat' | translate }}</mat-label>
+        <input
+          matInput
+          type="number"
+          step="any"
+          formControlName="lat"
+          [min]="limits.latMin"
+          [max]="limits.latMax"
+          required
+        />
+        <mat-error
+          ><app-route-field-error [control]="form.controls.startPoint.controls.lat"
+        /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.routes.fields.startLng' | translate }}</mat-label>
+        <input
+          matInput
+          type="number"
+          step="any"
+          formControlName="lng"
+          [min]="limits.lngMin"
+          [max]="limits.lngMax"
+          required
+        />
+        <mat-error
+          ><app-route-field-error [control]="form.controls.startPoint.controls.lng"
+        /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="route-form__group" formArrayName="waypoints" data-testid="route-waypoints">
+    <legend>{{ 'training.routes.fields.waypoints' | translate }}</legend>
+    <p class="route-form__note">
+      {{ 'training.routes.hints.waypoints' | translate: { max: limits.waypointsMax } }}
+    </p>
+    @for (waypoint of waypoints.controls; track waypoint; let i = $index) {
+      <div
+        class="route-form__row route-form__waypoint"
+        [formGroupName]="i"
+        [attr.data-waypoint]="i"
+        role="group"
+        [attr.aria-label]="'training.routes.waypointN' | translate: { n: i + 1 }"
+      >
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'training.routes.waypointLat' | translate: { n: i + 1 } }}</mat-label>
+          <input
+            matInput
+            type="number"
+            step="any"
+            formControlName="lat"
+            [min]="limits.latMin"
+            [max]="limits.latMax"
+            required
+          />
+          <mat-error><app-route-field-error [control]="waypoint.controls.lat" /></mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'training.routes.waypointLng' | translate: { n: i + 1 } }}</mat-label>
+          <input
+            matInput
+            type="number"
+            step="any"
+            formControlName="lng"
+            [min]="limits.lngMin"
+            [max]="limits.lngMax"
+            required
+          />
+          <mat-error><app-route-field-error [control]="waypoint.controls.lng" /></mat-error>
+        </mat-form-field>
+        <button
+          mat-icon-button
+          type="button"
+          class="route-form__remove"
+          [attr.aria-label]="'training.routes.actions.removeWaypointN' | translate: { n: i + 1 }"
+          (click)="removeWaypoint(i)"
+        >
+          <mat-icon aria-hidden="true">delete</mat-icon>
+        </button>
+      </div>
+    }
+    <div>
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="!canAddWaypoint()"
+        (click)="addWaypoint()"
+      >
+        {{ 'training.routes.actions.addWaypoint' | translate }}
+      </button>
+    </div>
+  </fieldset>
+
+  <div class="route-form__actions">
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{
+        (submitting() ? 'training.routes.actions.publishing' : 'training.routes.actions.publish')
+          | translate
+      }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'training.routes.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>

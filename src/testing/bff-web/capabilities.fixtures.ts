@@ -3,7 +3,8 @@
  * (`src/app/core/api/contracts/bff-web.openapi.json`). Los códigos de capacidad
  * salen de ADR-024 y los permisos de `contracts/authorization/actor-permissions.v1.json`
  * del backend, filtrados al canal web como hace el BFF. Lo usan las pruebas
- * unitarias y Playwright; `capabilities.contract.spec.ts` valida cada respuesta
+ * unitarias y Playwright (permisos de `actor-permissions.v2` desde HU026);
+ * `capabilities.contract.spec.ts` valida cada respuesta
  * contra el esquema del contrato. Datos sintéticos.
  *
  * Archivo sin dependencias de Angular para poder importarlo desde Playwright.
@@ -14,7 +15,7 @@ export const GET_CAPABILITIES_PATH = '/v1/me/capabilities';
 
 const CORRELATION_ID = '9e8d7c6b-5a49-4382-a1b0-c9d8e7f6a5b4';
 const EVALUATED_AT = '2026-10-12T12:00:00Z';
-const POLICY_VERSION = 'actor-permissions.v1';
+const POLICY_VERSION = 'actor-permissions.v2';
 const CATALOG_VERSION = 'plans-2026-10-11.v1';
 
 /** Capacidades del plan `FREE` (ADR-024). */
@@ -42,13 +43,14 @@ export const PREMIUM_CAPABILITIES = [
   'services.virtual_sessions.schedule',
 ] as const;
 
-/** Permisos web del organizador en `actor-permissions.v1`. */
+/** Permisos web del organizador en `actor-permissions.v2` (v1 + `training.routes.author`, ADR-041). */
 export const ORGANIZER_WEB_PERMISSIONS = [
   'events.create',
   'events.attendees.view',
   'events.calendar.view',
   'events.publish',
   'events.pricing.manage',
+  'training.routes.author',
   'calendar.integrated.view',
 ] as const;
 

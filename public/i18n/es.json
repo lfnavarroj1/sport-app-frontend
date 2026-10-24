@@ -975,6 +975,117 @@
         "CUP": "taza(s)",
         "TBSP": "cda."
       }
+    },
+    "routes": {
+      "title": "Rutas",
+      "intro": "Publica rutas para que los deportistas las reciban como sugerencia en la app móvil. Indica el deporte, la distancia, la dificultad, la ciudad, el punto de inicio y, si quieres, puntos intermedios.",
+      "form": {
+        "title": "Publicar una ruta"
+      },
+      "sections": {
+        "route": "Datos de la ruta",
+        "startPoint": "Punto de inicio"
+      },
+      "fields": {
+        "name": "Nombre",
+        "description": "Descripción (opcional)",
+        "sport": "Deporte",
+        "distanceKm": "Distancia (km)",
+        "difficulty": "Dificultad",
+        "city": "Ciudad",
+        "countryCode": "País (código ISO de 2 letras)",
+        "startLat": "Latitud de inicio",
+        "startLng": "Longitud de inicio",
+        "waypoints": "Puntos intermedios (opcionales)"
+      },
+      "waypointN": "Punto intermedio {{n}}",
+      "waypointLat": "Latitud del punto {{n}}",
+      "waypointLng": "Longitud del punto {{n}}",
+      "hints": {
+        "distanceKm": "Entre 0,1 y 500,0 km, con un decimal como máximo.",
+        "countryCode": "Por ejemplo, CO.",
+        "coordinates": "En grados decimales: la latitud va de -90 a 90 y la longitud de -180 a 180. Por ejemplo, 4,6584 y -74,0937.",
+        "waypoints": "En orden de recorrido; hasta {{max}}. No se carga ningún trazado ni mapa."
+      },
+      "units": {
+        "km": "km"
+      },
+      "difficulties": {
+        "LOW": "Baja",
+        "MODERATE": "Moderada",
+        "HIGH": "Alta"
+      },
+      "status": {
+        "PUBLISHED": "Publicada",
+        "RETIRED": "Retirada"
+      },
+      "validation": {
+        "distanceFormat": "Usa un número con un decimal como máximo, por ejemplo 12,5.",
+        "distanceRange": "Debe estar entre 0,1 y 500,0 km."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "unknown": "El valor no es válido.",
+        "required": "Este dato es obligatorio.",
+        "invalid_length": "La longitud no es válida.",
+        "out_of_range": "El valor está fuera del rango permitido.",
+        "unknown_value": "El valor no es válido.",
+        "field_not_allowed": "Este dato no se puede enviar."
+      },
+      "violationFields": {
+        "waypoint": "Punto intermedio {{n}}",
+        "waypointLat": "Punto intermedio {{n}} (latitud)",
+        "waypointLng": "Punto intermedio {{n}} (longitud)",
+        "request": "Solicitud"
+      },
+      "values": {
+        "distance": "{{value}} km",
+        "point": "{{lat}}, {{lng}}"
+      },
+      "list": {
+        "title": "Tus rutas",
+        "empty": "Aún no has publicado rutas.",
+        "place": "Lugar",
+        "noWaypoints": "Sin puntos intermedios",
+        "publishedAt": "Publicada",
+        "retiredAt": "Retirada",
+        "version": "Versión",
+        "moreError": "No pudimos cargar más rutas. Inténtalo de nuevo.",
+        "note": "Una ruta retirada deja de sugerirse, pero se conserva en tu lista. Publicar una ruta no valora su seguridad."
+      },
+      "published": {
+        "message": "Publicamos la ruta «{{name}}».",
+        "replayed": "Esta confirmación corresponde a un envío anterior: no se publicó otra ruta."
+      },
+      "retire": {
+        "confirm": "¿Retirar «{{name}}»? Dejará de sugerirse a los deportistas; seguirá en tu lista como retirada."
+      },
+      "retired": {
+        "message": "Retiramos la ruta. Ya no se sugerirá a los deportistas."
+      },
+      "retrying": "Reintentando publicar la ruta ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "Revisa estos datos:",
+        "idempotencyKeyReused": "No pudimos confirmar la publicación. Revisa los datos y vuelve a publicar.",
+        "retryHint": "Puedes volver a intentarlo: no se publicará una ruta duplicada.",
+        "versionConflict": "La ruta cambió desde que la cargaste y no se retiró. Actualiza la lista y vuelve a intentarlo.",
+        "routeNotFound": "La ruta no existe o no es tuya."
+      },
+      "actions": {
+        "new": "Publicar una ruta",
+        "publish": "Publicar ruta",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar",
+        "addWaypoint": "Agregar punto intermedio",
+        "removeWaypointN": "Quitar el punto intermedio {{n}}",
+        "retire": "Retirar",
+        "retireNamed": "Retirar la ruta «{{name}}»",
+        "confirmRetire": "Sí, retirar",
+        "retiring": "Retirando…",
+        "refresh": "Actualizar lista",
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando…"
+      }
     }
   },
   "shell": {
@@ -988,7 +1099,8 @@
       "health": "Salud",
       "nutrition": "Alimentación",
       "calendar": "Calendario",
-      "account": "Mi cuenta"
+      "account": "Mi cuenta",
+      "routes": "Rutas"
     },
     "items": {
       "home": "Inicio",
@@ -1013,7 +1125,8 @@
       "athlete-nutrition": "Mi alimentación",
       "athlete-services": "Servicios",
       "sport-calendar": "Calendario deportivo",
-      "sports-medicine": "Servicios médicos y deportivos"
+      "sports-medicine": "Servicios médicos y deportivos",
+      "organizer-routes": "Rutas"
     },
     "plan": {
       "title": "Opciones de tu plan",

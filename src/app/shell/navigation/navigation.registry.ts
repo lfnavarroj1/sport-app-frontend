@@ -20,7 +20,15 @@ import { ActorType } from '../../core/session/session.store';
  */
 
 export type NavGroup =
-  'main' | 'events' | 'services' | 'training' | 'health' | 'nutrition' | 'calendar' | 'account';
+  | 'main'
+  | 'events'
+  | 'services'
+  | 'training'
+  | 'routes'
+  | 'health'
+  | 'nutrition'
+  | 'calendar'
+  | 'account';
 
 export interface NavItem {
   /** Identificador estable de la opción. */
@@ -314,6 +322,16 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.pricing.manage',
         'HU025',
       ),
+      // HU026: el organizador publica rutas y retira las propias (ADR-041; actor-permissions v2).
+      permissionOption(
+        'organizer-routes',
+        'routes',
+        150,
+        'route',
+        '/organizador/rutas',
+        'training.routes.author',
+        'HU026',
+      ),
       upcoming(
         'integrated-calendar',
         'calendar',
@@ -418,6 +436,7 @@ export const GROUP_ORDER: readonly NavGroup[] = [
   'events',
   'services',
   'training',
+  'routes',
   'health',
   'nutrition',
   'calendar',
