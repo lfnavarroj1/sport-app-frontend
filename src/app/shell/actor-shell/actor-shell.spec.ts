@@ -165,6 +165,9 @@ describe('ActorShell (ADR-025, HU003)', () => {
       const element = await render('athlete');
 
       expect(item(element, 'plan')?.textContent).toContain('Mi plan');
+      // HU016: «Mi plan» ya navega a la comparación y el cambio de plan.
+      expect(item(element, 'plan')?.getAttribute('href')).toBe('/deportista/plan');
+      expect(item(element, 'plan')?.textContent).not.toContain('Próximamente');
       expect(item(element, 'athlete-training-plans')?.textContent).toContain(
         'Planes de entrenamiento',
       );

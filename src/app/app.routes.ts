@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { ActorType } from './core/session/session.store';
+import { requireCapability } from './features/affiliation/require-capability.guard';
 import { requireActor } from './shell/navigation/actor.guards';
 
 /**
@@ -63,8 +64,18 @@ export const routes: Routes = [
         ),
     },
     {
-      // HU010: el deportista autoriza a profesionales a asignarle planes.
+      // HU016: «Mi plan»: plan actual, comparación y cambio de plan (ADR-036).
+      path: 'plan',
+      loadChildren: () =>
+        import('./features/affiliation/my-plan/my-plan.routes').then(
+          (module) => module.MY_PLAN_ROUTES,
+        ),
+    },
+    {
+      // HU010: el deportista autoriza a profesionales a asignarle planes. HU016:
+      // la capacidad del plan se exige también ante una URL directa.
       path: 'entrenamientos/planes',
+      canActivate: [requireCapability('training.plan.manage')],
       loadChildren: () =>
         import('./features/training/authorizations/authorizations.routes').then(
           (module) => module.AUTHORIZATIONS_ROUTES,
@@ -89,7 +100,9 @@ export const routes: Routes = [
     {
       // HU020: la opción PREMIUM abre la misma pantalla de disponibilidad,
       // filtrada por medicina deportiva (ADR-038). Va antes de `servicios`.
+      // HU016: sin la capacidad `PREMIUM` una URL directa no la abre.
       path: 'servicios/medico-deportivos',
+      canActivate: [requireCapability('services.sports_medicine.access')],
       data: { presetCategory: 'SPORTS_MEDICINE' },
       loadChildren: () =>
         import('./features/services/availability/availability.routes').then(

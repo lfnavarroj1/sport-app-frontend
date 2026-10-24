@@ -57,6 +57,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(navigable('athlete')).toEqual([
       ['home', homeFor('athlete'), 'HU003'],
       ['profile', '/deportista/perfil', 'HU005'],
+      ['plan', '/deportista/plan', 'HU016'],
       ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
       ['athlete-services', '/deportista/servicios', 'HU020'],
       ['athlete-nutrition', '/deportista/alimentacion', 'HU014'],
