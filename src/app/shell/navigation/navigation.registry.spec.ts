@@ -67,6 +67,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     expect(navigable('organizer')).toEqual([
       ['home', homeFor('organizer'), 'HU003'],
       ['event-create', '/organizador/eventos/nuevo', 'HU021'],
+      ['event-attendees', '/organizador/eventos/inscritos', 'HU022'],
       ['event-calendar', '/organizador/eventos/calendario', 'HU023'],
       ['event-publish', '/organizador/eventos/publicacion', 'HU024'],
     ]);

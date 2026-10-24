@@ -11,7 +11,8 @@ import { STRICT_CODEC } from './training-history.api';
  * ADR-028, HU021) y, para HU024 (ADR-033), `GET /v1/me/events`,
  * `GET /v1/events/{event_id}` y `POST /v1/events/{event_id}/publish`; desde 0.17.0,
  * para HU023 (ADR-040), `GET /v1/events` (calendario de publicados) y
- * `GET /v1/me/events/{event_id}/conflicts` (coincidencias). Todas se
+ * `GET /v1/me/events/{event_id}/conflicts` (coincidencias); desde 0.22.0, para
+ * HU022 (ADR-039), `GET /v1/me/events/{event_id}/registrations` (inscritos). Todas se
  * autentican con el access token; `organizer_id` sale del token y nunca viaja en
  * la solicitud. Estos tipos son del transporte: la interfaz los transforma antes
  * de usarlos.
@@ -312,7 +313,74 @@ export const EVENT_CONFLICTS_ERROR_CODES = {
   upstreamTimeout: 'upstream_timeout',
 } as const;
 
-/** Cliente del BFF web para los eventos del organizador (HU021, HU023 y HU024). */
+/**
+ * Filtro `status` de `GET /v1/me/events/{event_id}/registrations`: `REGISTERED`
+ * (por defecto en el BFF) o `ALL`.
+ */
+export const ATTENDEE_STATUS_FILTERS = ['REGISTERED', 'ALL'] as const;
+export type AttendeeStatusFilterDto = (typeof ATTENDEE_STATUS_FILTERS)[number];
+
+/** Parámetros de la consulta de inscritos; los ausentes no se envían. */
+export interface EventAttendeesQueryDto {
+  readonly status?: AttendeeStatusFilterDto | null;
+  /** 1–100; el BFF usa 20 si no se envía. */
+  readonly limit?: number | null;
+  /** Cursor opaco de `next_cursor`; la web nunca lo interpreta. */
+  readonly cursor?: string | null;
+}
+
+/** Esquema `AppliedFee`: tarifa informativa de la inscripción, no un cobro. */
+export interface AppliedFeeDto {
+  /** Cadena decimal con dos decimales. */
+  readonly amount: string;
+  readonly currency: string;
+}
+
+/** Esquema `AttendeeItem`: identidad mínima, sin correo ni perfil (ADR-039). */
+export interface AttendeeItemDto {
+  readonly registration_id: string;
+  readonly athlete_id: string;
+  /** `full_name` de Usuarios; `null` si Usuarios no lo entregó. */
+  readonly display_name: string | null;
+  /** El contrato 0.22.0 solo publica `REGISTERED`. */
+  readonly status: string;
+  /** Instante UTC con sufijo `Z`. */
+  readonly registered_at: string;
+  readonly applied_fee: AppliedFeeDto | null;
+}
+
+/** Esquema `AttendeesSource`: estado de la consulta de nombres a Usuarios. */
+export interface AttendeesSourceDto {
+  readonly source: 'users';
+  readonly status: 'OK' | 'UNAVAILABLE';
+}
+
+/**
+ * Esquema `EventAttendeesResponse`. `total` cuenta las inscripciones que
+ * cumplen el filtro; `by_status`, todas las del evento.
+ */
+export interface EventAttendeesResponseDto {
+  readonly items: readonly AttendeeItemDto[];
+  readonly total: number;
+  readonly by_status: Readonly<Record<string, number>>;
+  readonly next_cursor: string | null;
+  readonly sources: readonly AttendeesSourceDto[];
+}
+
+/** Límites del parámetro `limit` de la consulta de inscritos. */
+export const EVENT_ATTENDEES_LIMIT = { min: 1, max: 100, default: 20 } as const;
+
+/** Códigos de error que el contrato declara para la consulta de inscritos. */
+export const EVENT_ATTENDEES_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  eventNotFound: 'event_not_found',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Cliente del BFF web para los eventos del organizador (HU021, HU022, HU023 y HU024). */
 @Injectable({ providedIn: 'root' })
 export class BffWebEventsApi {
   private readonly http = inject(HttpClient);
@@ -375,6 +443,27 @@ export class BffWebEventsApi {
     return this.http.get<EventConflictsResponseDto>(
       this.bffWebUrl.resolve(`v1/me/events/${encodeURIComponent(eventId)}/conflicts`),
       { headers: bearer(accessToken) },
+    );
+  }
+
+  /**
+   * Inscritos de un evento propio (HU022, ADR-039). Un evento ajeno o inexistente
+   * responde `404 event_not_found` sin revelar participantes.
+   */
+  getEventAttendees(
+    accessToken: string,
+    eventId: string,
+    query: EventAttendeesQueryDto,
+  ): Observable<EventAttendeesResponseDto> {
+    let params = new HttpParams({ encoder: STRICT_CODEC });
+    for (const [name, value] of Object.entries(query)) {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(name, String(value));
+      }
+    }
+    return this.http.get<EventAttendeesResponseDto>(
+      this.bffWebUrl.resolve(`v1/me/events/${encodeURIComponent(eventId)}/registrations`),
+      { headers: bearer(accessToken), params },
     );
   }
 

@@ -1,0 +1,11 @@
+// Inscritos de un evento (HU022): selector arriba y lista debajo, a lo ancho de la página.
+.attendees {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.attendees__select {
+  width: 100%;
+  max-width: 36rem;
+}

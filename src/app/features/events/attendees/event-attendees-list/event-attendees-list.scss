@@ -1,0 +1,54 @@
+// Lista de inscritos (HU022): tabla semántica con desplazamiento horizontal en pantallas estrechas.
+.attendees__filter {
+  margin-bottom: 1rem;
+}
+
+.attendees__warning {
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+}
+
+.attendees__table-wrapper {
+  overflow-x: auto;
+}
+
+.attendees__table {
+  width: 100%;
+  border-collapse: collapse;
+
+  caption {
+    margin-bottom: 0.5rem;
+    text-align: left;
+    font: var(--mat-sys-title-small);
+  }
+
+  th,
+  td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  tbody th {
+    font-weight: 600;
+  }
+}
+
+.attendees__unknown {
+  color: var(--mat-sys-on-surface-variant);
+  font-style: italic;
+  font-weight: 400;
+}
