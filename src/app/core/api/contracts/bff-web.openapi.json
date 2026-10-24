@@ -20,6 +20,46 @@
         "title": "AppliedFee",
         "type": "object"
       },
+      "AssociatedServiceSummary": {
+        "description": "Resumen del servicio; la tarifa es informativa: asociar no contrata ni paga.",
+        "properties": {
+          "category": {
+            "enum": [
+              "SPORTS_MEDICINE",
+              "COACHING",
+              "NUTRITION",
+              "TRANSPORT",
+              "ACCOMPANIMENT"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/ServicePrice"
+          },
+          "modality": {
+            "enum": [
+              "IN_PERSON",
+              "VIRTUAL",
+              "HYBRID"
+            ],
+            "title": "Modality",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "modality",
+          "fee"
+        ],
+        "title": "AssociatedServiceSummary",
+        "type": "object"
+      },
       "AttendeeItem": {
         "properties": {
           "applied_fee": {
@@ -543,6 +583,20 @@
         "title": "CreatedNutritionPlanResponse",
         "type": "object"
       },
+      "DayOfWeek": {
+        "description": "Días de la disponibilidad de ADR-034.",
+        "enum": [
+          "MON",
+          "TUE",
+          "WED",
+          "THU",
+          "FRI",
+          "SAT",
+          "SUN"
+        ],
+        "title": "DayOfWeek",
+        "type": "string"
+      },
       "DemographicProfileResponse": {
         "description": "Respuesta del comando: la sección con el `user_id` del token.",
         "properties": {
@@ -866,6 +920,30 @@
             "title": "Event Id",
             "type": "string"
           },
+          "fee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventFee"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tarifa informativa (HU025); `null` sin tarifa. No es un cobro."
+          },
+          "fee_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Último cambio de la tarifa; `null` si nunca se definió.",
+            "title": "Fee Updated At"
+          },
           "location": {
             "$ref": "#/components/schemas/EventLocation"
           },
@@ -934,7 +1012,9 @@
           "version",
           "created_at",
           "updated_at",
-          "published_at"
+          "published_at",
+          "fee",
+          "fee_updated_at"
         ],
         "title": "EventAggregateResponse",
         "type": "object"
@@ -1127,7 +1207,7 @@
                 "type": "null"
               }
             ],
-            "description": "`null` hasta HU025."
+            "description": "Informativa; `null` sin tarifa (HU025)."
           },
           "location": {
             "$ref": "#/components/schemas/EventDetailLocation"
@@ -1135,6 +1215,18 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "registration_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Inscripciones vigentes; solo para el organizador propietario (HU025), `null` para los demás actores.",
+            "title": "Registration Count"
           },
           "starts_at": {
             "format": "date-time",
@@ -1171,20 +1263,18 @@
           "capacity",
           "status",
           "version",
-          "fee"
+          "fee",
+          "registration_count"
         ],
         "title": "EventDetailResponse",
         "type": "object"
       },
       "EventFee": {
+        "description": "Tarifa informativa del evento (ADR-040): `{amount, currency}`; `0.00` es gratuito.",
         "properties": {
           "amount": {
             "description": "Cadena decimal con dos decimales.",
             "title": "Amount",
-            "type": "string"
-          },
-          "billing_unit": {
-            "title": "Billing Unit",
             "type": "string"
           },
           "currency": {
@@ -1194,8 +1284,7 @@
         },
         "required": [
           "amount",
-          "currency",
-          "billing_unit"
+          "currency"
         ],
         "title": "EventFee",
         "type": "object"
@@ -1431,6 +1520,18 @@
         "title": "FoodUnit",
         "type": "string"
       },
+      "Goal": {
+        "description": "Catálogo de objetivos de ADR-034 (`primary_goal` de HU006).",
+        "enum": [
+          "HEALTH",
+          "PERFORMANCE",
+          "WEIGHT_MANAGEMENT",
+          "RECREATION",
+          "COMPETITION"
+        ],
+        "title": "Goal",
+        "type": "string"
+      },
       "GrantAuthorizationRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1531,6 +1632,15 @@
         "title": "HistoryFilters",
         "type": "object"
       },
+      "Level": {
+        "enum": [
+          "BEGINNER",
+          "INTERMEDIATE",
+          "ADVANCED"
+        ],
+        "title": "Level",
+        "type": "string"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1571,7 +1681,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/EventAggregateResponse"
+              "$ref": "#/components/schemas/OwnEventResponse"
             },
             "title": "Items",
             "type": "array"
@@ -2044,6 +2154,146 @@
           "next_cursor"
         ],
         "title": "NutritionPlansPage",
+        "type": "object"
+      },
+      "OwnEventResponse": {
+        "description": "El agregado como lo ve su organizador (HU025).",
+        "properties": {
+          "capacity": {
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "discipline": {
+            "title": "Discipline",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "ends_at": {
+            "description": "`starts_at` + `duration_minutes`.",
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventFee"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tarifa informativa (HU025); `null` sin tarifa. No es un cobro."
+          },
+          "fee_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Último cambio de la tarifa; `null` si nunca se definió.",
+            "title": "Fee Updated At"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EventLocation"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "organizer_id": {
+            "format": "uuid",
+            "title": "Organizer Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Instante de la publicación; `null` en borrador.",
+            "title": "Published At"
+          },
+          "registration_count": {
+            "description": "Inscripciones vigentes; cambiar la tarifa no las modifica (cada una conserva su `applied_fee`).",
+            "title": "Registration Count",
+            "type": "integer"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "time_zone": {
+            "title": "Time Zone",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "organizer_id",
+          "name",
+          "description",
+          "discipline",
+          "location",
+          "starts_at",
+          "ends_at",
+          "time_zone",
+          "duration_minutes",
+          "capacity",
+          "status",
+          "version",
+          "created_at",
+          "updated_at",
+          "published_at",
+          "fee",
+          "fee_updated_at",
+          "registration_count"
+        ],
+        "title": "OwnEventResponse",
         "type": "object"
       },
       "PhysiologicalProfileResponse": {
@@ -2697,6 +2947,61 @@
         "title": "PublishServiceResponse",
         "type": "object"
       },
+      "PublishTemplateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_weeks": {
+            "maximum": 52.0,
+            "minimum": 1.0,
+            "title": "Duration Weeks",
+            "type": "integer"
+          },
+          "goal": {
+            "$ref": "#/components/schemas/Goal",
+            "description": "Catálogo de objetivos de ADR-034."
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "objectives": {
+            "maxLength": 2000,
+            "minLength": 20,
+            "title": "Objectives",
+            "type": "string"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/Sport",
+            "description": "Catálogo de deportes de HU010."
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          },
+          "weekly_sessions": {
+            "description": "Sesiones de una semana tipo, en el orden del profesional.",
+            "items": {
+              "$ref": "#/components/schemas/WeeklySessionRequest"
+            },
+            "maxItems": 14,
+            "minItems": 1,
+            "title": "Weekly Sessions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "objectives",
+          "sport",
+          "goal",
+          "level",
+          "duration_weeks",
+          "weekly_sessions"
+        ],
+        "title": "PublishTemplateRequest",
+        "type": "object"
+      },
       "PublishedEventItem": {
         "properties": {
           "discipline": {
@@ -2712,6 +3017,17 @@
             "format": "uuid",
             "title": "Event Id",
             "type": "string"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventFee"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Informativa; `null` sin tarifa (HU025)."
           },
           "location": {
             "$ref": "#/components/schemas/PublishedEventLocation"
@@ -2748,7 +3064,8 @@
           "ends_at",
           "time_zone",
           "status",
-          "version"
+          "version",
+          "fee"
         ],
         "title": "PublishedEventItem",
         "type": "object"
@@ -2868,6 +3185,22 @@
           "expected_version"
         ],
         "title": "RetireRouteRequest",
+        "type": "object"
+      },
+      "RetireTemplateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "description": "Versión vigente que conoce el cliente.",
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "title": "RetireTemplateRequest",
         "type": "object"
       },
       "RoutePoint": {
@@ -3062,6 +3395,92 @@
           "next_cursor"
         ],
         "title": "RoutesResponse",
+        "type": "object"
+      },
+      "ServiceAssociationResponse": {
+        "properties": {
+          "associated_at": {
+            "format": "date-time",
+            "title": "Associated At",
+            "type": "string"
+          },
+          "association_id": {
+            "format": "uuid",
+            "title": "Association Id",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UTC (`Z`); `null` mientras está activa.",
+            "title": "Ended At"
+          },
+          "service": {
+            "$ref": "#/components/schemas/AssociatedServiceSummary"
+          },
+          "service_id": {
+            "format": "uuid",
+            "title": "Service Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "association_id",
+          "service_id",
+          "service",
+          "status",
+          "associated_at",
+          "ended_at",
+          "version"
+        ],
+        "title": "ServiceAssociationResponse",
+        "type": "object"
+      },
+      "ServiceAssociationsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceAssociationResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "ServiceAssociationsResponse",
         "type": "object"
       },
       "ServiceAvailabilityResponse": {
@@ -3758,6 +4177,135 @@
         "title": "SubscriptionResponse",
         "type": "object"
       },
+      "TemplateResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "duration_weeks": {
+            "title": "Duration Weeks",
+            "type": "integer"
+          },
+          "goal": {
+            "$ref": "#/components/schemas/Goal"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "objectives": {
+            "title": "Objectives",
+            "type": "string"
+          },
+          "professional_id": {
+            "format": "uuid",
+            "title": "Professional Id",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "retired_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired At"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/Sport"
+          },
+          "status": {
+            "enum": [
+              "PUBLISHED",
+              "RETIRED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "template_id": {
+            "format": "uuid",
+            "title": "Template Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "weekly_sessions": {
+            "items": {
+              "$ref": "#/components/schemas/WeeklySessionResponse"
+            },
+            "title": "Weekly Sessions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "template_id",
+          "professional_id",
+          "title",
+          "objectives",
+          "sport",
+          "goal",
+          "level",
+          "duration_weeks",
+          "weekly_sessions",
+          "status",
+          "version",
+          "created_at",
+          "updated_at",
+          "published_at",
+          "retired_at"
+        ],
+        "title": "TemplateResponse",
+        "type": "object"
+      },
+      "TemplatesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cursor opaco de la página siguiente; `null` si no hay más.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "TemplatesResponse",
+        "type": "object"
+      },
       "TrainingAthleteItem": {
         "properties": {
           "athlete_id": {
@@ -4082,12 +4630,61 @@
         ],
         "title": "WebSessionResponse",
         "type": "object"
+      },
+      "WeeklySessionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "day_of_week": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "maximum": 600.0,
+            "minimum": 10.0,
+            "title": "Duration Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day_of_week",
+          "description",
+          "duration_minutes"
+        ],
+        "title": "WeeklySessionRequest",
+        "type": "object"
+      },
+      "WeeklySessionResponse": {
+        "properties": {
+          "day_of_week": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "title": "Duration Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day_of_week",
+          "description",
+          "duration_minutes"
+        ],
+        "title": "WeeklySessionResponse",
+        "type": "object"
       }
     }
   },
   "info": {
     "title": "SportApp - BFF web",
-    "version": "0.23.0"
+    "version": "0.26.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -4814,6 +5411,353 @@
           }
         },
         "summary": "Detalle de un evento (ADR-033)",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/v1/events/{event_id}/fee": {
+      "delete": {
+        "description": "Deja `fee = null` con las mismas reglas de estado, inicio y versión que la asignación.",
+        "operationId": "delete_fee_v1_events__event_id__fee_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Versión vigente del evento que vio el organizador (entero ≥ 1).",
+            "in": "query",
+            "name": "expected_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Versión vigente del evento que vio el organizador (entero ≥ 1).",
+              "title": "Expected Version"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnEventResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` cuando se devuelve el resultado de un reintento.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required` (`organizer` con `events.pricing.manage`)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`event_not_found`: inexistente o de otro organizador."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`version_conflict` (`details[0]` = `{field: expected_version, issue: <versión vigente>}`) o `idempotency_key_reused`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error` con `details[{field, issue}]`: `query.expected_version` (`required`, `unknown_value`, `out_of_range`), `starts_at` (`event_already_started`) o `Idempotency-Key` ausente o inválida."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Retirar la tarifa de un evento propio (HU025)",
+        "tags": [
+          "events"
+        ]
+      },
+      "put": {
+        "description": "`DRAFT` o `PUBLISHED` antes de `starts_at`; `0.00` es gratuito. Responde la versión incrementada y `registration_count`; las inscripciones existentes conservan su `applied_fee`. No genera cobro, estado de pago ni reembolso.",
+        "operationId": "put_fee_v1_events__event_id__fee_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "description": "Esquema documentado del cuerpo; la validación la hacen el transporte y el dominio.",
+                "properties": {
+                  "amount": {
+                    "description": "Cadena decimal con exactamente dos decimales, de `0.00` (gratuito) a `99999999.99`.",
+                    "examples": [
+                      "85000.00"
+                    ],
+                    "pattern": "^[0-9]+\\.[0-9]{2}$",
+                    "title": "Amount",
+                    "type": "string"
+                  },
+                  "currency": {
+                    "description": "Solo `COP`.",
+                    "examples": [
+                      "COP"
+                    ],
+                    "title": "Currency",
+                    "type": "string"
+                  },
+                  "expected_version": {
+                    "description": "Versión vigente del evento que vio el organizador.",
+                    "minimum": 1,
+                    "title": "Expected Version",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency",
+                  "expected_version"
+                ],
+                "title": "EventFeeRequest",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnEventResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` cuando se devuelve el resultado de un reintento.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required` (`organizer` con `events.pricing.manage`)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`event_not_found`: inexistente o de otro organizador."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`version_conflict` (`details[0]` = `{field: expected_version, issue: <versión vigente>}`) o `idempotency_key_reused`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error` con `details[{field, issue}]`: `amount` (`required`, `unknown_value` sin dos decimales, `too_many_decimals`, `out_of_range`), `currency` (`unsupported_currency`), `expected_version`, `field_not_allowed`, `starts_at` (`event_already_started`) o `Idempotency-Key` ausente o inválida."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Asignar la tarifa de un evento propio (HU025)",
         "tags": [
           "events"
         ]
@@ -6765,6 +7709,416 @@
         ]
       }
     },
+    "/v1/me/service-associations": {
+      "get": {
+        "description": "Del más reciente al más antiguo, con el resumen del servicio.",
+        "operationId": "list_mine_v1_me_service_associations_get",
+        "parameters": [
+          {
+            "description": "`ACTIVE` (por defecto), `INACTIVE` o `ALL` (con el historial).",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`ACTIVE` (por defecto), `INACTIVE` o `ALL` (con el historial).",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Entero de 1 a 100; 20 por defecto.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Entero de 1 a 100; 20 por defecto.",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "`next_cursor` de la página anterior.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` de la página anterior.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAssociationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required`: solo el deportista; `capability_required`: su plan no incluye `services.sports_medicine.access`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error` en `query.status`, `query.limit` o `query.cursor`."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`: Afiliación no permitió verificar la capacidad (también por timeout) o un servicio interno no está disponible."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Mis servicios asociados (HU017, ADR-038)",
+        "tags": [
+          "service-associations"
+        ]
+      },
+      "post": {
+        "description": "Solo crea la relación: no comparte datos de salud con el profesional, no contrata, no reserva ni paga. Una asociación activa por deportista y servicio.",
+        "operationId": "associate_v1_me_service_associations_post",
+        "parameters": [
+          {
+            "description": "UUID; obligatorio (lo valida el servicio).",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "UUID; obligatorio (lo valida el servicio).",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "description": "Esquema documentado del cuerpo; la validación la hace el servicio.",
+                "properties": {
+                  "service_id": {
+                    "description": "Servicio `PUBLISHED` de categoría `SPORTS_MEDICINE`.",
+                    "format": "uuid",
+                    "title": "Service Id",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "service_id"
+                ],
+                "title": "AssociateServiceRequest",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAssociationResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` cuando se devuelve el resultado de un reintento.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required`: solo el deportista; `capability_required`: su plan no incluye `services.sports_medicine.access`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_not_found`: no existe, está en borrador o no es de `SPORTS_MEDICINE`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`association_exists` con `details: [{field: \"association_id\", issue: <identificador de la activa>}]`, o `idempotency_key_reused`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error` con `details[{field, issue}]`: `service_id`, campos de más, cuerpo ausente o `Idempotency-Key` ausente o inválida."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`: Afiliación no permitió verificar la capacidad (también por timeout) o un servicio interno no está disponible."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Asociar un servicio médico deportivo (HU017, ADR-038)",
+        "tags": [
+          "service-associations"
+        ]
+      }
+    },
+    "/v1/me/service-associations/{association_id}": {
+      "delete": {
+        "description": "Pasa a `INACTIVE` con `ended_at` y se conserva en el historial; repetirlo responde `204`.",
+        "operationId": "dissociate_v1_me_service_associations__association_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "association_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Association Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required`: solo el deportista; `capability_required`: su plan no incluye `services.sports_medicine.access`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`association_not_found`: no existe o es de otro deportista."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error`: `path.association_id` no es un UUID."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`: Afiliación no permitió verificar la capacidad (también por timeout) o un servicio interno no está disponible."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Quitar una asociación propia (HU017, ADR-038)",
+        "tags": [
+          "service-associations"
+        ]
+      }
+    },
     "/v1/me/services": {
       "get": {
         "operationId": "list_mine_v1_me_services_get",
@@ -7899,6 +9253,132 @@
         "summary": "Revocar la autorización de un profesional (HU010)",
         "tags": [
           "training"
+        ]
+      }
+    },
+    "/v1/me/training-plan-templates": {
+      "get": {
+        "description": "Plantillas publicadas y retiradas del profesional, orden `created_at` y `template_id` descendente; el cursor es opaco.",
+        "operationId": "my_templates_v1_me_training_plan_templates_get",
+        "parameters": [
+          {
+            "description": "Entero de 1 a 50; 20 por defecto.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Entero de 1 a 50; 20 por defecto.",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "`next_cursor` anterior.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` anterior.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required` (`training.plan.author`, solo profesional)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error` del servicio en `query.limit` (`out_of_range`, también si no es entero) o `query.cursor` (`invalid_cursor`), sin alterar."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Mis plantillas de plan (HU028, lectura CQRS)",
+        "tags": [
+          "training-plan-templates"
         ]
       }
     },
@@ -9514,6 +10994,269 @@
         "summary": "Mi historial de entrenamiento (HU011)",
         "tags": [
           "training"
+        ]
+      }
+    },
+    "/v1/training-plan-templates": {
+      "post": {
+        "description": "La plantilla nace `PUBLISHED` en versión 1; no es un plan asignado. Reintentar con la misma `Idempotency-Key` (24 horas) devuelve la misma plantilla.",
+        "operationId": "publish_template_v1_training_plan_templates_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` cuando se devuelve el resultado de un reintento.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required` (`training.plan.author`, solo profesional)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`idempotency_key_reused`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error` con `details[{field, issue}]` por campo (forma del cuerpo y reglas del servicio, sin alterar). Nada se publica."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Publicar una plantilla de plan de entrenamiento (HU028)",
+        "tags": [
+          "training-plan-templates"
+        ]
+      }
+    },
+    "/v1/training-plan-templates/{template_id}/retire": {
+      "post": {
+        "description": "`PUBLISHED` → `RETIRED` con la versión siguiente; la plantilla se conserva y deja de sugerirse. Una plantilla ya retirada se devuelve tal cual.",
+        "operationId": "retire_template_v1_training_plan_templates__template_id__retire_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Template Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetireTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_access_token`: falta el token o no es válido."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`permission_required` (`training.plan.author`, solo profesional)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`template_not_found`: no existe o es de otro profesional."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`version_conflict`: `details[0]` = `{field: expected_version, issue: <versión vigente>}`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_error`: `body.expected_version`."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_unavailable`."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`upstream_timeout`."
+          }
+        },
+        "summary": "Retirar una plantilla propia (HU028)",
+        "tags": [
+          "training-plan-templates"
         ]
       }
     },

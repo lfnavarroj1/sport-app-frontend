@@ -102,7 +102,7 @@ describe('Contrato bff-web: operaciones de HU024 (ADR-033)', () => {
     const detail: EventDetailResponseDto = EVENT_DETAIL_RESPONSES.draft.body;
 
     expect(Object.keys(page).sort()).toEqual(required('MyEventsResponse'));
-    expect(Object.keys(page.items[0]).sort()).toEqual(required('EventAggregateResponse'));
+    expect(Object.keys(page.items[0]).sort()).toEqual(required('OwnEventResponse'));
     expect(Object.keys(aggregate).sort()).toEqual(required('EventAggregateResponse'));
     expect(Object.keys(detail).sort()).toEqual(required('EventDetailResponse'));
     expect(Object.keys(detail.location).sort()).toEqual(required('EventDetailLocation'));

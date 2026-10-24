@@ -1435,6 +1435,96 @@
         "loadingMore": "Cargando…",
         "recheck": "Volver a consultar"
       }
+    },
+    "pricing": {
+      "title": "Tarifas de eventos",
+      "intro": "Asigna el valor en pesos colombianos de tus eventos o retíralo. La tarifa informa a los deportistas cuánto cuesta participar.",
+      "informative": "La tarifa es informativa: no genera cobros, pagos ni reembolsos.",
+      "registrations": "Inscripciones vigentes: {{count}}",
+      "list": {
+        "title": "Tus eventos",
+        "label": "Eventos propios y su tarifa",
+        "empty": "Aún no tienes eventos. Crea uno para asignarle una tarifa."
+      },
+      "detail": {
+        "choose": "Elige un evento de la lista para asignar o retirar su tarifa."
+      },
+      "fee": {
+        "none": "Sin tarifa",
+        "free": "Gratuito",
+        "amount": "Tarifa: {{amount}}"
+      },
+      "fields": {
+        "fee": "Tarifa actual",
+        "registrations": "Inscripciones vigentes",
+        "currency": "Moneda",
+        "starts_at": "Inicio del evento",
+        "expected_version": "Versión del evento",
+        "other": "Solicitud"
+      },
+      "form": {
+        "amount": "Valor de la tarifa",
+        "prefix": "$",
+        "currency": "COP",
+        "hint": "Pesos colombianos (COP), con hasta dos decimales separados por coma. Escribe 0 si el evento es gratuito.",
+        "preview": "Se mostrará como {{amount}}.",
+        "previewFree": "Se mostrará como evento gratuito.",
+        "errors": {
+          "required": "Escribe el valor de la tarifa. Usa 0 si el evento es gratuito.",
+          "format": "Escribe solo números, por ejemplo 85.000 o 85000,50.",
+          "tooManyDecimals": "Usa como máximo dos decimales.",
+          "outOfRange": "El valor máximo es $ 99.999.999,99."
+        }
+      },
+      "warnings": {
+        "registrations": "Este evento tiene {{count}} inscripciones vigentes. Las inscripciones existentes conservan su tarifa.",
+        "started": "Este evento ya comenzó. Si intentas cambiar su tarifa, el sistema lo rechazará."
+      },
+      "actions": {
+        "save": "Guardar tarifa",
+        "remove": "Retirar tarifa",
+        "confirm": "Confirmar",
+        "saving": "Guardando…",
+        "cancel": "Cancelar"
+      },
+      "confirm": {
+        "setTitle": "¿Asignar {{fee}} a «{{name}}»?",
+        "setFreeTitle": "¿Marcar «{{name}}» como gratuito?",
+        "removeTitle": "¿Retirar la tarifa de «{{name}}»?",
+        "registrations": "Las inscripciones existentes conservan su tarifa; el cambio no las modifica."
+      },
+      "retrying": "No pudimos confirmar el cambio. Reintentando ({{attempt}} de {{max}})…",
+      "result": {
+        "assigned": "Tarifa asignada",
+        "removed": "Tarifa retirada",
+        "replayed": "Este cambio ya se había confirmado; no se volvió a aplicar.",
+        "registrationsKept": "Las inscripciones existentes conservan su tarifa.",
+        "visibility": "El detalle público del evento mostrará la tarifa en unos instantes."
+      },
+      "conflict": {
+        "message": "El evento cambió mientras lo revisabas. Actualízalo y vuelve a intentarlo.",
+        "messageWithVersion": "El evento cambió mientras lo revisabas (versión vigente: {{version}}). Actualízalo y vuelve a intentarlo.",
+        "refresh": "Actualizar evento"
+      },
+      "violations": {
+        "title": "La tarifa no se guardó por estos motivos:",
+        "unchanged": "La tarifa del evento no cambió."
+      },
+      "issues": {
+        "required": "Este dato es obligatorio.",
+        "unknown_value": "El valor debe tener exactamente dos decimales.",
+        "too_many_decimals": "Usa como máximo dos decimales.",
+        "out_of_range": "El valor está fuera del rango permitido (de 0 a 99.999.999,99).",
+        "unsupported_currency": "Solo se admiten pesos colombianos (COP).",
+        "field_not_allowed": "La solicitud incluye un dato no permitido.",
+        "event_already_started": "El evento ya comenzó; su tarifa no se puede cambiar.",
+        "unknown": "El valor no cumple una regla del evento."
+      },
+      "errors": {
+        "notFound": "No encontramos este evento o no te pertenece.",
+        "idempotencyKeyReused": "No pudimos confirmar este cambio. Inténtalo de nuevo.",
+        "retryHint": "Si vuelves a intentarlo, el cambio no se aplicará dos veces."
+      }
     }
   },
   "services": {
