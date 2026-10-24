@@ -6,6 +6,10 @@
 
   <mat-card appearance="outlined" class="availability-page__card">
     <mat-card-content>
+      @if (associations) {
+        <app-my-associations />
+      }
+
       <form
         class="availability__filters"
         data-testid="availability-filters"
@@ -115,6 +119,9 @@
               <p class="availability__note">
                 {{ 'services.availability.price.note' | translate }}
               </p>
+              @if (associations && service.category === 'SPORTS_MEDICINE') {
+                <app-association-action [serviceId]="service.id" [name]="service.name" />
+              }
               @if (service.intervals.length > 0) {
                 <h3 class="availability__subtitle">
                   {{ 'services.availability.intervals.title' | translate }}

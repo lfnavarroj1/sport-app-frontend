@@ -1,0 +1,138 @@
+@if (!store.capabilityMissing()) {
+  <div class="association-action" data-testid="association-action">
+    @if (active(); as association) {
+      <p class="association-action__badge" data-testid="association-badge">
+        {{ 'services.associations.action.associated' | translate }}
+      </p>
+    }
+
+    @if (step() !== 'idle') {
+      <div
+        class="association-action__confirm"
+        role="group"
+        tabindex="-1"
+        data-testid="association-confirm"
+        [attr.aria-labelledby]="'association-confirm-title-' + serviceId()"
+      >
+        <p [id]="'association-confirm-title-' + serviceId()">
+          {{
+            (step() === 'confirmAssociate'
+              ? 'services.associations.confirm.associate'
+              : 'services.associations.confirm.dissociate'
+            ) | translate: { name: name() }
+          }}
+        </p>
+        @if (step() === 'confirmAssociate') {
+          <p class="association-action__note">
+            {{ 'services.associations.privacyNote' | translate }}
+          </p>
+        }
+        @if (associatingThis() && store.retryAttempt() > 0) {
+          <p class="association-action__note" role="status">
+            {{ 'services.associations.retrying' | translate: { attempt: store.retryAttempt() } }}
+          </p>
+        }
+        <div class="association-action__buttons">
+          <button
+            mat-flat-button
+            type="button"
+            data-testid="association-confirm-button"
+            [disabled]="busy()"
+            (click)="step() === 'confirmAssociate' ? associate() : dissociate()"
+          >
+            {{
+              (step() === 'confirmAssociate'
+                ? associatingThis()
+                  ? 'services.associations.action.associating'
+                  : 'services.associations.action.confirmAssociate'
+                : dissociatingThis()
+                  ? 'services.associations.action.dissociating'
+                  : 'services.associations.action.confirmDissociate'
+              ) | translate
+            }}
+          </button>
+          <button mat-stroked-button type="button" [disabled]="busy()" (click)="cancel()">
+            {{ 'services.associations.action.cancel' | translate }}
+          </button>
+        </div>
+      </div>
+    } @else if (active()) {
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="association-dissociate"
+        [disabled]="busy()"
+        [attr.aria-label]="
+          'services.associations.action.dissociateNamed' | translate: { name: name() }
+        "
+        (click)="ask('confirmDissociate')"
+      >
+        {{ 'services.associations.action.dissociate' | translate }}
+      </button>
+    } @else {
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="association-associate"
+        [disabled]="busy() || checking()"
+        [attr.aria-label]="
+          'services.associations.action.associateNamed' | translate: { name: name() }
+        "
+        (click)="ask('confirmAssociate')"
+      >
+        {{ 'services.associations.action.associate' | translate }}
+      </button>
+    }
+
+    @if (message(); as message) {
+      @switch (message.kind) {
+        @case ('failed') {
+          <div
+            class="association-action__error"
+            role="alert"
+            tabindex="-1"
+            data-testid="association-message"
+          >
+            @if (capabilityRequired(message.error)) {
+              <p>
+                {{ 'services.associations.errors.capabilityRequired' | translate }}
+                <a [routerLink]="comparePlansRoute">{{
+                  'services.associations.comparePlans' | translate
+                }}</a>
+              </p>
+            } @else {
+              <p>{{ failureKey(message.error) | translate }}</p>
+            }
+            @if (message.error.correlationId) {
+              <p class="association-action__reference">
+                {{ 'common.errors.reference' | translate: { id: message.error.correlationId } }}
+              </p>
+            }
+            @if (retryable(message.error)) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="busy()"
+                (click)="message.action === 'associate' ? associate() : dissociate()"
+              >
+                {{ 'common.state.retry' | translate }}
+              </button>
+            }
+          </div>
+        }
+        @default {
+          <p class="association-action__done" tabindex="-1" data-testid="association-message">
+            {{
+              (message.kind === 'associated'
+                ? 'services.associations.action.done.associated'
+                : message.kind === 'exists'
+                  ? 'services.associations.action.done.exists'
+                  : 'services.associations.action.done.dissociated'
+              ) | translate
+            }}
+          </p>
+        }
+      }
+    }
+  </div>
+}
