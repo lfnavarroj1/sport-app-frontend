@@ -76,6 +76,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['event-publish', '/organizador/eventos/publicacion', 'HU024'],
       ['event-pricing', '/organizador/eventos/tarifas', 'HU025'],
       ['organizer-routes', '/organizador/rutas', 'HU026'],
+      ['profile', '/organizador/perfil', 'HU002'],
     ]);
     expect(navigable('service_provider')).toEqual([
       ['home', homeFor('service_provider'), 'HU003'],
@@ -85,6 +86,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['training-templates', '/profesional/entrenamientos/plantillas', 'HU028'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
       ['nutrition-plans', '/profesional/alimentacion/planes', 'HU014'],
+      ['profile', '/profesional/perfil', 'HU002'],
     ]);
   });
 
@@ -176,26 +178,30 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
     ).toContain('nutrition-plans');
   });
 
-  it('HU005: «Mi perfil» navega solo para el deportista; los demás esperan HU002 (ADR-034)', () => {
+  it('HU002: «Mi perfil» navega para los tres actores, sin permiso ni capacidad (ADR-035)', () => {
     const profile = (actor: ActorType) =>
       NAVIGATION[actor].items.find((item) => item.id === 'profile')!;
+    const routes = {
+      athlete: ['/deportista/perfil', 'HU005'],
+      organizer: ['/organizador/perfil', 'HU002'],
+      service_provider: ['/profesional/perfil', 'HU002'],
+    } as const;
 
-    expect(profile('athlete')).toEqual(
-      jasmine.objectContaining({
-        group: 'account',
-        route: '/deportista/perfil',
-        permission: null,
-        capability: null,
-        hu: 'HU005',
-        available: true,
-      }),
-    );
-    for (const actor of ['organizer', 'service_provider'] as const) {
+    for (const [actor, [route, hu]] of Object.entries(routes) as [ActorType, readonly string[]][]) {
       expect(profile(actor))
         .withContext(actor)
-        .toEqual(jasmine.objectContaining({ route: null, hu: 'HU002', available: false }));
+        .toEqual(
+          jasmine.objectContaining({
+            group: 'account',
+            route,
+            permission: null,
+            capability: null,
+            hu,
+            available: true,
+          }),
+        );
+      expect(visibleIds(actor, null)).withContext(actor).toContain('profile');
     }
-    expect(visibleIds('athlete', null)).toContain('profile');
   });
 
   it('no incluye opciones de HU aprobadas solo para móvil', () => {

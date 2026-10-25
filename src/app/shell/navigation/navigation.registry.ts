@@ -78,31 +78,24 @@ const home = (route: string): NavItem => ({
 });
 
 /**
- * «Mi perfil». El deportista lo abre en `/deportista/perfil`, donde HU005 registra
- * sus datos demográficos y fisiológicos y HU006 sus hábitos deportivos (ADR-034). Los demás actores no tienen
- * ruta de perfil hasta HU002, así que su opción sigue como «Próximamente».
+ * «Mi perfil» de cada actor. HU002 le da ruta para los tres, con sus datos
+ * personales (ADR-035); en el del deportista HU005, HU006 y HU009 registran además
+ * su perfil deportivo (ADR-034).
  */
-const PROFILE: NavItem = {
+const profile = (route: string, hu = 'HU002'): NavItem => ({
   id: 'profile',
   group: 'account',
   order: 20,
   icon: 'person',
-  route: null,
+  route,
   permission: null,
   capability: null,
-  hu: 'HU002',
-  available: false,
-};
-
-const ATHLETE_PROFILE: NavItem = {
-  ...PROFILE,
-  route: '/deportista/perfil',
-  hu: 'HU005',
+  hu,
   available: true,
-};
+});
 
-const account = (profile: NavItem = PROFILE): NavItem[] => [
-  profile,
+const account = (profileItem: NavItem): NavItem[] => [
+  profileItem,
   // HU004: acción de cierre para los tres actores web; no tiene ruta.
   {
     id: 'logout',
@@ -182,7 +175,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     planCapabilities: true,
     items: [
       home('/deportista/inicio'),
-      ...account(ATHLETE_PROFILE),
+      ...account(profile('/deportista/perfil', 'HU005')),
       // «Mi plan» solo existe para el deportista (navegacion/README.md). HU016: plan
       // actual, comparación y cambio; opción base, sin capacidad (planes/05).
       {
@@ -342,7 +335,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar.integrated.view',
         'HU018',
       ),
-      ...account(),
+      ...account(profile('/organizador/perfil')),
     ],
   },
   service_provider: {
@@ -436,7 +429,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar.integrated.view',
         'HU018',
       ),
-      ...account(),
+      ...account(profile('/profesional/perfil')),
     ],
   },
 };

@@ -56,7 +56,8 @@ export const routes: Routes = [
   // HU003 (CA7–CA10) y ADR-025: un inicio y un menú por tipo de actor.
   actorArea('deportista', 'athlete', [
     {
-      // HU005: «Mi perfil», con los datos demográficos y fisiológicos (ADR-034).
+      // HU002 y HU005: «Mi perfil», con los datos personales (ADR-035) y el perfil
+      // deportivo (ADR-034).
       path: 'perfil',
       loadChildren: () =>
         import('./features/identity/profile/profile.routes').then(
@@ -120,6 +121,14 @@ export const routes: Routes = [
   ]),
   actorArea('organizador', 'organizer', [
     {
+      // HU002: «Mi perfil» del organizador, con solo sus datos personales (ADR-035).
+      path: 'perfil',
+      loadChildren: () =>
+        import('./features/identity/profile/profile.routes').then(
+          (module) => module.ACCOUNT_PROFILE_ROUTES,
+        ),
+    },
+    {
       // HU021: el organizador crea un evento en borrador (ADR-028).
       path: 'eventos/nuevo',
       loadChildren: () =>
@@ -169,6 +178,14 @@ export const routes: Routes = [
     },
   ]),
   actorArea('profesional', 'service_provider', [
+    {
+      // HU002: «Mi perfil» del profesional, con solo sus datos personales (ADR-035).
+      path: 'perfil',
+      loadChildren: () =>
+        import('./features/identity/profile/profile.routes').then(
+          (module) => module.ACCOUNT_PROFILE_ROUTES,
+        ),
+    },
     {
       // HU015: el profesional crea un servicio en borrador (ADR-027).
       path: 'servicios/nuevo',

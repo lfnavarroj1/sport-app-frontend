@@ -14,11 +14,14 @@ import {
   SIMULATED_PROFILE_CORRELATION_ID,
   SPORT_HABITS_RESPONSES,
 } from '../../../../../testing/bff-web/profile.fixtures';
+import { ACCOUNT_READ } from '../../../../../testing/bff-web/account.fixtures';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { ApiError } from '../../../../core/api/api-error';
 import { ProfileResponseDto } from '../../../../core/api/bff-web/profile.api';
 import { APP_CONFIG, AppConfig } from '../../../../core/config/app-config';
 import { DEFAULT_LANGUAGE } from '../../../../core/i18n/i18n.providers';
+import { AccountGateway } from '../account-form/account.gateway';
+import { toAccount } from '../account-form/account.model';
 import { DemographicForm } from '../demographic-form/demographic-form';
 import { NutritionHabitsForm } from '../nutrition-habits-form/nutrition-habits-form';
 import { PhysiologicalForm } from '../physiological-form/physiological-form';
@@ -41,7 +44,12 @@ import {
   toSportHabits,
 } from '../profile.model';
 import { SportHabitsForm } from '../sport-habits-form/sport-habits-form';
-import { PROFILE_PROJECTION_RETRY_DELAYS_MS, ProfilePage } from './profile-page';
+import {
+  PROFILE_PROJECTION_RETRY_DELAYS_MS,
+  PROFILE_SCOPE,
+  ProfilePage,
+  ProfileScope,
+} from './profile-page';
 
 // Datos sintéticos de prueba, derivados de los fixtures del contrato bff-web 0.16.0.
 const EMPTY: AthleteProfile = toAthleteProfile(EMPTY_PROFILE as ProfileResponseDto);
@@ -129,8 +137,18 @@ describe('ProfilePage (HU005)', () => {
   let fixture: ComponentFixture<ProfilePage>;
   let element: HTMLElement;
   let gateway: jasmine.SpyObj<ProfileGateway>;
+  let accountGateway: jasmine.SpyObj<AccountGateway>;
 
-  function configure(consentVersion: string | null = SIMULATED_HEALTH_CONSENT_VERSION): void {
+  function configure(
+    consentVersion: string | null = SIMULATED_HEALTH_CONSENT_VERSION,
+    scope: ProfileScope = 'athlete',
+  ): void {
+    // HU002: «Datos personales» se prueba en `account-section.spec.ts`; aquí solo carga.
+    accountGateway = jasmine.createSpyObj<AccountGateway>('AccountGateway', [
+      'loadAccount',
+      'saveAccount',
+    ]);
+    accountGateway.loadAccount.and.resolveTo(toAccount(ACCOUNT_READ));
     gateway = jasmine.createSpyObj<ProfileGateway>('ProfileGateway', [
       'loadProfile',
       'saveDemographic',
@@ -144,6 +162,8 @@ describe('ProfilePage (HU005)', () => {
         provideTranslateTesting(),
         { provide: LOCALE_ID, useValue: DEFAULT_LANGUAGE },
         { provide: ProfileGateway, useValue: gateway },
+        { provide: AccountGateway, useValue: accountGateway },
+        { provide: PROFILE_SCOPE, useValue: scope },
         { provide: APP_CONFIG, useValue: config(consentVersion) },
         { provide: PROFILE_PROJECTION_RETRY_DELAYS_MS, useValue: [0] },
       ],
@@ -286,19 +306,20 @@ describe('ProfilePage (HU005)', () => {
       expect(button('Editar datos fisiológicos')?.disabled).toBeFalse();
     });
 
-    it('presenta los datos personales como «Próximamente» y los hábitos como sección propia', async () => {
+    it('HU002: empieza con los datos personales y presenta los hábitos como sección propia', async () => {
       await create(FULL);
 
-      const personal = testId('profile-personal-upcoming')!;
-      expect(personal.querySelector('h2')?.textContent).toContain('Próximamente');
-      expect(personal.querySelector('button')).toBeNull();
-      expect(personal.textContent).toContain('Datos personales');
+      const personal = testId('profile-hu002')!;
+      expect(personal.querySelector('h2')?.textContent?.trim()).toBe('Datos personales');
+      expect(personal.textContent).not.toContain('Próximamente');
+      expect(button('Editar datos personales', personal)).toBeDefined();
+      expect(accountGateway.loadAccount).toHaveBeenCalledTimes(1);
       expect(testId('profile-habits-upcoming')).toBeNull();
       const habits = testId('profile-hu006')!;
       expect(habits.querySelector('h2')?.textContent?.trim()).toBe('Hábitos deportivos');
       expect(habits.textContent).not.toContain('Próximamente');
       expect([...element.querySelectorAll('h2')].map((h) => h.textContent?.trim())).toEqual([
-        'Datos personales Próximamente',
+        'Datos personales',
         'Datos demográficos y fisiológicos',
         'Hábitos deportivos',
         'Hábitos alimenticios',
@@ -307,6 +328,28 @@ describe('ProfilePage (HU005)', () => {
         'Datos demográficos',
         'Datos fisiológicos',
       ]);
+    });
+  });
+
+  describe('organizador y profesional (HU002)', () => {
+    beforeEach(() => configure(SIMULATED_HEALTH_CONSENT_VERSION, 'account'));
+
+    it('solo muestra los datos personales y no consulta el perfil deportivo', async () => {
+      await create(FULL);
+
+      expect(gateway.loadProfile).not.toHaveBeenCalled();
+      expect(accountGateway.loadAccount).toHaveBeenCalledTimes(1);
+      expect(element.querySelector('h1')?.textContent?.trim()).toBe('Mi perfil');
+      expect(element.querySelector('header p')?.textContent?.trim()).toBe(
+        'Consulta y mantén al día tus datos personales.',
+      );
+      expect([...element.querySelectorAll('h2')].map((h) => h.textContent?.trim())).toEqual([
+        'Datos personales',
+      ]);
+      expect(testId('profile-hu005')).toBeNull();
+      expect(testId('profile-hu006')).toBeNull();
+      expect(testId('profile-hu009')).toBeNull();
+      expect(element.textContent).not.toContain('deportista');
     });
   });
 

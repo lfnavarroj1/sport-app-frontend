@@ -1,0 +1,108 @@
+<section class="account-section" data-testid="account-section">
+  <h2 class="account-section__title">{{ 'profile.personal.title' | translate }}</h2>
+  <p class="account-section__note">{{ 'profile.personal.intro' | translate }}</p>
+
+  @if (notProjected()) {
+    <div class="account-section__pending" role="status" data-testid="account-not-projected">
+      <p>{{ 'profile.personal.notProjected' | translate }}</p>
+      <button mat-stroked-button type="button" (click)="load()">
+        {{ 'common.state.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+    <app-async-state [state]="state()" (retry)="load()">
+      @if (projectionStalled()) {
+        <div
+          class="account-section__pending"
+          role="status"
+          data-testid="account-projection-pending"
+        >
+          <p>{{ 'profile.projection.pending' | translate }}</p>
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="account-refresh"
+            [disabled]="refreshing()"
+            (click)="refreshNow()"
+          >
+            {{ 'profile.projection.refresh' | translate }}
+          </button>
+        </div>
+      }
+
+      @if (mode() === 'edit') {
+        @if (retryAttempt(); as attempt) {
+          <p class="account-section__note" role="status" data-testid="account-retrying">
+            {{ 'profile.personal.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+          </p>
+        }
+        @if (failure(); as error) {
+          <div
+            class="account-section__error"
+            role="alert"
+            tabindex="-1"
+            data-testid="account-error"
+          >
+            <p>{{ failureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'profile.personal.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="account-section__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        @if (displayed(); as account) {
+          <app-account-form
+            [initial]="account"
+            [submitting]="submitting()"
+            [serverErrors]="violations()"
+            [emailTaken]="emailTaken()"
+            (submitted)="save($event)"
+            (edited)="onEdited()"
+            (cancelled)="cancelEdit()"
+          />
+        }
+      } @else {
+        @if (saved(); as saved) {
+          <div
+            class="account-section__success"
+            role="status"
+            tabindex="-1"
+            data-testid="account-saved"
+          >
+            <p>{{ 'profile.personal.saved' | translate }}</p>
+            @if (saved.replayed) {
+              <p data-testid="account-replayed">{{ 'profile.personal.replayed' | translate }}</p>
+            }
+          </div>
+        }
+        @if (conflict()) {
+          <p
+            class="account-section__warning"
+            role="alert"
+            tabindex="-1"
+            data-testid="account-conflict"
+          >
+            {{ 'profile.personal.conflict' | translate }}
+          </p>
+        }
+        @if (displayed(); as account) {
+          <dl class="account-section__facts" data-testid="account-summary">
+            <dt>{{ 'profile.personal.fields.fullName' | translate }}</dt>
+            <dd data-testid="account-full-name">{{ account.fullName }}</dd>
+            <dt>{{ 'profile.personal.fields.email' | translate }}</dt>
+            <dd data-testid="account-email">{{ account.email }}</dd>
+          </dl>
+          <div class="account-section__actions">
+            <button mat-stroked-button type="button" [disabled]="pending()" (click)="startEdit()">
+              {{ 'profile.personal.actions.edit' | translate }}
+            </button>
+          </div>
+        }
+      }
+    </app-async-state>
+  }
+</section>

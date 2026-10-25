@@ -72,7 +72,9 @@ test.describe('HU005 Datos demográficos y fisiológicos (simulador del contrato
     await expect(page).toHaveURL(/\/deportista\/perfil$/);
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mi perfil');
-    await expect(page.getByTestId('profile-personal-upcoming')).toContainText('Próximamente');
+    // HU002: los datos personales ya no son «Próximamente».
+    await expect(page.getByTestId('profile-hu002')).toContainText('Datos personales');
+    await expect(page.getByTestId('profile-hu002')).not.toContainText('Próximamente');
     // Desde HU006 los hábitos son una sección propia, no «Próximamente».
     await expect(page.getByTestId('profile-hu006')).not.toContainText('Próximamente');
     await expect(page.getByTestId('demographic-empty')).toHaveText(
@@ -281,9 +283,11 @@ test.describe('HU005 Datos demográficos y fisiológicos (simulador del contrato
   test('CA5: el organizador no tiene perfil de deportista', async ({ page }) => {
     const simulation = await loginAs(page, 'organizer');
 
-    const profile = page.locator('mat-sidenav [data-menu-item="profile"]');
-    await expect(profile).toContainText('Próximamente');
-    await expect(profile.locator('a, button')).toHaveCount(0);
+    // HU002: su «Mi perfil» solo tiene datos personales y no consulta el perfil deportivo.
+    await page.locator('mat-sidenav [data-menu-item="profile"]').click();
+    await expect(page).toHaveURL(/\/organizador\/perfil$/);
+    await expect(page.getByTestId('account-summary')).toBeVisible();
+    await expect(page.getByTestId('profile-hu005')).toHaveCount(0);
 
     await page.goto('/deportista/perfil');
     await expect(page).toHaveURL(/\/acceso-no-autorizado$/);

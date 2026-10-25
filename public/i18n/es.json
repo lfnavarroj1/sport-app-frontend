@@ -242,10 +242,29 @@
   "profile": {
     "title": "Mi perfil",
     "intro": "Consulta y mantén al día la información de tu perfil de deportista.",
-    "upcoming": "Próximamente",
+    "introAccount": "Consulta y mantén al día tus datos personales.",
     "personal": {
       "title": "Datos personales",
-      "upcoming": "Pronto podrás actualizar tu nombre y tu correo desde aquí."
+      "intro": "Tu nombre y el correo con el que inicias sesión. Solo tú puedes cambiarlos.",
+      "fields": {
+        "fullName": "Nombre completo",
+        "email": "Correo electrónico"
+      },
+      "hints": {
+        "email": "Si lo cambias, tu sesión sigue abierta y la próxima vez inicias sesión con el correo nuevo."
+      },
+      "actions": {
+        "edit": "Editar datos personales",
+        "save": "Guardar datos personales",
+        "cancel": "Cancelar"
+      },
+      "saved": "Guardamos tus datos personales.",
+      "replayed": "Esta confirmación corresponde a un envío anterior: no se repitió el cambio.",
+      "conflict": "Tus datos personales cambiaron desde otra sesión. No sobrescribimos nada: te mostramos los datos vigentes para que los revises.",
+      "emailTaken": "No puedes usar este correo. Ingresa otro.",
+      "notProjected": "Tus datos personales aún se están preparando. Vuelve a intentarlo en unos segundos.",
+      "retrying": "Reintentando el envío ({{attempt}} de {{max}})…",
+      "retryHint": "Puedes volver a intentarlo: no se repetirá el cambio."
     },
     "habits": {
       "title": "Hábitos deportivos",
