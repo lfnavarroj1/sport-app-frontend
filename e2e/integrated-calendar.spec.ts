@@ -156,6 +156,8 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
   }) => {
     const simulation = await loginAs(page, 'athlete');
     await openCalendar(page, 'sport-calendar', /\/deportista\/calendario$/, 'Calendario deportivo');
+    // La consulta inicial del mes ya respondió: el parcial es para la de la lista.
+    await expect(page.getByTestId('integrated-sources')).toBeVisible();
     simulation.next = INTEGRATED_CALENDAR_RESPONSES.athletePartial;
     await listMarch(page);
 
@@ -187,7 +189,10 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
   }) => {
     const simulation = await loginAs(page, 'service_provider');
     await openCalendar(page, 'integrated-calendar', /\/profesional\/calendario$/, 'Calendario integrado');
+    await expect(page.getByTestId('integrated-sources')).toBeVisible();
+    const listed = page.waitForResponse((r) => r.url().includes('/v1/me/integrated-calendar'));
     await page.getByRole('radio', { name: 'Lista' }).click();
+    await listed;
     const before = simulation.requests.length;
     await page.getByLabel('Desde').fill('2027-01-01');
     await page.getByLabel('Hasta').fill('2027-04-30');
