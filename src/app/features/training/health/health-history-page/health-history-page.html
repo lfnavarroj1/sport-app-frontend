@@ -42,7 +42,9 @@
               'training.health.filters.allTypes' | translate
             }}</mat-option>
             @for (type of typeOptions; track type) {
-              <mat-option [value]="type">{{ 'training.health.types.' + type | translate }}</mat-option>
+              <mat-option [value]="type">{{
+                'training.health.types.' + type | translate
+              }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

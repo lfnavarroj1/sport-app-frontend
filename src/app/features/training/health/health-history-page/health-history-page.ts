@@ -219,10 +219,7 @@ export class HealthHistoryPage {
   private focusRow(index: number): void {
     afterNextRender(
       () =>
-        this.table()
-          ?.nativeElement.querySelectorAll<HTMLElement>('tbody tr')
-          .item(index)
-          ?.focus(),
+        this.table()?.nativeElement.querySelectorAll<HTMLElement>('tbody tr').item(index)?.focus(),
       { injector: this.injector },
     );
   }

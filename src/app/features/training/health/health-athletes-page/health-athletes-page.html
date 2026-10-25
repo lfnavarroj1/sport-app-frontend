@@ -7,7 +7,11 @@
   <mat-card appearance="outlined" class="training-page__card">
     <mat-card-content>
       @if (permissionDenied()) {
-        <div class="training-page__error" role="alert" data-testid="health-athletes-permission-denied">
+        <div
+          class="training-page__error"
+          role="alert"
+          data-testid="health-athletes-permission-denied"
+        >
           <p>{{ 'training.health.athletes.permissionDenied' | translate }}</p>
         </div>
       } @else {
@@ -56,7 +60,12 @@
             </div>
           }
           @if (nextCursor()) {
-            <button mat-stroked-button type="button" [disabled]="loadingMore()" (click)="loadMore()">
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
               {{
                 (loadingMore()
                   ? 'common.state.loading'

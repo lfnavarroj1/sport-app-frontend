@@ -207,8 +207,7 @@ describe('BffWebHealthReportsApi', () => {
       .subscribe();
 
     const request = http.expectOne(
-      (r) =>
-        r.url === `http://bff.test/v1/athletes/${SIMULATED_HEALTH_ATHLETE_ID}/health-reports`,
+      (r) => r.url === `http://bff.test/v1/athletes/${SIMULATED_HEALTH_ATHLETE_ID}/health-reports`,
     );
     expect(request.request.headers.get('Authorization')).toBe('Bearer token-sintetico');
     expect(request.request.params.get('severity')).toBe('HIGH');

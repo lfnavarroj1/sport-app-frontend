@@ -30,7 +30,8 @@ export function healthReport(index: number) {
       .replace('.000Z', 'Z'),
     expected_recovery_days: index % 2 === 0 ? 3 + index : null,
     status: 'OPEN' as const,
-    session_id: index % 3 === 0 ? `5a7c9e1b-3d5f-4a7c-9e1b-${String(index).padStart(12, '0')}` : null,
+    session_id:
+      index % 3 === 0 ? `5a7c9e1b-3d5f-4a7c-9e1b-${String(index).padStart(12, '0')}` : null,
   };
 }
 

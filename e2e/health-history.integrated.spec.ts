@@ -192,9 +192,27 @@ async function seedReports(email: string, consent: string): Promise<SeededReport
     const { access_token: token } = (await session.json()) as { access_token: string };
     const now = Date.now();
     const plan = [
-      { type: 'DISCOMFORT' as const, area: 'KNEE', severity: 'LOW', at: now - 1 * HOUR_MS, days: 2 },
-      { type: 'INJURY' as const, area: 'ANKLE_FOOT', severity: 'HIGH', at: now - 3 * HOUR_MS, days: 21 },
-      { type: 'INCAPACITY' as const, area: 'BACK', severity: 'MODERATE', at: now - 5 * HOUR_MS, days: null },
+      {
+        type: 'DISCOMFORT' as const,
+        area: 'KNEE',
+        severity: 'LOW',
+        at: now - 1 * HOUR_MS,
+        days: 2,
+      },
+      {
+        type: 'INJURY' as const,
+        area: 'ANKLE_FOOT',
+        severity: 'HIGH',
+        at: now - 3 * HOUR_MS,
+        days: 21,
+      },
+      {
+        type: 'INCAPACITY' as const,
+        area: 'BACK',
+        severity: 'MODERATE',
+        at: now - 5 * HOUR_MS,
+        days: null,
+      },
     ];
     const seeded: SeededReport[] = [];
     for (const entry of plan) {

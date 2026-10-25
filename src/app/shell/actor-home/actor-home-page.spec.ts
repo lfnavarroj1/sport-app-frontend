@@ -23,7 +23,9 @@ import { ActorHomePage } from './actor-home-page';
 function markUpcoming(actor: ActorType, id: string): () => void {
   const navigation = NAVIGATION[actor] as { items: readonly NavItem[] };
   const original = navigation.items;
-  navigation.items = original.map((item) => (item.id === id ? { ...item, available: false } : item));
+  navigation.items = original.map((item) =>
+    item.id === id ? { ...item, available: false } : item,
+  );
   return () => (navigation.items = original);
 }
 

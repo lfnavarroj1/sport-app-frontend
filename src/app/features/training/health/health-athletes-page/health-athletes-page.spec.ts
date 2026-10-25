@@ -82,9 +82,7 @@ describe('HealthAthletesPage (HU012, selector del profesional)', () => {
     await create();
 
     expect(loadPage).toHaveBeenCalledOnceWith(null);
-    expect(element.querySelector('h1')?.textContent).toContain(
-      'Historial de molestias o lesiones',
-    );
+    expect(element.querySelector('h1')?.textContent).toContain('Historial de molestias o lesiones');
     expect(items()).toEqual([athlete(0).id, athlete(1).id]);
     const link = element.querySelector<HTMLAnchorElement>('li[data-athlete] a')!;
     expect(link.textContent).toContain('Deportista Sintético 1');

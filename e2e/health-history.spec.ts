@@ -128,9 +128,7 @@ test.describe('HU012 Ver historial de molestias o lesiones (simulador del contra
     await expect(page.getByTestId('health-table')).toHaveCount(0);
   });
 
-  test('un fallo del servicio se informa con referencia y permite reintentar', async ({
-    page,
-  }) => {
+  test('un fallo del servicio se informa con referencia y permite reintentar', async ({ page }) => {
     const { health } = await loginAs(page, 'athlete', healthReports(2));
     health.next = HEALTH_REPORTS_RESPONSES.upstreamUnavailable;
     await page.goto('/deportista/salud');
