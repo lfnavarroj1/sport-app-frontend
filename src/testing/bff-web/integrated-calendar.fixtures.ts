@@ -202,7 +202,12 @@ export const ACTOR_SOURCES: Readonly<Record<string, readonly SourceName[]>> = {
 export const ACTOR_ITEMS: Readonly<Record<string, readonly IntegratedItemFixture[]>> = {
   organizer: [OWN_DRAFT_ITEM, OWN_PUBLISHED_ITEM],
   service_provider: [PUBLISHED_EVENT_ITEM, OWN_SERVICE_PUBLISHED_ITEM, OWN_SERVICE_DRAFT_ITEM],
-  athlete: [TRAINING_SESSION_ITEM, PUBLISHED_EVENT_ITEM, REGISTRATION_ITEM, ASSOCIATED_SERVICE_ITEM],
+  athlete: [
+    TRAINING_SESSION_ITEM,
+    PUBLISHED_EVENT_ITEM,
+    REGISTRATION_ITEM,
+    ASSOCIATED_SERVICE_ITEM,
+  ],
 };
 
 /** `sources[]` con todas las fuentes `OK`, salvo las indicadas. */

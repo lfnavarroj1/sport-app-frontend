@@ -58,7 +58,12 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
     page,
   }) => {
     const simulation = await loginAs(page, 'organizer');
-    await openCalendar(page, 'integrated-calendar', /\/organizador\/calendario$/, 'Calendario integrado');
+    await openCalendar(
+      page,
+      'integrated-calendar',
+      /\/organizador\/calendario$/,
+      'Calendario integrado',
+    );
     await expect(page.getByTestId('integrated-browser-zone')).toContainText('America/Bogota');
     await listMarch(page);
 
@@ -90,10 +95,17 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
   test('vista de mes: cada elemento en su día y navegación entre meses', async ({ page }) => {
     await page.clock.setFixedTime(new Date('2027-03-15T17:00:00Z'));
     const simulation = await loginAs(page, 'organizer');
-    await openCalendar(page, 'integrated-calendar', /\/organizador\/calendario$/, 'Calendario integrado');
+    await openCalendar(
+      page,
+      'integrated-calendar',
+      /\/organizador\/calendario$/,
+      'Calendario integrado',
+    );
 
     await expect(page.getByTestId('integrated-month-label')).toHaveText(/marzo 2027/i);
-    await expect(page.locator('td[data-day="2027-03-07"]')).toContainText('Media maratón de Bogotá');
+    await expect(page.locator('td[data-day="2027-03-07"]')).toContainText(
+      'Media maratón de Bogotá',
+    );
     await expect(page.locator('td[data-day="2027-03-19"]')).toContainText(
       'Carrera de medianoche de Madrid',
     );
@@ -111,7 +123,12 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
     page,
   }) => {
     await loginAs(page, 'service_provider');
-    await openCalendar(page, 'integrated-calendar', /\/profesional\/calendario$/, 'Calendario integrado');
+    await openCalendar(
+      page,
+      'integrated-calendar',
+      /\/profesional\/calendario$/,
+      'Calendario integrado',
+    );
     await listMarch(page);
 
     await expect(titles(page)).toHaveText([
@@ -176,7 +193,12 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
   }) => {
     const simulation = await loginAs(page, 'organizer');
     simulation.next = INTEGRATED_CALENDAR_RESPONSES.upstreamTimeout;
-    await openCalendar(page, 'integrated-calendar', /\/organizador\/calendario$/, 'Calendario integrado');
+    await openCalendar(
+      page,
+      'integrated-calendar',
+      /\/organizador\/calendario$/,
+      'Calendario integrado',
+    );
 
     const error = page.getByTestId('state-error');
     await expect(error).toContainText('3b8d2f6a-9c1e-4d7b-a5f3-2e8c6a4d1b9f');
@@ -188,7 +210,12 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
     page,
   }) => {
     const simulation = await loginAs(page, 'service_provider');
-    await openCalendar(page, 'integrated-calendar', /\/profesional\/calendario$/, 'Calendario integrado');
+    await openCalendar(
+      page,
+      'integrated-calendar',
+      /\/profesional\/calendario$/,
+      'Calendario integrado',
+    );
     await expect(page.getByTestId('integrated-sources')).toBeVisible();
     const listed = page.waitForResponse((r) => r.url().includes('/v1/me/integrated-calendar'));
     await page.getByRole('radio', { name: 'Lista' }).click();

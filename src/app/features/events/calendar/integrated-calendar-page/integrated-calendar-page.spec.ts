@@ -11,7 +11,11 @@ import { provideTranslateTesting } from '../../../../../testing/translate-testin
 import { IntegratedCalendarResponseDto } from '../../../../core/api/bff-web/integrated-calendar.api';
 import { DEFAULT_LANGUAGE } from '../../../../core/i18n/i18n.providers';
 import { ActorType, SessionStore } from '../../../../core/session/session.store';
-import { CalendarPeriod, localDayKey, monthPeriod } from '../../event-calendar/event-calendar.model';
+import {
+  CalendarPeriod,
+  localDayKey,
+  monthPeriod,
+} from '../../event-calendar/event-calendar.model';
 import { IntegratedCalendarGateway } from '../integrated-calendar.gateway';
 import { IntegratedCalendar, toIntegratedCalendar } from '../integrated-calendar.model';
 import { IntegratedCalendarPage } from './integrated-calendar-page';
@@ -112,9 +116,9 @@ describe('IntegratedCalendarPage (HU018)', () => {
   }
 
   function listedTitles(): string[] {
-    return [...element.querySelectorAll('[data-testid="integrated-list"] .calendar-item__title')].map(
-      (node) => node.textContent?.trim() ?? '',
-    );
+    return [
+      ...element.querySelectorAll('[data-testid="integrated-list"] .calendar-item__title'),
+    ].map((node) => node.textContent?.trim() ?? '');
   }
 
   beforeEach(() => {
@@ -190,7 +194,9 @@ describe('IntegratedCalendarPage (HU018)', () => {
         'Valoración deportiva',
       ]);
       const sources = [
-        ...element.querySelectorAll('[data-testid="integrated-list"] [data-testid="calendar-item-source"]'),
+        ...element.querySelectorAll(
+          '[data-testid="integrated-list"] [data-testid="calendar-item-source"]',
+        ),
       ].map((node) => node.textContent?.trim());
       expect(sources).toEqual([
         'Sesiones de mis planes',
@@ -228,7 +234,9 @@ describe('IntegratedCalendarPage (HU018)', () => {
         await settle();
       }
 
-      expect(text('integrated-no-source')).toBe('Elige al menos una fuente para ver sus actividades.');
+      expect(text('integrated-no-source')).toBe(
+        'Elige al menos una fuente para ver sus actividades.',
+      );
       expect(testId('integrated-empty')).toBeNull();
     });
   });

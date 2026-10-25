@@ -51,7 +51,9 @@
 @if (entry.timeZone; as timeZone) {
   <span class="calendar-item__zone" data-testid="calendar-item-zone">
     @if (zonedStart(); as local) {
-      {{ 'events.integratedCalendar.item.zoneWithTime' | translate: { zone: timeZone, time: local } }}
+      {{
+        'events.integratedCalendar.item.zoneWithTime' | translate: { zone: timeZone, time: local }
+      }}
     } @else {
       {{ 'events.integratedCalendar.item.zone' | translate: { zone: timeZone } }}
     }

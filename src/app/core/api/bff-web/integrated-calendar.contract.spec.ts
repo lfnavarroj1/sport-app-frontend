@@ -80,9 +80,9 @@ describe('Contrato bff-web: operación de HU018', () => {
 
   it('se autentica con Authorization y recibe el periodo `from`/`to`', () => {
     const parameters = operation.parameters ?? [];
-    expect(
-      parameters.filter((p) => p.in === 'header').map((p) => p.name.toLowerCase()),
-    ).toEqual(['authorization']);
+    expect(parameters.filter((p) => p.in === 'header').map((p) => p.name.toLowerCase())).toEqual([
+      'authorization',
+    ]);
     expect(parameters.filter((p) => p.in === 'query').map((p) => p.name)).toEqual(['from', 'to']);
   });
 
@@ -149,7 +149,9 @@ describe('Contrato bff-web: operación de HU018', () => {
       if (response.status === 200) {
         const body = response.body as IntegratedCalendarResponseDto;
         body.items.forEach((item, index) =>
-          expect(validateAgainstSchema(contract, itemSchema(item.source), item, `$.items[${index}]`))
+          expect(
+            validateAgainstSchema(contract, itemSchema(item.source), item, `$.items[${index}]`),
+          )
             .withContext(item.item_id)
             .toEqual([]),
         );

@@ -187,7 +187,9 @@ export class BffWebIntegratedCalendarApi {
       this.bffWebUrl.resolve('v1/me/integrated-calendar'),
       {
         headers: new HttpHeaders({ Authorization: `Bearer ${accessToken}` }),
-        params: new HttpParams({ encoder: STRICT_CODEC }).set('from', query.from).set('to', query.to),
+        params: new HttpParams({ encoder: STRICT_CODEC })
+          .set('from', query.from)
+          .set('to', query.to),
       },
     );
   }

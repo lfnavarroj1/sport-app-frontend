@@ -116,7 +116,11 @@
       <app-async-state [state]="state()" (retry)="load()">
         @if (calendar(); as data) {
           @if (incomplete().length > 0) {
-            <div class="integrated-calendar__notice" role="alert" data-testid="integrated-incomplete">
+            <div
+              class="integrated-calendar__notice"
+              role="alert"
+              data-testid="integrated-incomplete"
+            >
               <p class="integrated-calendar__notice-title">
                 {{ 'events.integratedCalendar.incomplete.title' | translate }}
               </p>
@@ -127,8 +131,11 @@
                       'events.integratedCalendar.incomplete.item'
                         | translate
                           : {
-                              source: ('events.integratedCalendar.sources.' + source.name | translate),
-                              status: ('events.integratedCalendar.sourceStatus.' + source.status | translate),
+                              source:
+                                ('events.integratedCalendar.sources.' + source.name | translate),
+                              status:
+                                ('events.integratedCalendar.sourceStatus.' + source.status
+                                | translate),
                             }
                     }}
                   </li>
@@ -142,7 +149,11 @@
           }
 
           @if (truncated().length > 0) {
-            <div class="integrated-calendar__notice" role="status" data-testid="integrated-truncated">
+            <div
+              class="integrated-calendar__notice"
+              role="status"
+              data-testid="integrated-truncated"
+            >
               <p class="integrated-calendar__notice-title">
                 {{ 'events.integratedCalendar.truncated.title' | translate }}
               </p>

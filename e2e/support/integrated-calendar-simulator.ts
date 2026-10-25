@@ -72,7 +72,10 @@ export async function simulateIntegratedCalendar(
         return fulfill(route, invalid('to', 'out_of_range'));
       }
       const items = (ACTOR_ITEMS[actorType] ?? []).filter((item) => {
-        const start = item.starts_at === null ? Date.parse(`${item.occurs_on}T12:00:00Z`) : Date.parse(item.starts_at);
+        const start =
+          item.starts_at === null
+            ? Date.parse(`${item.occurs_on}T12:00:00Z`)
+            : Date.parse(item.starts_at);
         return start >= from && start < to;
       });
       await fulfill(route, {

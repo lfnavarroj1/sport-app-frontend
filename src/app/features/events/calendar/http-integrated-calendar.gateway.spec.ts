@@ -60,7 +60,10 @@ describe('HttpIntegratedCalendarGateway (HU018, contrato bff-web 0.30.0)', () =>
   function flush(response: SimulatedResponse): void {
     http
       .expectOne((r) => r.url === URL)
-      .flush(response.body, { status: response.status, statusText: String(response.status) });
+      .flush(response.body as object, {
+        status: response.status,
+        statusText: String(response.status),
+      });
   }
 
   it('consulta el periodo con el access token y transforma la respuesta', async () => {

@@ -168,7 +168,11 @@ async function publish(session: ApiSession, eventId: string): Promise<void> {
 }
 
 /** Crea por API un servicio en borrador con un horario (HU015, ADR-027). */
-async function createService(session: ApiSession, name: string, startsAtMs: number): Promise<string> {
+async function createService(
+  session: ApiSession,
+  name: string,
+  startsAtMs: number,
+): Promise<string> {
   const created = await session.api.post('/v1/services', {
     headers: { Authorization: `Bearer ${session.token}`, 'Idempotency-Key': randomUUID() },
     data: {
@@ -226,7 +230,9 @@ test.describe('HU018 Integrar servicios y eventos en calendario contra el BFF we
     const today = Date.now();
     const days = { from: bogotaDay(today + DAY_MS), to: bogotaDay(today + 30 * DAY_MS) };
     const at = (offsetDays: number, hour: number) =>
-      Date.parse(`${bogotaDay(today + offsetDays * DAY_MS)}T${String(hour).padStart(2, '0')}:00:00-05:00`);
+      Date.parse(
+        `${bogotaDay(today + offsetDays * DAY_MS)}T${String(hour).padStart(2, '0')}:00:00-05:00`,
+      );
 
     const ownerEmail = uniqueEmail('organizador');
     const otherEmail = uniqueEmail('otro-organizador');
@@ -254,9 +260,9 @@ test.describe('HU018 Integrar servicios y eventos en calendario contra el BFF we
     await login(ownerPage, ownerEmail, /\/organizador\/inicio$/);
     await showUntil(ownerPage, 'integrated-calendar', days, [draftName, publishedName]);
     const ownList = ownerPage.getByTestId('integrated-list');
-    await expect(ownList.locator('[data-source="OWN_EVENT"]', { hasText: draftName })).toContainText(
-      'Borrador',
-    );
+    await expect(
+      ownList.locator('[data-source="OWN_EVENT"]', { hasText: draftName }),
+    ).toContainText('Borrador');
     await expect(
       ownList.locator('[data-source="OWN_EVENT"]', { hasText: publishedName }),
     ).toContainText('Zona: America/Bogota');

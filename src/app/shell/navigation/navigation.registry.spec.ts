@@ -273,8 +273,8 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       );
 
       expect(provider).toEqual(
-      jasmine.arrayContaining(['service-create', 'service-publish', 'integrated-calendar']),
-    );
+        jasmine.arrayContaining(['service-create', 'service-publish', 'integrated-calendar']),
+      );
       expect(provider).not.toContain('event-create');
       expect(provider).not.toContain('plan');
     });

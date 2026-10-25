@@ -230,7 +230,12 @@ export function integratedMonthWeeks(
     for (let i = 0; i < 7; i++) {
       const key = localDayKey(cursor);
       const inMonth = cursor.getMonth() === month;
-      week.push({ key, day: cursor.getDate(), inMonth, items: inMonth ? (byDay.get(key) ?? []) : [] });
+      week.push({
+        key,
+        day: cursor.getDate(),
+        inMonth,
+        items: inMonth ? (byDay.get(key) ?? []) : [],
+      });
       cursor.setDate(cursor.getDate() + 1);
     }
     weeks.push(week);
