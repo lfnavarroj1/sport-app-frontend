@@ -1,5 +1,5 @@
 /**
- * Simulador de HU024 derivado del contrato bff-web 0.16.0
+ * Simulador de HU024 derivado del contrato bff-web 0.26.0
  * (`src/app/core/api/contracts/bff-web.openapi.json`) y de los ejemplos de
  * ADR-033: `GET /v1/me/events`, `GET /v1/events/{event_id}` y
  * `POST /v1/events/{event_id}/publish`. Lo usan las pruebas unitarias y
@@ -9,6 +9,7 @@
  * Archivo sin dependencias de Angular para poder importarlo desde Playwright.
  */
 import { SIMULATED_EVENT_ID, SIMULATED_ORGANIZER_ID } from './create-event.fixtures';
+import { EventFeeFixture } from './event-calendar.fixtures';
 import { SimulatedResponse } from './register-user.fixtures';
 
 export const MY_EVENTS_PATH = '/v1/me/events';
@@ -50,6 +51,10 @@ export function organizerEvent(index: number, status: Status = 'DRAFT') {
     created_at: '2026-10-12T21:00:00Z',
     updated_at: published ? '2026-10-12T23:10:00Z' : '2026-10-12T21:00:00Z',
     published_at: published ? '2026-10-12T23:10:00Z' : null,
+    // Desde 0.26.0 (HU025): tarifa informativa y conteo de inscripciones del propietario.
+    fee: null as EventFeeFixture | null,
+    fee_updated_at: null as string | null,
+    registration_count: 0,
   };
 }
 
@@ -76,14 +81,18 @@ export function eventDetail(event: ReturnType<typeof organizerEvent>) {
     capacity: event.capacity,
     status: event.status,
     version: event.version,
-    fee: null,
+    fee: event.fee,
+    registration_count: event.registration_count as number | null,
   };
 }
 
 /** Respuesta `200` de publicar: el agregado de ADR-033 con versión + 1 y `published_at`. */
 export function publishedEvent(event: ReturnType<typeof organizerEvent>) {
+  // `EventAggregateResponse` no incluye `registration_count` (solo `OwnEventResponse`).
+  const aggregate: Partial<typeof event> = { ...event };
+  delete aggregate.registration_count;
   return {
-    ...event,
+    ...(aggregate as Omit<typeof event, 'registration_count'>),
     status: 'PUBLISHED' as const,
     version: event.version + 1,
     updated_at: '2026-10-18T15:00:00Z',

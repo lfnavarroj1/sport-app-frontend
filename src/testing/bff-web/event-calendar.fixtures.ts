@@ -43,7 +43,14 @@ function published(
     time_zone: timeZone,
     status: 'PUBLISHED' as const,
     version: 2,
+    fee: null as EventFeeFixture | null,
   };
+}
+
+/** Esquema `EventFee` (bff-web 0.26.0, HU025). */
+export interface EventFeeFixture {
+  readonly amount: string;
+  readonly currency: string;
 }
 
 const MARCH_1 = Date.UTC(2027, 2, 1);
