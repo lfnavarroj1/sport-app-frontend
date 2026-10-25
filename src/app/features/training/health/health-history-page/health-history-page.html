@@ -1,0 +1,165 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.health.title.' + scope.kind | translate }}</h1>
+    <p>{{ 'training.health.intro.' + scope.kind | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <div class="health__notice" role="note" data-testid="health-sensitivity-notice">
+        <p class="health__notice-title">{{ 'training.health.notice.title' | translate }}</p>
+        <p>{{ 'training.health.notice.' + scope.kind | translate }}</p>
+        <p>{{ 'training.health.notice.noDiagnosis' | translate }}</p>
+      </div>
+
+      @if (scope.kind === 'athlete') {
+        <p class="health__back">
+          <a routerLink=".." data-testid="health-choose-athlete">{{
+            'training.health.athletes.chooseAnother' | translate
+          }}</a>
+        </p>
+      }
+
+      <form
+        class="history__filters"
+        [formGroup]="form"
+        (ngSubmit)="applyFilters()"
+        novalidate
+        [attr.aria-label]="'training.health.filters.label' | translate"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.health.filters.from' | translate }}</mat-label>
+          <input matInput type="date" formControlName="from" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.health.filters.to' | translate }}</mat-label>
+          <input matInput type="date" formControlName="to" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.health.filters.type' | translate }}</mat-label>
+          <mat-select formControlName="type">
+            <mat-option [value]="null">{{
+              'training.health.filters.allTypes' | translate
+            }}</mat-option>
+            @for (type of typeOptions; track type) {
+              <mat-option [value]="type">{{ 'training.health.types.' + type | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'training.health.filters.severity' | translate }}</mat-label>
+          <mat-select formControlName="severity">
+            <mat-option [value]="null">{{
+              'training.health.filters.allSeverities' | translate
+            }}</mat-option>
+            @for (severity of severityOptions; track severity) {
+              <mat-option [value]="severity">{{
+                'training.health.severities.' + severity | translate
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="history__filter-actions">
+          <button mat-flat-button type="submit">
+            {{ 'training.health.filters.apply' | translate }}
+          </button>
+          <button mat-stroked-button type="button" (click)="clearFilters()">
+            {{ 'training.health.filters.clear' | translate }}
+          </button>
+        </div>
+        <p class="history__hint">{{ 'training.health.filters.hint' | translate }}</p>
+      </form>
+
+      @if (ownError(); as error) {
+        <div class="training-page__error" role="alert" data-testid="health-own-error">
+          <p>{{ error.key | translate }}</p>
+          @if (error.correlationId) {
+            <p class="training-page__reference">
+              {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+            </p>
+          }
+        </div>
+      } @else {
+        <app-async-state [state]="state()" [emptyMessageKey]="emptyKey()" (retry)="loadFirst()">
+          <div class="history__table-wrapper">
+            <table
+              #table
+              class="history__table"
+              data-testid="health-table"
+              [attr.aria-label]="'training.health.tableLabel' | translate"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'training.health.columns.occurredAt' | translate }}</th>
+                  <th scope="col">{{ 'training.health.columns.type' | translate }}</th>
+                  <th scope="col">{{ 'training.health.columns.bodyArea' | translate }}</th>
+                  <th scope="col">{{ 'training.health.columns.severity' | translate }}</th>
+                  <th scope="col">{{ 'training.health.columns.recovery' | translate }}</th>
+                  <th scope="col">{{ 'training.health.columns.status' | translate }}</th>
+                  <th scope="col">{{ 'training.health.columns.session' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (report of reports(); track report.id) {
+                  @let recovery = recoveryText(report.expectedRecoveryDays);
+                  <tr tabindex="-1" [attr.data-report]="report.id">
+                    <td>{{ report.occurredAt | date: 'medium' }}</td>
+                    <td>{{ 'training.health.types.' + report.type | translate }}</td>
+                    <td>{{ 'training.health.bodyAreas.' + report.bodyArea | translate }}</td>
+                    <td>{{ 'training.health.severities.' + report.severity | translate }}</td>
+                    <td>{{ recovery.key | translate: recovery.params }}</td>
+                    <td>{{ 'training.health.statuses.' + report.status | translate }}</td>
+                    <td>
+                      {{
+                        (report.sessionId
+                          ? 'training.health.session.yes'
+                          : 'training.health.session.no'
+                        ) | translate
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <p class="history__count" role="status" data-testid="health-count">
+            {{
+              (nextCursor() ? 'training.health.countMore' : 'training.health.countAll')
+                | translate: { count: reports().length }
+            }}
+          </p>
+
+          @if (moreError(); as error) {
+            <div class="training-page__error" role="alert" data-testid="health-more-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p class="training-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (nextCursor()) {
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="health-load-more"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
+              {{
+                (loadingMore()
+                  ? 'common.state.loading'
+                  : moreError()
+                    ? 'common.state.retry'
+                    : 'training.health.actions.loadMore'
+                ) | translate
+              }}
+            </button>
+          }
+        </app-async-state>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

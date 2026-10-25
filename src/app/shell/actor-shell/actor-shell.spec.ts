@@ -19,6 +19,7 @@ import { APP_CONFIG, AppConfig } from '../../core/config/app-config';
 import { SessionAccess } from '../../core/session/session-access.store';
 import { ActorType, SessionStore } from '../../core/session/session.store';
 import { ViewState } from '../../shared/ui/view-state';
+import { NAVIGATION, NavItem } from '../navigation/navigation.registry';
 import { ActorShell } from './actor-shell';
 
 /** Vista del BFF que corresponde a cada actor en el simulador. */
@@ -31,6 +32,19 @@ const READY: Record<ActorType, ViewState<SessionAccess>> = {
     SERVICE_PROVIDER_WEB_PERMISSIONS,
   ),
 };
+
+/**
+ * Desde HU012 y HU013 ninguna opción web es «Próximamente». Para conservar la
+ * prueba del renderizado, durante la prueba se marca como no disponible una
+ * opción real del profesional (como si su HU no estuviera en la web) y se
+ * restaura el registro al terminar. No cambia el código de producción.
+ */
+function markUpcoming(actor: ActorType, id: string): () => void {
+  const navigation = NAVIGATION[actor] as { items: readonly NavItem[] };
+  const original = navigation.items;
+  navigation.items = original.map((item) => (item.id === id ? { ...item, available: false } : item));
+  return () => (navigation.items = original);
+}
 
 describe('ActorShell (ADR-025, HU003)', () => {
   let session: SessionStore;
@@ -78,6 +92,14 @@ describe('ActorShell (ADR-025, HU003)', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  /** Restaura el registro si la prueba marcó una opción como «Próximamente». */
+  let restoreNavigation: (() => void) | null = null;
+
+  afterEach(() => {
+    restoreNavigation?.();
+    restoreNavigation = null;
+  });
+
   afterEach(() => session?.end());
 
   const item = (element: HTMLElement, id: string): HTMLElement | null =>
@@ -113,6 +135,7 @@ describe('ActorShell (ADR-025, HU003)', () => {
   });
 
   it('las opciones «Próximamente» no son enlaces ni acciones', async () => {
+    restoreNavigation = markUpcoming('service_provider', 'health-history');
     const element = await render('service_provider');
     const upcoming = item(element, 'health-history');
 

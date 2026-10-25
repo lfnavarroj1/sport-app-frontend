@@ -1,0 +1,20 @@
+.health__notice {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface-container-low);
+
+  p {
+    margin: 0.25rem 0;
+    font: var(--mat-sys-body-medium);
+  }
+
+  .health__notice-title {
+    font: var(--mat-sys-title-small);
+  }
+}
+
+.health__back {
+  margin: 0 0 1rem;
+}

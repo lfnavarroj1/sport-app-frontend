@@ -1,0 +1,74 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.health.athletes.title' | translate }}</h1>
+    <p>{{ 'training.health.athletes.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      @if (permissionDenied()) {
+        <div class="training-page__error" role="alert" data-testid="health-athletes-permission-denied">
+          <p>{{ 'training.health.athletes.permissionDenied' | translate }}</p>
+        </div>
+      } @else {
+        <app-async-state
+          [state]="state()"
+          emptyMessageKey="training.health.athletes.empty"
+          (retry)="loadFirst()"
+        >
+          <ul
+            #list
+            class="athletes__list"
+            data-testid="health-athletes-list"
+            [attr.aria-label]="'training.health.athletes.listLabel' | translate"
+          >
+            @for (athlete of athletes(); track athlete.id) {
+              <li class="athletes__item" [attr.data-athlete]="athlete.id">
+                <a class="athletes__link" [routerLink]="[athlete.id]">
+                  <span class="athletes__name">{{ athlete.fullName }}</span>
+                  <span class="athletes__email">{{ athlete.email }}</span>
+                  <span class="athletes__since">{{
+                    'training.history.athletes.authorizedAt'
+                      | translate: { date: (athlete.authorizedAt | date: 'medium') }
+                  }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+
+          <p class="athletes__count" role="status" data-testid="health-athletes-count">
+            {{
+              (nextCursor()
+                ? 'training.history.athletes.countMore'
+                : 'training.history.athletes.countAll'
+              ) | translate: { count: athletes().length }
+            }}
+          </p>
+
+          @if (moreError(); as error) {
+            <div class="training-page__error" role="alert" data-testid="health-athletes-more-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p class="training-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (nextCursor()) {
+            <button mat-stroked-button type="button" [disabled]="loadingMore()" (click)="loadMore()">
+              {{
+                (loadingMore()
+                  ? 'common.state.loading'
+                  : moreError()
+                    ? 'common.state.retry'
+                    : 'training.health.actions.loadMore'
+                ) | translate
+              }}
+            </button>
+          }
+        </app-async-state>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

@@ -11,7 +11,21 @@ import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { SessionAccess } from '../../core/session/session-access.store';
 import { ActorType, SessionStore } from '../../core/session/session.store';
 import { ViewState } from '../../shared/ui/view-state';
+import { NAVIGATION, NavItem } from '../navigation/navigation.registry';
 import { ActorHomePage } from './actor-home-page';
+
+/**
+ * Desde HU012 y HU013 ninguna opción web es «Próximamente». Para conservar la
+ * prueba del renderizado, durante la prueba se marca como no disponible una
+ * opción real del profesional (como si su HU no estuviera en la web) y se
+ * restaura el registro al terminar. No cambia el código de producción.
+ */
+function markUpcoming(actor: ActorType, id: string): () => void {
+  const navigation = NAVIGATION[actor] as { items: readonly NavItem[] };
+  const original = navigation.items;
+  navigation.items = original.map((item) => (item.id === id ? { ...item, available: false } : item));
+  return () => (navigation.items = original);
+}
 
 describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
   let session: SessionStore;
@@ -44,6 +58,14 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  /** Restaura el registro si la prueba marcó una opción como «Próximamente». */
+  let restoreNavigation: (() => void) | null = null;
+
+  afterEach(() => {
+    restoreNavigation?.();
+    restoreNavigation = null;
+  });
+
   afterEach(() => session.end());
 
   const features = (element: HTMLElement): (string | null)[] =>
@@ -71,6 +93,7 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
   });
 
   it('lista las funciones confirmadas del rol marcadas como «Próximamente»', async () => {
+    restoreNavigation = markUpcoming('service_provider', 'health-history');
     const element = await render(
       'service_provider',
       accessReady('service_provider', 'NOT_APPLICABLE', SERVICE_PROVIDER_WEB_PERMISSIONS),

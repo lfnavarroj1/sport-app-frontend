@@ -83,6 +83,15 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU012: «Mi salud», historial propio de molestias, incapacidades o lesiones
+      // (ADR-037). Opción base, sin capacidad de plan.
+      path: 'salud',
+      loadChildren: () =>
+        import('./features/training/health/health.routes').then(
+          (module) => module.ATHLETE_HEALTH_ROUTES,
+        ),
+    },
+    {
       // HU011: historial propio de entrenamiento.
       path: 'historial/entrenamientos',
       loadChildren: () =>
@@ -249,6 +258,14 @@ export const routes: Routes = [
       loadChildren: () =>
         import('./features/training/history/history.routes').then(
           (module) => module.PROFESSIONAL_HISTORY_ROUTES,
+        ),
+    },
+    {
+      // HU012: historial de salud de un deportista que autorizó al profesional (ADR-037).
+      path: 'historial/salud',
+      loadChildren: () =>
+        import('./features/training/health/health.routes').then(
+          (module) => module.PROFESSIONAL_HEALTH_HISTORY_ROUTES,
         ),
     },
     {

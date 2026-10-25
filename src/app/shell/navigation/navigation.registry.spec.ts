@@ -34,13 +34,14 @@ function accessOf(
 const visibleIds = (actor: ActorType, access: SessionAccess | null): string[] =>
   visibleItems(actor, access).map((item) => item.id);
 
-/** Opciones del deportista sin permiso ni capacidad; HU011, HU020 y HU014 no exigen capacidad de plan. */
+/** Opciones del deportista sin permiso ni capacidad; HU011, HU012, HU020 y HU014 no exigen capacidad de plan. */
 const ATHLETE_BASE = [
   'home',
   'profile',
   'logout',
   'plan',
   'athlete-training-history',
+  'athlete-health',
   'athlete-services',
   'athlete-nutrition',
 ];
@@ -63,6 +64,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['profile', '/deportista/perfil', 'HU005'],
       ['plan', '/deportista/plan', 'HU016'],
       ['athlete-training-history', '/deportista/historial/entrenamientos', 'HU011'],
+      ['athlete-health', '/deportista/salud', 'HU012'],
       ['athlete-services', '/deportista/servicios', 'HU020'],
       ['athlete-nutrition', '/deportista/alimentacion', 'HU014'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
@@ -87,10 +89,56 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
       ['training-templates', '/profesional/entrenamientos/plantillas', 'HU028'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
+      ['health-history', '/profesional/historial/salud', 'HU012'],
       ['nutrition-plans', '/profesional/alimentacion/planes', 'HU014'],
       ['integrated-calendar', '/profesional/calendario', 'HU018'],
       ['profile', '/profesional/perfil', 'HU002'],
     ]);
+  });
+
+  it('con HU012 ninguna opción web queda «Próximamente»: todas sus HU ya están en la web', () => {
+    for (const actor of Object.keys(NAVIGATION) as ActorType[]) {
+      const upcoming = NAVIGATION[actor].items.filter((item) => !item.available);
+
+      expect(upcoming.map((item) => item.id))
+        .withContext(actor)
+        .toEqual(actor === 'service_provider' ? ['nutrition-history'] : []);
+    }
+  });
+
+  it('HU012: «Mi salud» es opción base; el historial del profesional exige health.history.view_assigned', () => {
+    const find = (actor: ActorType, id: string) =>
+      NAVIGATION[actor].items.find((item) => item.id === id)!;
+
+    expect(find('athlete', 'athlete-health')).toEqual(
+      jasmine.objectContaining({
+        group: 'health',
+        route: '/deportista/salud',
+        permission: null,
+        capability: null,
+        hu: 'HU012',
+        available: true,
+      }),
+    );
+    expect(find('service_provider', 'health-history')).toEqual(
+      jasmine.objectContaining({
+        group: 'health',
+        route: '/profesional/historial/salud',
+        permission: 'health.history.view_assigned',
+        hu: 'HU012',
+        available: true,
+      }),
+    );
+    expect(visibleIds('athlete', null)).toContain('athlete-health');
+    expect(visibleIds('service_provider', null)).not.toContain('health-history');
+    expect(
+      visibleIds(
+        'service_provider',
+        accessOf('service_provider', 'NOT_APPLICABLE', ['health.history.view_assigned'], []),
+      ),
+    ).toContain('health-history');
+    expect(ids('organizer')).not.toContain('health-history');
+    expect(ids('organizer')).not.toContain('athlete-health');
   });
 
   it('HU004: «Cerrar sesión» es una acción disponible para los tres actores web, sin ruta ni permiso', () => {
@@ -408,6 +456,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       'main',
       'services',
       'training',
+      'health',
       'nutrition',
       'account',
     ]);
