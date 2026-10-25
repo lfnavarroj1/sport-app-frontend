@@ -273,9 +273,9 @@ test.describe('HU028 Plantillas de entrenamiento del profesional (simulador del 
     ]);
     await openTemplates(page);
     await expect(items(page)).toHaveCount(20);
-    const firstPage = (await (await simulation.listRequests[0].response())!.json()) as {
-      next_cursor: string;
-    };
+    // El cursor sale de la regla del simulador; leer el cuerpo de una respuesta
+    // simulada después de renderizar es inestable en CI.
+    const firstPage = { next_cursor: 'plantillas-desde-20' };
 
     // Un fallo de la página siguiente no borra lo ya cargado.
     simulation.nextList.push(MY_TEMPLATES_RESPONSES.upstreamUnavailable);
