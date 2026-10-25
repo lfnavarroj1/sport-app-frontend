@@ -91,7 +91,7 @@ export function foodIntakes(count: number, offset = 0) {
 export const INTAKE_WITH_UNKNOWN_FOOD = {
   ...foodIntake(0),
   intake_id: '1c3e5a7b-9d1f-4c3e-8a5b-000000000001',
-  items: [{ food_code: 'COFFEE', quantity: '250.0', unit: 'ML' }],
+  items: [{ food_code: 'COFFEE', quantity: '250.0', unit: 'ML' as const }],
 };
 
 function error(
