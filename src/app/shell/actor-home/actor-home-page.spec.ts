@@ -126,6 +126,7 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     );
     expect(features(element)).toEqual([
       'athlete-training-history',
+      'athlete-health',
       'athlete-services',
       'athlete-nutrition',
       'athlete-training-plans',
@@ -137,9 +138,10 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     const element = await render('athlete', accessReady('athlete', 'PROVISIONING'));
 
     expect(planText(element)).toContain('Estamos activando tu plan');
-    // Solo las funciones que no dependen del plan (HU011, HU020 y HU014).
+    // Solo las funciones que no dependen del plan (HU011, HU012, HU020 y HU014).
     expect(features(element)).toEqual([
       'athlete-training-history',
+      'athlete-health',
       'athlete-services',
       'athlete-nutrition',
     ]);
@@ -158,6 +160,7 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     expect(planText(failed)).toBe('No pudimos consultar tu plan. Reintenta desde el menú.');
     expect(features(failed)).toEqual([
       'athlete-training-history',
+      'athlete-health',
       'athlete-services',
       'athlete-nutrition',
     ]);
