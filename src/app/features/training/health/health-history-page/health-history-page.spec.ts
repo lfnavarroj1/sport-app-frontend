@@ -340,9 +340,9 @@ describe('HealthHistoryPage (HU012)', () => {
       expect(
         element.querySelector('[data-testid="health-sensitivity-notice"]')?.textContent,
       ).toContain('mientras el deportista mantenga tu autorización');
-      expect(
-        element.querySelector('[data-testid="health-choose-athlete"]')?.textContent,
-      ).toContain('Elegir otro deportista');
+      const choose = element.querySelector('[data-testid="health-choose-athlete"]');
+      expect(choose?.textContent).toContain('Elegir otro deportista');
+      expect(choose?.getAttribute('href')).toBe('/profesional/historial/salud');
     });
 
     it('CA4: el deportista sin reportes se informa como tal', async () => {
