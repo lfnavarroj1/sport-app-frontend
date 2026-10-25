@@ -1,4 +1,4 @@
-import { BrowserContext, Request, Route } from '@playwright/test';
+import { BrowserContext, Page, Request, Route } from '@playwright/test';
 
 import {
   ACCOUNT_STATEMENT_PATH,
@@ -10,6 +10,7 @@ import {
   statementPage,
   statementResponse,
 } from '../../src/testing/bff-web/account-statement.fixtures';
+import { FREE_SUBSCRIPTION } from '../../src/testing/bff-web/affiliation.fixtures';
 import { SimulatedResponse } from '../../src/testing/bff-web/register-user.fixtures';
 import { AffiliationSimulation } from './affiliation-simulator';
 
@@ -30,6 +31,14 @@ export interface AccountStatementSimulation {
   /** Respuestas de las próximas consultas, en orden; luego, el comportamiento normal. */
   readonly next: SimulatedResponse[];
 }
+
+/** Deportista recién registrado: `FREE` activo, sin compromisos. */
+export const ACTIVE_FREE_DATA: StatementData = {
+  status: 'ACTIVE',
+  subscription: FREE_SUBSCRIPTION,
+  commitments: [],
+  movements: [FREE_ACTIVATED_MOVEMENT],
+};
 
 /** Organizador y profesional: `NOT_APPLICABLE` con listas vacías (CA2). */
 export const NOT_APPLICABLE_DATA: StatementData = {
@@ -70,18 +79,18 @@ export function athleteDataFrom(affiliation: AffiliationSimulation): () => State
 
 /**
  * Reemplaza `GET /v1/me/account-statement` con el simulador del contrato bff-web
- * 0.28.0 (ADR-036) en todas las pestañas del contexto. Como el BFF: sin `Bearer`
+ * 0.28.0 (ADR-036); con el contexto como `target`, en todas sus pestañas. Como el BFF: sin `Bearer`
  * responde `401`; `limit` fuera de 1 a 100 o un cursor que no emitió, `422`; pagina
  * por cursor en el orden de los datos; `payments_status` es `NOT_INTEGRATED` y
  * `balance`, `null`. La cuenta es la de la sesión: no hay parámetro de usuario.
  */
 export async function simulateAccountStatement(
-  context: BrowserContext,
+  target: Page | BrowserContext,
   data: () => StatementData,
 ): Promise<AccountStatementSimulation> {
   const simulation: AccountStatementSimulation = { data, requests: [], next: [] };
 
-  await context.route((url) => url.pathname === ACCOUNT_STATEMENT_PATH, async (route) => {
+  await target.route((url) => url.pathname === ACCOUNT_STATEMENT_PATH, async (route) => {
     if (route.request().method() !== 'GET') {
       return route.fallback();
     }
