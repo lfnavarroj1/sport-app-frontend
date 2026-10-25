@@ -173,8 +173,11 @@ test.describe('HU018 Integrar servicios y eventos en calendario (simulador del c
   }) => {
     const simulation = await loginAs(page, 'athlete');
     await openCalendar(page, 'sport-calendar', /\/deportista\/calendario$/, 'Calendario deportivo');
-    // La consulta inicial del mes ya respondió: el parcial es para la de la lista.
+    // Pasar a la lista ya consulta: el parcial se fuerza para la consulta de marzo.
     await expect(page.getByTestId('integrated-sources')).toBeVisible();
+    const listed = page.waitForResponse((r) => r.url().includes('/v1/me/integrated-calendar'));
+    await page.getByRole('radio', { name: 'Lista' }).click();
+    await listed;
     simulation.next = INTEGRATED_CALENDAR_RESPONSES.athletePartial;
     await listMarch(page);
 
