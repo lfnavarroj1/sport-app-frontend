@@ -969,11 +969,59 @@
       },
       "athlete": {
         "title": "Mi alimentación",
-        "intro": "Consulta los planes de alimentación que te asignaron los profesionales que autorizaste.",
+        "intro": "Consulta los planes de alimentación que te asignaron los profesionales que autorizaste y los consumos que registraste en la app móvil.",
         "plansTitle": "Planes de alimentación",
         "empty": "Aún no tienes planes de alimentación. Si un profesional acaba de asignarte uno, aparecerá en unos segundos.",
         "countMore": "Planes mostrados: {{count}}. Hay más disponibles.",
-        "countAll": "Planes mostrados: {{count}}."
+        "countAll": "Planes mostrados: {{count}}.",
+        "nothingYet": "Aún no tienes consumos registrados ni planes de alimentación. Registra tus consumos desde la app móvil."
+      },
+      "intakes": {
+        "title": {
+          "own": "Mis consumos",
+          "athlete": "Consumos del deportista"
+        },
+        "filters": {
+          "label": "Filtros del historial de alimentación",
+          "from": "Desde",
+          "to": "Hasta",
+          "mealType": "Tipo de comida",
+          "allMeals": "Todas las comidas",
+          "apply": "Aplicar filtros",
+          "clear": "Limpiar filtros",
+          "hint": "Las fechas del filtro corresponden al día del consumo en UTC; los consumos se muestran con la fecha y la hora de tu dispositivo."
+        },
+        "empty": {
+          "own": "Aún no tienes consumos registrados. Regístralos desde la app móvil.",
+          "athlete": "Este deportista aún no tiene consumos registrados.",
+          "filtered": "No hay consumos con estos filtros."
+        },
+        "consumedAt": "Consumido a las {{time}}",
+        "countMore": "Consumos mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Consumos mostrados: {{count}}.",
+        "actions": {
+          "loadMore": "Cargar más consumos",
+          "reload": "Volver a cargar desde el inicio"
+        },
+        "errors": {
+          "toBeforeFrom": "La fecha «Hasta» no puede ser anterior a la fecha «Desde».",
+          "invalidCursor": "No se pudo continuar la lista. Vuelve a cargarla desde el inicio.",
+          "athleteNotAuthorized": "No tienes una autorización vigente de este deportista para ver su historial de alimentación."
+        }
+      },
+      "professional": {
+        "athletes": {
+          "title": "Historial de alimentación",
+          "intro": "Elige un deportista que te haya autorizado para consultar los consumos que registró.",
+          "listLabel": "Deportistas que te autorizaron",
+          "empty": "Aún no tienes deportistas que te hayan autorizado. Cuando un deportista te autorice, aparecerá aquí.",
+          "permissionDenied": "Tu cuenta no tiene permiso para consultar la lista de deportistas que te autorizaron."
+        },
+        "history": {
+          "title": "Historial de alimentación del deportista",
+          "intro": "Consumos que registró el deportista, del más reciente al más antiguo. Solo se muestran sus consumos, sin su perfil ni sus hábitos.",
+          "backToAthletes": "Volver a la lista de deportistas"
+        }
       },
       "mealTypes": {
         "BREAKFAST": "Desayuno",

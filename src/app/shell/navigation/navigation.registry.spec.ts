@@ -87,6 +87,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['training-plans', '/profesional/entrenamientos/planes', 'HU010'],
       ['training-templates', '/profesional/entrenamientos/plantillas', 'HU028'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
+      ['nutrition-history', '/profesional/historial/alimentacion', 'HU013'],
       ['nutrition-plans', '/profesional/alimentacion/planes', 'HU014'],
       ['integrated-calendar', '/profesional/calendario', 'HU018'],
       ['profile', '/profesional/perfil', 'HU002'],
