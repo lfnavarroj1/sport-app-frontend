@@ -87,7 +87,14 @@ export const AFTER_UPGRADE_MOVEMENTS = [
     'QUARTERLY',
     '14400.00',
   ),
-  movement(2, 'PLAN_CHANGED', '2026-10-24T15:00:00Z', PREMIUM_SUBSCRIPTION_ID, 'PREMIUM', 'QUARTERLY'),
+  movement(
+    2,
+    'PLAN_CHANGED',
+    '2026-10-24T15:00:00Z',
+    PREMIUM_SUBSCRIPTION_ID,
+    'PREMIUM',
+    'QUARTERLY',
+  ),
   FREE_ACTIVATED_MOVEMENT,
 ];
 
@@ -212,7 +219,12 @@ export const ACCOUNT_STATEMENT_RESPONSES = {
   /** Volvió a `FREE` antes del fin del periodo: el compromiso queda `WAIVED`. */
   backToFree: {
     status: 200,
-    body: statementResponse('ACTIVE', FREE_SUBSCRIPTION, [WAIVED_COMMITMENT], AFTER_DOWNGRADE_MOVEMENTS),
+    body: statementResponse(
+      'ACTIVE',
+      FREE_SUBSCRIPTION,
+      [WAIVED_COMMITMENT],
+      AFTER_DOWNGRADE_MOVEMENTS,
+    ),
   },
   /** CA5: primera página de un historial de 25 movimientos. */
   firstPage: {

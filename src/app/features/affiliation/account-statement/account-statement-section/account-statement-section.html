@@ -14,7 +14,11 @@
       <div [attr.data-statement-status]="data.status" data-testid="account-statement-content">
         @switch (data.status) {
           @case ('PROVISIONING') {
-            <div class="statement__status" role="status" data-testid="account-statement-provisioning">
+            <div
+              class="statement__status"
+              role="status"
+              data-testid="account-statement-provisioning"
+            >
               <p>{{ 'affiliation.statement.provisioning' | translate }}</p>
               <button mat-stroked-button type="button" (click)="load()">
                 {{ 'affiliation.statement.actions.recheck' | translate }}
@@ -22,7 +26,11 @@
             </div>
           }
           @case ('NOT_APPLICABLE') {
-            <p class="statement__status" role="status" data-testid="account-statement-not-applicable">
+            <p
+              class="statement__status"
+              role="status"
+              data-testid="account-statement-not-applicable"
+            >
               {{ 'affiliation.statement.notApplicable' | translate }}
             </p>
           }
@@ -101,7 +109,10 @@
             } @else {
               <ul class="statement__commitments" data-testid="account-statement-commitments">
                 @for (commitment of data.commitments; track commitment.id) {
-                  <li class="statement__commitment" [attr.data-commitment-status]="commitment.status">
+                  <li
+                    class="statement__commitment"
+                    [attr.data-commitment-status]="commitment.status"
+                  >
                     <p class="statement__commitment-head">
                       <strong>
                         @if (planKey(commitment.planCode); as key) {
@@ -112,7 +123,10 @@
                         · {{ 'affiliation.periodicities.' + commitment.periodicity | translate }}
                       </strong>
                       <span class="statement__badge">
-                        {{ 'affiliation.statement.commitments.status.' + commitment.status | translate }}
+                        {{
+                          'affiliation.statement.commitments.status.' + commitment.status
+                            | translate
+                        }}
                       </span>
                     </p>
                     <dl class="statement__facts">
@@ -161,7 +175,9 @@
                       <th scope="col">{{ 'affiliation.statement.movements.date' | translate }}</th>
                       <th scope="col">{{ 'affiliation.statement.movements.type' | translate }}</th>
                       <th scope="col">{{ 'affiliation.statement.movements.plan' | translate }}</th>
-                      <th scope="col">{{ 'affiliation.statement.movements.amount' | translate }}</th>
+                      <th scope="col">
+                        {{ 'affiliation.statement.movements.amount' | translate }}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

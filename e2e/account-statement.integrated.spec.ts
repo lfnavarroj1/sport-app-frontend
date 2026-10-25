@@ -99,7 +99,10 @@ test.describe('HU007 Estado de cuenta contra el BFF web @integrado', () => {
 
     await page.locator('mat-sidenav [data-menu-item="plan"]').click();
     await expect(page).toHaveURL(/\/deportista\/plan$/);
-    await page.locator('[data-plan="PREMIUM"]').getByRole('button', { name: 'Elegir Premium' }).click();
+    await page
+      .locator('[data-plan="PREMIUM"]')
+      .getByRole('button', { name: 'Elegir Premium' })
+      .click();
     await page.getByRole('radio', { name: /^Trimestral/ }).check();
     await button(page, 'Continuar').click();
     const change = waitForOperation(page, 'POST', '/v1/me/subscription/changes');
@@ -133,7 +136,9 @@ test.describe('HU007 Estado de cuenta contra el BFF web @integrado', () => {
       'SportApp no registra pagos',
     );
     await expect(
-      page.locator('[data-testid="account-statement-commitments"] li[data-commitment-status="PENDING_EXTERNAL"]'),
+      page.locator(
+        '[data-testid="account-statement-commitments"] li[data-commitment-status="PENDING_EXTERNAL"]',
+      ),
     ).toHaveCount(1);
     await expect(page.getByTestId('account-statement').locator('tbody tr')).toHaveCount(
       body.movements.length,

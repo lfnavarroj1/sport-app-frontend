@@ -215,9 +215,7 @@ describe('Contrato bff-web: operación de HU007', () => {
     expect<string[]>([...MOVEMENT_TYPES]).toEqual(
       property('MovementItem', 'movement_type')['enum'] as string[],
     );
-    expect(property('AccountStatementResponse', 'payments_status')['const']).toBe(
-      'NOT_INTEGRATED',
-    );
+    expect(property('AccountStatementResponse', 'payments_status')['const']).toBe('NOT_INTEGRATED');
     expect(property('AccountStatementResponse', 'balance')['type']).toBe('null');
   });
 

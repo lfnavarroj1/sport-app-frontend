@@ -28,6 +28,15 @@ function httpError(response: { status: number; body: unknown }): HttpErrorRespon
   return new HttpErrorResponse({ status: response.status, error: response.body });
 }
 
+/**
+ * Respuestas sucesivas creadas al llamar (una promesa rechazada creada antes de
+ * consumirse se reporta como rechazo no atendido).
+ */
+function sequence<T>(...steps: (() => Promise<T>)[]): () => Promise<T> {
+  let call = 0;
+  return () => steps[Math.min(call++, steps.length - 1)]();
+}
+
 describe('AccountStatementSection (HU007)', () => {
   let fixture: ComponentFixture<AccountStatementSection>;
   let element: HTMLElement;
@@ -104,9 +113,11 @@ describe('AccountStatementSection (HU007)', () => {
     });
 
     it('un fallo se informa con su referencia, nunca como cuenta vacía, y se puede reintentar', async () => {
-      gateway.load.and.returnValues(
-        Promise.reject(httpError(ACCOUNT_STATEMENT_RESPONSES.upstreamUnavailable)),
-        Promise.resolve(ACTIVE_PREMIUM),
+      gateway.load.and.callFake(
+        sequence(
+          () => Promise.reject(httpError(ACCOUNT_STATEMENT_RESPONSES.upstreamUnavailable)),
+          () => Promise.resolve(ACTIVE_PREMIUM),
+        ),
       );
       fixture = TestBed.createComponent(AccountStatementSection);
       element = fixture.nativeElement as HTMLElement;
@@ -165,7 +176,9 @@ describe('AccountStatementSection (HU007)', () => {
       expect(items[0].textContent).toContain(
         'Pendiente de pago externo: SportApp no lo cobra ni lo confirma',
       );
-      expect(items[0].textContent).toMatch(/\$\s14\.400 \(precio de referencia, pago no confirmado\)/);
+      expect(items[0].textContent).toMatch(
+        /\$\s14\.400 \(precio de referencia, pago no confirmado\)/,
+      );
       expect(items[0].textContent).toContain('Fecha de pago (informativa)');
     });
 
@@ -189,7 +202,9 @@ describe('AccountStatementSection (HU007)', () => {
         'FREE_ACTIVATED',
       ]);
       const cells = rows().map((row) =>
-        [...row.querySelectorAll('td')].map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim()),
+        [...row.querySelectorAll('td')].map((cell) =>
+          cell.textContent?.replace(/\s+/g, ' ').trim(),
+        ),
       );
       expect(cells[0][1]).toBe('Compromiso informativo registrado');
       expect(cells[0][2]).toBe('Premium · Trimestral');
@@ -249,7 +264,9 @@ describe('AccountStatementSection (HU007)', () => {
       element = fixture.nativeElement as HTMLElement;
       await settle();
 
-      expect(text('account-statement-provisioning')).toContain('Estamos activando tu plan gratuito');
+      expect(text('account-statement-provisioning')).toContain(
+        'Estamos activando tu plan gratuito',
+      );
       expect(testId('state-error')).toBeNull();
 
       await click('Volver a consultar');
@@ -291,9 +308,11 @@ describe('AccountStatementSection (HU007)', () => {
     });
 
     it('un fallo al cargar más conserva lo mostrado y permite reintentar', async () => {
-      gateway.loadMore.and.returnValues(
-        Promise.reject(httpError(ACCOUNT_STATEMENT_RESPONSES.upstreamTimeout)),
-        Promise.resolve(LAST_PAGE),
+      gateway.loadMore.and.callFake(
+        sequence(
+          () => Promise.reject(httpError(ACCOUNT_STATEMENT_RESPONSES.upstreamTimeout)),
+          () => Promise.resolve(LAST_PAGE),
+        ),
       );
       await create(FIRST_PAGE);
 
@@ -337,11 +356,14 @@ describe('AccountStatementSection (HU007)', () => {
       expect(section.id).toBe(ACCOUNT_STATEMENT_FRAGMENT);
       expect(section.getAttribute('aria-labelledby')).toBe('account-statement-title');
       const table = testId('account-statement-movements')!;
-      expect(element.querySelector(`#${table.getAttribute('aria-labelledby')}`)?.textContent).toContain(
-        'Movimientos',
-      );
       expect(
-        [...table.querySelectorAll('th')].map((th) => [th.getAttribute('scope'), th.textContent?.trim()]),
+        element.querySelector(`#${table.getAttribute('aria-labelledby')}`)?.textContent,
+      ).toContain('Movimientos');
+      expect(
+        [...table.querySelectorAll('th')].map((th) => [
+          th.getAttribute('scope'),
+          th.textContent?.trim(),
+        ]),
       ).toEqual([
         ['col', 'Fecha'],
         ['col', 'Movimiento'],

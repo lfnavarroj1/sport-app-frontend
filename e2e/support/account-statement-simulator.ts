@@ -90,43 +90,46 @@ export async function simulateAccountStatement(
 ): Promise<AccountStatementSimulation> {
   const simulation: AccountStatementSimulation = { data, requests: [], next: [] };
 
-  await target.route((url) => url.pathname === ACCOUNT_STATEMENT_PATH, async (route) => {
-    if (route.request().method() !== 'GET') {
-      return route.fallback();
-    }
-    simulation.requests.push(route.request());
-    const authorization = (await route.request().headerValue('authorization')) ?? '';
-    if (!/^Bearer \S+$/.test(authorization)) {
-      return fulfill(route, ACCOUNT_STATEMENT_RESPONSES.invalidAccessToken);
-    }
-    const injected = simulation.next.shift();
-    if (injected) {
-      return fulfill(route, injected);
-    }
-    const query = new URL(route.request().url()).searchParams;
-    const limit = Number(query.get('limit') ?? '20');
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-      return fulfill(route, ACCOUNT_STATEMENT_RESPONSES.limitOutOfRange);
-    }
-    const cursor = query.get('cursor');
-    const offset = cursor === null ? 0 : offsetOfCursor(cursor);
-    if (offset === null) {
-      return fulfill(route, ACCOUNT_STATEMENT_RESPONSES.invalidCursor);
-    }
-    const current = simulation.data();
-    const body =
-      current.status === 'ACTIVE' || current.status === 'NONE'
-        ? statementPage(
-            current.status,
-            current.subscription,
-            current.commitments,
-            current.movements,
-            offset,
-            limit,
-          )
-        : statementResponse(current.status, null, [], []);
-    await fulfill(route, { status: 200, body });
-  });
+  await target.route(
+    (url) => url.pathname === ACCOUNT_STATEMENT_PATH,
+    async (route) => {
+      if (route.request().method() !== 'GET') {
+        return route.fallback();
+      }
+      simulation.requests.push(route.request());
+      const authorization = (await route.request().headerValue('authorization')) ?? '';
+      if (!/^Bearer \S+$/.test(authorization)) {
+        return fulfill(route, ACCOUNT_STATEMENT_RESPONSES.invalidAccessToken);
+      }
+      const injected = simulation.next.shift();
+      if (injected) {
+        return fulfill(route, injected);
+      }
+      const query = new URL(route.request().url()).searchParams;
+      const limit = Number(query.get('limit') ?? '20');
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        return fulfill(route, ACCOUNT_STATEMENT_RESPONSES.limitOutOfRange);
+      }
+      const cursor = query.get('cursor');
+      const offset = cursor === null ? 0 : offsetOfCursor(cursor);
+      if (offset === null) {
+        return fulfill(route, ACCOUNT_STATEMENT_RESPONSES.invalidCursor);
+      }
+      const current = simulation.data();
+      const body =
+        current.status === 'ACTIVE' || current.status === 'NONE'
+          ? statementPage(
+              current.status,
+              current.subscription,
+              current.commitments,
+              current.movements,
+              offset,
+              limit,
+            )
+          : statementResponse(current.status, null, [], []);
+      await fulfill(route, { status: 200, body });
+    },
+  );
 
   return simulation;
 }

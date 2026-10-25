@@ -85,7 +85,11 @@ describe('HttpAccountStatementGateway (HU007, contrato bff-web 0.28.0)', () => {
     const statement = await loaded;
     expect(statement.status).toBe('ACTIVE');
     expect(statement.subscription).toEqual(
-      jasmine.objectContaining({ planCode: 'PREMIUM', periodicity: 'QUARTERLY', price: '14400.00' }),
+      jasmine.objectContaining({
+        planCode: 'PREMIUM',
+        periodicity: 'QUARTERLY',
+        price: '14400.00',
+      }),
     );
     expect(statement.commitments).toEqual([
       {
@@ -150,7 +154,10 @@ describe('HttpAccountStatementGateway (HU007, contrato bff-web 0.28.0)', () => {
     await respond(ACCOUNT_STATEMENT_RESPONSES.invalidCursor);
 
     await expectAsync(page).toBeRejectedWith(
-      jasmine.objectContaining({ status: 422, error: jasmine.objectContaining({ code: 'validation_error' }) }),
+      jasmine.objectContaining({
+        status: 422,
+        error: jasmine.objectContaining({ code: 'validation_error' }),
+      }),
     );
   });
 

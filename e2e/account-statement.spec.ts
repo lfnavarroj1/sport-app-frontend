@@ -78,11 +78,16 @@ test.describe('HU007 Estado de cuenta (simulador del contrato) @simulado', () =>
     await page.locator('mat-sidenav [data-menu-item="plan"]').click();
     await expect(page).toHaveURL(/\/deportista\/plan$/);
 
-    await page.locator('[data-plan="PREMIUM"]').getByRole('button', { name: 'Elegir Premium' }).click();
+    await page
+      .locator('[data-plan="PREMIUM"]')
+      .getByRole('button', { name: 'Elegir Premium' })
+      .click();
     await page.getByRole('radio', { name: /^Trimestral/ }).check();
     await button(page, 'Continuar').click();
     await button(page, 'Confirmar cambio').click();
-    await expect(page.getByTestId('my-plan-changed')).toContainText('Ahora tienes el plan Premium.');
+    await expect(page.getByTestId('my-plan-changed')).toContainText(
+      'Ahora tienes el plan Premium.',
+    );
 
     await page.getByTestId('my-plan-statement-link').click();
     await expect(page).toHaveURL(/\/deportista\/perfil#estado-de-cuenta$/);
@@ -122,7 +127,9 @@ test.describe('HU007 Estado de cuenta (simulador del contrato) @simulado', () =>
     { actorType: 'organizer', area: 'organizador' },
     { actorType: 'service_provider', area: 'profesional' },
   ] as const) {
-    test(`CA2 (${actorType}): ve NOT_APPLICABLE como estado, sin listas ni error`, async ({ page }) => {
+    test(`CA2 (${actorType}): ve NOT_APPLICABLE como estado, sin listas ni error`, async ({
+      page,
+    }) => {
       const { statement: simulation } = await loginAs(page, actorType);
       await openProfile(page, area);
 
@@ -135,7 +142,9 @@ test.describe('HU007 Estado de cuenta (simulador del contrato) @simulado', () =>
     });
   }
 
-  test('CA2: el deportista en PROVISIONING lo ve explícito y vuelve a consultar', async ({ page }) => {
+  test('CA2: el deportista en PROVISIONING lo ve explícito y vuelve a consultar', async ({
+    page,
+  }) => {
     const { affiliation } = await loginAs(page, 'athlete', { subscription: null });
     await openProfile(page, 'deportista');
 
@@ -175,7 +184,9 @@ test.describe('HU007 Estado de cuenta (simulador del contrato) @simulado', () =>
     expect(second.get('cursor')).toBe(ACCOUNT_STATEMENT_RESPONSES.firstPage.body.next_cursor);
   });
 
-  test('un fallo transitorio se informa con su referencia y se puede reintentar', async ({ page }) => {
+  test('un fallo transitorio se informa con su referencia y se puede reintentar', async ({
+    page,
+  }) => {
     const { statement: simulation } = await loginAs(page, 'athlete');
     simulation.next.push(ACCOUNT_STATEMENT_RESPONSES.upstreamUnavailable);
     await openProfile(page, 'deportista');
