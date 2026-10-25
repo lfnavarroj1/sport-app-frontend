@@ -1,0 +1,73 @@
+<section class="events-page">
+  <header class="events-page__header">
+    <h1>{{ 'events.pricing.title' | translate }}</h1>
+    <p>{{ 'events.pricing.intro' | translate }}</p>
+  </header>
+
+  <div class="event-pricing">
+    <mat-card appearance="outlined" class="events-page__card">
+      <mat-card-content>
+        <h2 class="events-page__step">{{ 'events.pricing.list.title' | translate }}</h2>
+        <app-async-state
+          [state]="events()"
+          emptyMessageKey="events.pricing.list.empty"
+          (retry)="reload()"
+        >
+          <ul
+            class="event-pricing__items"
+            data-testid="pricing-events-list"
+            [attr.aria-label]="'events.pricing.list.label' | translate"
+          >
+            @for (event of list(); track event.id) {
+              @let fee = feeText(event);
+              <li [attr.data-event]="event.id" data-testid="pricing-event-item">
+                <a
+                  class="event-pricing__link"
+                  [routerLink]="[event.id]"
+                  routerLinkActive="event-pricing__link--active"
+                  ariaCurrentWhenActive="page"
+                >
+                  <span class="event-pricing__name">{{ event.name }}</span>
+                  <span class="event-pricing__meta">
+                    {{ 'events.publish.status.' + event.status | translate }} ·
+                    {{ event.discipline }} · {{ event.city }}
+                  </span>
+                  <span class="event-pricing__meta">
+                    {{
+                      'events.publish.list.startsAt'
+                        | translate: { date: (event.startsAt | date: 'medium') }
+                    }}
+                  </span>
+                  <span class="event-pricing__meta">
+                    {{
+                      'events.publish.list.eventTime'
+                        | translate: { date: inZone(event), timeZone: event.timeZone }
+                    }}
+                  </span>
+                  <span class="event-pricing__fee" data-testid="pricing-event-fee">
+                    {{ fee.key | translate: { amount: fee.amount } }}
+                  </span>
+                  <span class="event-pricing__meta" data-testid="pricing-event-registrations">
+                    {{
+                      'events.pricing.registrations' | translate: { count: event.registrationCount }
+                    }}
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        </app-async-state>
+        <p class="events-page__note">{{ 'events.pricing.informative' | translate }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="event-pricing__detail">
+      @if (!detailOpen()) {
+        <p class="events-page__note" data-testid="fee-detail-placeholder">
+          {{ 'events.pricing.detail.choose' | translate }}
+        </p>
+      }
+      <router-outlet (activate)="detailOpen.set(true)" (deactivate)="detailOpen.set(false)" />
+    </div>
+  </div>
+</section>

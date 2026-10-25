@@ -144,6 +144,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU025: el organizador asigna o retira la tarifa de sus eventos (ADR-040).
+      path: 'eventos/tarifas',
+      loadChildren: () =>
+        import('./features/events/event-pricing/event-pricing.routes').then(
+          (module) => module.EVENT_PRICING_ROUTES,
+        ),
+    },
+    {
       // HU026: el organizador publica rutas y retira las propias (ADR-041).
       path: 'rutas',
       loadChildren: () =>

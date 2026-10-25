@@ -313,7 +313,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.publish',
         'HU024',
       ),
-      upcoming(
+      // HU025: el organizador asigna o retira la tarifa de sus eventos (ADR-040).
+      permissionOption(
         'event-pricing',
         'events',
         140,

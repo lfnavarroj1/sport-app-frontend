@@ -74,6 +74,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['event-attendees', '/organizador/eventos/inscritos', 'HU022'],
       ['event-calendar', '/organizador/eventos/calendario', 'HU023'],
       ['event-publish', '/organizador/eventos/publicacion', 'HU024'],
+      ['event-pricing', '/organizador/eventos/tarifas', 'HU025'],
       ['organizer-routes', '/organizador/rutas', 'HU026'],
     ]);
     expect(navigable('service_provider')).toEqual([
