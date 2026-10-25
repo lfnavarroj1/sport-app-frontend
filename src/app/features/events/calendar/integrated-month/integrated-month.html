@@ -1,0 +1,51 @@
+<div class="integrated-month__wrapper">
+  <table class="integrated-month" data-testid="integrated-month">
+    <caption>
+      {{
+        firstDay() | date: 'MMMM y'
+      }}
+    </caption>
+    <thead>
+      <tr>
+        @for (weekday of weekdays; track $index) {
+          <th scope="col">
+            <abbr [attr.title]="weekday | date: 'EEEE'">{{ weekday | date: 'EEE' }}</abbr>
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (week of weeks(); track $index) {
+        <tr>
+          @for (day of week; track day.key) {
+            <td
+              [class.integrated-month__day--outside]="!day.inMonth"
+              [attr.data-day]="day.inMonth ? day.key : null"
+            >
+              @if (day.inMonth) {
+                <time class="integrated-month__number" [attr.datetime]="day.key">{{
+                  day.day
+                }}</time>
+                @if (day.items.length > 0) {
+                  <ul
+                    class="integrated-month__items"
+                    [attr.aria-label]="
+                      'events.integratedCalendar.month.dayItems'
+                        | translate: { date: (dayDate(day.key) | date: 'longDate') }
+                    "
+                  >
+                    @for (item of day.items; track item.id) {
+                      <li [attr.data-item]="item.id">
+                        <app-calendar-item [item]="item" [compact]="true" />
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

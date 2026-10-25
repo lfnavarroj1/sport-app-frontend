@@ -111,6 +111,15 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU018: «Calendario deportivo», opción `FREE` del plan (ADR-039).
+      path: 'calendario',
+      canActivate: [requireCapability('calendar.sport.view')],
+      loadChildren: () =>
+        import('./features/events/calendar/integrated-calendar.routes').then(
+          (module) => module.SPORT_CALENDAR_ROUTES,
+        ),
+    },
+    {
       // HU020: catálogo de servicios publicados y su disponibilidad.
       path: 'servicios',
       loadChildren: () =>
@@ -176,6 +185,14 @@ export const routes: Routes = [
           (module) => module.EVENT_CALENDAR_ROUTES,
         ),
     },
+    {
+      // HU018: calendario integrado de los eventos propios del organizador (ADR-039).
+      path: 'calendario',
+      loadChildren: () =>
+        import('./features/events/calendar/integrated-calendar.routes').then(
+          (module) => module.INTEGRATED_CALENDAR_ROUTES,
+        ),
+    },
   ]),
   actorArea('profesional', 'service_provider', [
     {
@@ -232,6 +249,15 @@ export const routes: Routes = [
       loadChildren: () =>
         import('./features/training/history/history.routes').then(
           (module) => module.PROFESSIONAL_HISTORY_ROUTES,
+        ),
+    },
+    {
+      // HU018: calendario integrado con la disponibilidad propia y los eventos
+      // publicados (ADR-039).
+      path: 'calendario',
+      loadChildren: () =>
+        import('./features/events/calendar/integrated-calendar.routes').then(
+          (module) => module.INTEGRATED_CALENDAR_ROUTES,
         ),
     },
   ]),
