@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -7,8 +7,9 @@ import { BffWebUrl } from '../bff-web-url';
 /**
  * Transporte de las operaciones de HU016 del contrato bff-web 0.20.0 (ver
  * `contract.ts`, ADR-036): catálogo de planes con ofertas, suscripción vigente y
- * cambio de plan. Solo `athlete`; todas se autentican con el access token
- * (`Authorization: Bearer`). Estos tipos son del transporte: la interfaz los
+ * cambio de plan, solo para `athlete`; y la de HU007 (contrato 0.27.0 o superior),
+ * el estado de cuenta, para los tres actores. Todas se autentican con el access
+ * token (`Authorization: Bearer`). Estos tipos son del transporte: la interfaz los
  * transforma antes de usarlos.
  */
 
@@ -96,7 +97,80 @@ export const SUBSCRIPTION_CHANGE_ERROR_CODES = {
   upstreamTimeout: 'upstream_timeout',
 } as const;
 
-/** Cliente del BFF web para «Mi plan» (HU016). El deportista sale del access token. */
+/** Enumeración `statement_status` de `AccountStatementResponse` (HU007). */
+export const STATEMENT_STATUSES = ['ACTIVE', 'PROVISIONING', 'NOT_APPLICABLE', 'NONE'] as const;
+export type StatementStatusDto = (typeof STATEMENT_STATUSES)[number];
+
+/** Enumeración `status` de `CommitmentItem`. */
+export const COMMITMENT_STATUSES = ['PENDING_EXTERNAL', 'WAIVED'] as const;
+export type CommitmentStatusDto = (typeof COMMITMENT_STATUSES)[number];
+
+/** Enumeración `movement_type` de `MovementItem`. */
+export const MOVEMENT_TYPES = [
+  'FREE_ACTIVATED',
+  'PLAN_CHANGED',
+  'RETURNED_TO_FREE',
+  'COMMITMENT_CREATED',
+  'COMMITMENT_WAIVED',
+] as const;
+export type MovementTypeDto = (typeof MOVEMENT_TYPES)[number];
+
+/**
+ * Esquema `CommitmentItem`: compromiso de pago informativo; SportApp no lo cobra
+ * ni lo marca pagado. `amount` es una cadena decimal en COP antes de impuestos.
+ */
+export interface CommitmentItemDto {
+  readonly commitment_id: string;
+  readonly plan_code: string;
+  readonly periodicity: Exclude<PeriodicityDto, 'NONE'>;
+  readonly amount: string;
+  readonly currency: 'COP';
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly due_at: string;
+  readonly status: CommitmentStatusDto;
+}
+
+/** Esquema `MovementItem`: `amount`, `currency` y `commitment_id` solo en los del compromiso. */
+export interface MovementItemDto {
+  readonly movement_id: string;
+  readonly movement_type: MovementTypeDto;
+  readonly occurred_at: string;
+  readonly subscription_id: string;
+  readonly plan_code: string;
+  readonly periodicity: PeriodicityDto;
+  readonly commitment_id: string | null;
+  readonly amount: string | null;
+  readonly currency: 'COP' | null;
+}
+
+/** Esquema `AccountStatementResponse`: sin pagos (`NOT_INTEGRATED`, `balance` siempre `null`). */
+export interface AccountStatementResponseDto {
+  readonly statement_status: StatementStatusDto;
+  /** La vigente, como `GET /v1/me/subscription`; `null` sin suscripción activa. */
+  readonly subscription: SubscriptionResponseDto | null;
+  readonly commitments: readonly CommitmentItemDto[];
+  /** Página de movimientos, orden `occurred_at DESC, movement_id DESC`. */
+  readonly movements: readonly MovementItemDto[];
+  /** Cursor opaco de la página siguiente; `null` si no hay más. */
+  readonly next_cursor: string | null;
+  readonly payments_status: 'NOT_INTEGRATED';
+  readonly balance: null;
+}
+
+/** Códigos de error de `GET /v1/me/account-statement`. */
+export const ACCOUNT_STATEMENT_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/**
+ * Cliente del BFF web para «Mi plan» (HU016) y el estado de cuenta (HU007, contrato
+ * bff-web 0.27.0 o superior). Quien consulta sale del access token.
+ */
 @Injectable({ providedIn: 'root' })
 export class BffWebAffiliationApi {
   private readonly http = inject(HttpClient);
@@ -135,6 +209,28 @@ export class BffWebAffiliationApi {
         headers: bearer(accessToken).set('Idempotency-Key', idempotencyKey),
         observe: 'response',
       },
+    );
+  }
+
+  /**
+   * Estado de cuenta propio (HU007): suscripción vigente, compromisos informativos y
+   * una página de movimientos. Sin efectos.
+   *
+   * @param cursor `next_cursor` de la página anterior, sin modificar; `null` para la primera.
+   * @param limit 1 a 100.
+   */
+  getAccountStatement(
+    accessToken: string,
+    cursor: string | null,
+    limit: number,
+  ): Observable<AccountStatementResponseDto> {
+    let params = new HttpParams().set('limit', String(limit));
+    if (cursor !== null) {
+      params = params.set('cursor', cursor);
+    }
+    return this.http.get<AccountStatementResponseDto>(
+      this.bffWebUrl.resolve('v1/me/account-statement'),
+      { headers: bearer(accessToken), params },
     );
   }
 }

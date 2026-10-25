@@ -16,6 +16,7 @@ import {
 } from '../../src/testing/bff-web/profile.fixtures';
 import { SimulatedResponse } from '../../src/testing/bff-web/register-user.fixtures';
 import { simulateAccount } from './account-simulator';
+import { ACTIVE_FREE_DATA, simulateAccountStatement } from './account-statement-simulator';
 
 export interface ProfileSimulation {
   /** Solicitudes recibidas en los cuatro `PUT`, en orden de llegada. */
@@ -105,6 +106,9 @@ export async function simulateProfile(target: Page | BrowserContext): Promise<Pr
   // HU002: «Mi perfil» empieza con los datos personales; una prueba que los
   // necesite registra después su propio `simulateAccount`, que tiene prioridad.
   await simulateAccount(target);
+  // HU007: «Mi perfil» termina con el estado de cuenta; una prueba que lo necesite
+  // registra después su propio `simulateAccountStatement`, que tiene prioridad.
+  await simulateAccountStatement(target, () => ACTIVE_FREE_DATA);
   const simulation: ProfileSimulation = {
     requests: [],
     reads: [],

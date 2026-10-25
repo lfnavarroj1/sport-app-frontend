@@ -65,11 +65,12 @@ test.describe('HU002 Datos personales (simulador del contrato) @simulado', () =>
       await expect(page.getByTestId('account-full-name')).toHaveText('Persona Sintética');
       await expect(page.getByTestId('account-email')).toHaveText('persona@example.com');
       if (actorType !== 'athlete') {
-        // El organizador y el profesional solo tienen datos personales.
+        // El organizador y el profesional no tienen perfil deportivo: sus datos
+        // personales y su estado de cuenta (HU007).
         await expect(page.getByTestId('profile-hu005')).toHaveCount(0);
         await expect(
           page.getByTestId('profile-page').getByRole('heading', { level: 2 }),
-        ).toHaveCount(1);
+        ).toHaveText(['Datos personales', 'Estado de cuenta']);
       }
 
       await editAccount(page, '  Persona   Renombrada ', 'Persona.Nueva@Example.com');

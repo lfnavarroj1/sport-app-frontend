@@ -15,11 +15,14 @@ import {
   SPORT_HABITS_RESPONSES,
 } from '../../../../../testing/bff-web/profile.fixtures';
 import { ACCOUNT_READ } from '../../../../../testing/bff-web/account.fixtures';
+import { ACCOUNT_STATEMENT_RESPONSES } from '../../../../../testing/bff-web/account-statement.fixtures';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { ApiError } from '../../../../core/api/api-error';
 import { ProfileResponseDto } from '../../../../core/api/bff-web/profile.api';
 import { APP_CONFIG, AppConfig } from '../../../../core/config/app-config';
 import { DEFAULT_LANGUAGE } from '../../../../core/i18n/i18n.providers';
+import { AccountStatementGateway } from '../../../affiliation/account-statement/account-statement.gateway';
+import { toAccountStatement } from '../../../affiliation/account-statement/account-statement.model';
 import { AccountGateway } from '../account-form/account.gateway';
 import { toAccount } from '../account-form/account.model';
 import { DemographicForm } from '../demographic-form/demographic-form';
@@ -138,6 +141,7 @@ describe('ProfilePage (HU005)', () => {
   let element: HTMLElement;
   let gateway: jasmine.SpyObj<ProfileGateway>;
   let accountGateway: jasmine.SpyObj<AccountGateway>;
+  let statementGateway: jasmine.SpyObj<AccountStatementGateway>;
 
   function configure(
     consentVersion: string | null = SIMULATED_HEALTH_CONSENT_VERSION,
@@ -149,6 +153,14 @@ describe('ProfilePage (HU005)', () => {
       'saveAccount',
     ]);
     accountGateway.loadAccount.and.resolveTo(toAccount(ACCOUNT_READ));
+    // HU007: «Estado de cuenta» se prueba en `account-statement-section.spec.ts`; aquí solo carga.
+    statementGateway = jasmine.createSpyObj<AccountStatementGateway>('AccountStatementGateway', [
+      'load',
+      'loadMore',
+    ]);
+    statementGateway.load.and.resolveTo(
+      toAccountStatement(ACCOUNT_STATEMENT_RESPONSES.notApplicable.body),
+    );
     gateway = jasmine.createSpyObj<ProfileGateway>('ProfileGateway', [
       'loadProfile',
       'saveDemographic',
@@ -163,6 +175,7 @@ describe('ProfilePage (HU005)', () => {
         { provide: LOCALE_ID, useValue: DEFAULT_LANGUAGE },
         { provide: ProfileGateway, useValue: gateway },
         { provide: AccountGateway, useValue: accountGateway },
+        { provide: AccountStatementGateway, useValue: statementGateway },
         { provide: PROFILE_SCOPE, useValue: scope },
         { provide: APP_CONFIG, useValue: config(consentVersion) },
         { provide: PROFILE_PROJECTION_RETRY_DELAYS_MS, useValue: [0] },
@@ -323,7 +336,9 @@ describe('ProfilePage (HU005)', () => {
         'Datos demográficos y fisiológicos',
         'Hábitos deportivos',
         'Hábitos alimenticios',
+        'Estado de cuenta',
       ]);
+      expect(statementGateway.load).toHaveBeenCalledTimes(1);
       expect([...element.querySelectorAll('h3')].map((h) => h.textContent?.trim())).toEqual([
         'Datos demográficos',
         'Datos fisiológicos',
@@ -345,7 +360,11 @@ describe('ProfilePage (HU005)', () => {
       );
       expect([...element.querySelectorAll('h2')].map((h) => h.textContent?.trim())).toEqual([
         'Datos personales',
+        'Estado de cuenta',
       ]);
+      // HU007: el estado de cuenta también es de estos actores (CA2).
+      expect(statementGateway.load).toHaveBeenCalledTimes(1);
+      expect(testId('account-statement-not-applicable')).not.toBeNull();
       expect(testId('profile-hu005')).toBeNull();
       expect(testId('profile-hu006')).toBeNull();
       expect(testId('profile-hu009')).toBeNull();

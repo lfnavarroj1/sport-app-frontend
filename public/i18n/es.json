@@ -2049,6 +2049,72 @@
         "idempotencyKeyReused": "No pudimos confirmar el cambio con esa solicitud. Inténtalo de nuevo: no se aplicó ningún cambio duplicado.",
         "validation": "La periodicidad elegida no corresponde a ese plan. Elige otra.",
         "retryHint": "Si lo intentas de nuevo, no se aplicará un cambio duplicado."
+      },
+      "statementLink": "Ver mi estado de cuenta"
+    },
+    "statement": {
+      "title": "Estado de cuenta",
+      "intro": "Tu plan, sus compromisos informativos y los movimientos de tu suscripción.",
+      "paymentsNotIntegrated": "SportApp no registra pagos: la información de pagos no está confirmada y no hay un saldo calculado.",
+      "timeZone": "Fechas y horas en tu zona horaria ({{zone}}).",
+      "free": "Sin costo",
+      "amountUnconfirmed": "{{amount}} (precio de referencia, pago no confirmado)",
+      "provisioning": "Estamos activando tu plan gratuito. Tu estado de cuenta estará disponible en cuanto se confirme.",
+      "notApplicable": "Tu tipo de cuenta no tiene un plan de afiliación, así que no tiene compromisos ni movimientos.",
+      "none": "No tienes una suscripción activa. Abajo puedes consultar tu historial.",
+      "plans": {
+        "FREE": "Gratuito",
+        "INTERMEDIATE": "Intermedio",
+        "PREMIUM": "Premium"
+      },
+      "subscription": {
+        "title": "Tu plan",
+        "plan": "Plan",
+        "version": "Versión del plan",
+        "offer": "Oferta",
+        "price": "Precio",
+        "periodStart": "Inicio del periodo",
+        "nextDue": "Próximo vencimiento",
+        "noDue": "Sin vencimiento"
+      },
+      "balance": {
+        "label": "Saldo",
+        "unavailable": "No disponible: SportApp no registra pagos"
+      },
+      "commitments": {
+        "title": "Compromisos informativos",
+        "empty": "No tienes compromisos de pago.",
+        "amount": "Importe",
+        "period": "Periodo",
+        "periodRange": "{{start}} al {{end}}",
+        "dueAt": "Fecha de pago (informativa)",
+        "status": {
+          "PENDING_EXTERNAL": "Pendiente de pago externo: SportApp no lo cobra ni lo confirma",
+          "WAIVED": "Sin efecto: volviste al plan gratuito antes del fin del periodo"
+        }
+      },
+      "movements": {
+        "title": "Movimientos",
+        "empty": "Aún no hay movimientos.",
+        "date": "Fecha",
+        "type": "Movimiento",
+        "plan": "Plan",
+        "amount": "Importe",
+        "noAmount": "No aplica",
+        "cursorRejected": "No pudimos cargar más movimientos desde este punto. Vuelve a cargar el estado de cuenta.",
+        "types": {
+          "FREE_ACTIVATED": "Plan gratuito activado",
+          "PLAN_CHANGED": "Cambio de plan",
+          "RETURNED_TO_FREE": "Regreso al plan gratuito",
+          "COMMITMENT_CREATED": "Compromiso informativo registrado",
+          "COMMITMENT_WAIVED": "Compromiso informativo sin efecto"
+        }
+      },
+      "actions": {
+        "loadMore": "Cargar más movimientos",
+        "loadingMore": "Cargando movimientos…",
+        "recheck": "Volver a consultar",
+        "reload": "Volver a cargar el estado de cuenta"
       }
     }
   },
