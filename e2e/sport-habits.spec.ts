@@ -193,8 +193,9 @@ test.describe('HU006 Hábitos deportivos (simulador del contrato) @simulado', ()
     await button(page, 'Editar hábitos deportivos').click();
     await row(page, 0).getByLabel('Veces por semana').fill('5');
     await button(page, 'Guardar hábitos deportivos').click();
+    // Desde HU008 la edición envía solo los deportes (PATCH); la confirmación los lista.
     await expect(page.getByTestId('sport-habits-saved')).toHaveText(
-      'Actualizamos tus hábitos deportivos.',
+      /^Actualizamos tus hábitos deportivos\.\s*Secciones actualizadas:\s*Deportes\s*Lo que no cambiaste se conservó\.$/,
     );
 
     // La pestaña B aún muestra la versión 1 e intenta reemplazarla.

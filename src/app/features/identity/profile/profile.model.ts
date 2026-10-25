@@ -8,6 +8,7 @@ import {
   FOOD_ALLERGIES,
   FoodAllergyDto,
   GenderDto,
+  HABIT_SPORTS,
   HabitIntensityDto,
   HabitLevelDto,
   HabitSportDto,
@@ -20,6 +21,8 @@ import {
   PhysiologicalProfileSectionDto,
   PrimaryGoalDto,
   ProfileResponseDto,
+  SportHabitDto,
+  SportHabitsPatchRequestDto,
   SportHabitsRequestDto,
   SportHabitsSectionDto,
   TIME_SLOTS,
@@ -176,6 +179,24 @@ export interface SportHabitsDraft {
   readonly primaryGoal: PrimaryGoal | null;
 }
 
+/**
+ * Secciones de los hábitos deportivos que la actualización parcial (HU008,
+ * ADR-035) reemplaza por separado: deportes, disponibilidad (días y franjas) y
+ * objetivo principal.
+ */
+export const SPORT_HABITS_SECTIONS = ['sports', 'availability', 'primaryGoal'] as const;
+export type SportHabitsSectionName = (typeof SPORT_HABITS_SECTIONS)[number];
+
+/**
+ * Actualización parcial de los hábitos (HU008): lo capturado y las secciones que
+ * cambiaron respecto de la versión vigente, que son las únicas que se envían.
+ */
+export interface SportHabitsUpdate {
+  readonly draft: SportHabitsDraft;
+  /** Al menos una, en el orden de `SPORT_HABITS_SECTIONS`. */
+  readonly sections: readonly SportHabitsSectionName[];
+}
+
 /** Hábitos alimenticios que captura el deportista (HU009), ya normalizados para el contrato. */
 export interface NutritionHabitsDraft {
   /** Versión del consentimiento que aceptó (la de `healthDataConsentVersion`). */
@@ -266,20 +287,75 @@ export function toSportHabitsRequest(
 ): SportHabitsRequestDto {
   return {
     ...(expectedVersion === null ? {} : { expected_version: expectedVersion }),
-    sports: draft.sports.map((habit) => ({
-      sport: habit.sport,
-      frequency_per_week: habit.frequencyPerWeek,
-      session_duration_minutes: habit.sessionDurationMinutes,
-      intensity: habit.intensity,
-      level: habit.level,
-      years_practicing: habit.yearsPracticing,
-    })),
+    sports: draft.sports.map(toSportHabitDto),
     availability: {
       days: inCatalogOrder(draft.days, WEEK_DAYS),
       time_slots: inCatalogOrder(draft.timeSlots, TIME_SLOTS),
     },
     primary_goal: draft.primaryGoal,
   };
+}
+
+/**
+ * Cuerpo de `PATCH /v1/me/sport-habits` (HU008): `expected_version` y solo las
+ * secciones modificadas, cada una completa y con las mismas normalizaciones del
+ * `PUT`. Un objetivo borrado viaja como `primary_goal: null`.
+ */
+export function toSportHabitsPatchRequest(
+  update: SportHabitsUpdate,
+  expectedVersion: number,
+): SportHabitsPatchRequestDto {
+  const full = toSportHabitsRequest(update.draft, null);
+  return {
+    expected_version: expectedVersion,
+    ...(update.sections.includes('sports') ? { sports: full.sports } : {}),
+    ...(update.sections.includes('availability') ? { availability: full.availability } : {}),
+    ...(update.sections.includes('primaryGoal') ? { primary_goal: full.primary_goal } : {}),
+  };
+}
+
+/**
+ * Secciones que el deportista cambió respecto de los hábitos vigentes, en el
+ * orden de `SPORT_HABITS_SECTIONS`; vacía si no cambió nada. Se compara lo que
+ * el backend guardaría: deportes, días y franjas en el orden de su catálogo (el
+ * orden de las filas no es un cambio).
+ */
+export function modifiedSportHabitsSections(
+  current: SportHabits,
+  draft: SportHabitsDraft,
+): SportHabitsSectionName[] {
+  const changed: Record<SportHabitsSectionName, boolean> = {
+    sports: !sameJson(sportsInCatalogOrder(current.sports), sportsInCatalogOrder(draft.sports)),
+    availability:
+      !sameJson(inCatalogOrder(current.days, WEEK_DAYS), inCatalogOrder(draft.days, WEEK_DAYS)) ||
+      !sameJson(
+        inCatalogOrder(current.timeSlots, TIME_SLOTS),
+        inCatalogOrder(draft.timeSlots, TIME_SLOTS),
+      ),
+    primaryGoal: current.primaryGoal !== draft.primaryGoal,
+  };
+  return SPORT_HABITS_SECTIONS.filter((section) => changed[section]);
+}
+
+function toSportHabitDto(habit: SportHabit): SportHabitDto {
+  return {
+    sport: habit.sport,
+    frequency_per_week: habit.frequencyPerWeek,
+    session_duration_minutes: habit.sessionDurationMinutes,
+    intensity: habit.intensity,
+    level: habit.level,
+    years_practicing: habit.yearsPracticing,
+  };
+}
+
+function sportsInCatalogOrder(sports: readonly SportHabit[]): SportHabitDto[] {
+  return [...sports]
+    .sort((a, b) => HABIT_SPORTS.indexOf(a.sport) - HABIT_SPORTS.indexOf(b.sport))
+    .map(toSportHabitDto);
+}
+
+function sameJson(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /**

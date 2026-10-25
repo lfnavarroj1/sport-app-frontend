@@ -14,7 +14,7 @@ import { SportHabitsForm } from './sport-habits-form';
 // Datos sintéticos de prueba (ejemplo de ADR-034 con dos deportes).
 const INITIAL: SportHabits = toSportHabits(SPORT_HABITS_SECTION);
 
-describe('SportHabitsForm (HU006)', () => {
+describe('SportHabitsForm (HU006 y HU008)', () => {
   let fixture: ComponentFixture<SportHabitsForm>;
   let element: HTMLElement;
   let loader: HarnessLoader;
@@ -383,16 +383,6 @@ describe('SportHabitsForm (HU006)', () => {
       await (await loader.getHarness(MatCheckboxHarness.with({ label: 'Martes' }))).isChecked(),
     ).toBeFalse();
     expect(edited).toBe(0);
-
-    await submit();
-    expect(submitted).toEqual([
-      {
-        sports: INITIAL.sports,
-        days: ['MON', 'WED', 'SAT'],
-        timeSlots: ['MORNING'],
-        primaryGoal: 'HEALTH',
-      },
-    ]);
   });
 
   it('CA2: marca las reglas del backend en la fila y el campo de su posición; editar las retira', async () => {
@@ -457,5 +447,88 @@ describe('SportHabitsForm (HU006)', () => {
     await fixture.whenStable();
     await click(button('Cancelar'));
     expect(cancelled).toBe(1);
+  });
+  describe('modo edición (HU008, ADR-035)', () => {
+    it('al registrar no muestra el aviso de edición parcial; al editar sí', async () => {
+      await create(null);
+      expect(testId('sport-habits-partial-hint')).toBeNull();
+
+      await create(INITIAL);
+      expect(testId('sport-habits-partial-hint')?.textContent?.trim()).toBe(
+        'Solo se guardan las secciones que cambies (deportes, disponibilidad u objetivo); las demás se conservan.',
+      );
+    });
+
+    it('CA5: sin cambios no emite, lo avisa con role=status y editar retira el aviso', async () => {
+      await create(INITIAL);
+      await submit();
+      await fixture.whenStable();
+
+      expect(submitted).toEqual([]);
+      const note = testId('sport-habits-unchanged')!;
+      expect(note.getAttribute('role')).toBe('status');
+      expect(note.textContent?.trim()).toBe('No cambiaste ningún dato: no hay nada que guardar.');
+      expect(document.activeElement).toBe(note);
+
+      await check('Martes');
+      expect(testId('sport-habits-unchanged')).toBeNull();
+    });
+
+    it('CA1: editar solo el objetivo emite los hábitos con el resto sin cambios', async () => {
+      await create(INITIAL);
+      const goal = await loader.getHarness(
+        MatSelectHarness.with({ selector: '[formcontrolname="primaryGoal"]' }),
+      );
+      await goal.open();
+      await goal.clickOptions({ text: 'Sin especificar' });
+      await submit();
+
+      expect(submitted).toEqual([
+        {
+          sports: INITIAL.sports,
+          days: INITIAL.days,
+          timeSlots: INITIAL.timeSlots,
+          primaryGoal: null,
+        },
+      ]);
+    });
+
+    it('CA1: editar solo la disponibilidad conserva los deportes capturados', async () => {
+      await create(INITIAL);
+      await check('Martes');
+      await submit();
+
+      expect(submitted.length).toBe(1);
+      expect(submitted[0].sports).toEqual(INITIAL.sports);
+      expect(submitted[0].days).toEqual(['MON', 'TUE', 'WED', 'SAT']);
+      expect(submitted[0].primaryGoal).toBe('HEALTH');
+    });
+
+    it('CA1: editar un deporte emite la fila cambiada en su posición', async () => {
+      await create(INITIAL);
+      type(0, 'frequencyPerWeek', '4');
+      await fixture.whenStable();
+      await submit();
+
+      expect(submitted.length).toBe(1);
+      expect(submitted[0].sports[0].frequencyPerWeek).toBe(4);
+      expect(submitted[0].sports[1]).toEqual(INITIAL.sports[1]);
+      expect(submitted[0].days).toEqual(INITIAL.days);
+    });
+
+    it('CA5: un 422 del PATCH se marca por campo e índice', async () => {
+      await create(INITIAL);
+      await setServerErrors([
+        { field: 'sports[1].sport', issue: 'duplicate_value' },
+        { field: 'availability.time_slots[0]', issue: 'unknown_value' },
+        { field: '', issue: 'required' },
+      ]);
+
+      expect(testId('sport-row-1')!.querySelector('mat-error')?.textContent?.trim()).toBe(
+        'Este deporte ya está en otra fila.',
+      );
+      expect(testId('sport-habits-time-slots-error')).not.toBeNull();
+      expect(testId('sport-habits-errors')!.querySelectorAll('li').length).toBe(3);
+    });
   });
 });

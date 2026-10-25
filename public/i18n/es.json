@@ -296,7 +296,8 @@
       "hints": {
         "sports": "Registra de {{min}} a {{max}} deportes, sin repetir ninguno.",
         "maxSports": "Ya agregaste el máximo de {{max}} deportes.",
-        "range": "Entre {{min}} y {{max}}."
+        "range": "Entre {{min}} y {{max}}.",
+        "partial": "Solo se guardan las secciones que cambies (deportes, disponibilidad u objetivo); las demás se conservan."
       },
       "units": {
         "minutes": "min"
@@ -354,7 +355,10 @@
       },
       "saved": {
         "created": "Registramos tus hábitos deportivos.",
-        "replaced": "Actualizamos tus hábitos deportivos."
+        "replaced": "Actualizamos tus hábitos deportivos.",
+        "updated": "Actualizamos tus hábitos deportivos.",
+        "updatedSections": "Secciones actualizadas:",
+        "preserved": "Lo que no cambiaste se conservó."
       },
       "conflict": "Tus hábitos deportivos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
       "retrying": "Reintentando guardar tus hábitos deportivos ({{attempt}} de {{max}})…",
@@ -375,6 +379,15 @@
         "timeSlots": "Franjas horarias",
         "availability": "Disponibilidad",
         "primaryGoal": "Objetivo principal"
+      },
+      "unchanged": "No cambiaste ningún dato: no hay nada que guardar.",
+      "sections": {
+        "sports": "Deportes",
+        "availability": "Disponibilidad",
+        "primaryGoal": "Objetivo principal"
+      },
+      "errors": {
+        "notFound": "Aún no hay hábitos deportivos que actualizar. Actualiza la página y regístralos primero."
       }
     },
     "nutrition": {

@@ -16,7 +16,10 @@ import { MatCardModule } from '@angular/material/card';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiError, toApiError } from '../../../../core/api/api-error';
-import { PROFILE_ERROR_CODES } from '../../../../core/api/bff-web/profile.api';
+import {
+  PROFILE_ERROR_CODES,
+  SPORT_HABITS_NOT_FOUND,
+} from '../../../../core/api/bff-web/profile.api';
 import { APP_CONFIG } from '../../../../core/config/app-config';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
@@ -39,6 +42,9 @@ import {
   SaveOutcome,
   SportHabits,
   SportHabitsDraft,
+  SPORT_HABITS_SECTIONS,
+  SportHabitsSectionName,
+  modifiedSportHabitsSections,
   newerSection,
 } from '../profile.model';
 import { SportHabitsForm } from '../sport-habits-form/sport-habits-form';
@@ -123,6 +129,8 @@ class SectionState<T extends { readonly version: number }> {
  * los valores que confirmó el backend, incluido el IMC estimado que este calcula
  * (HU005 CA1, HU006 CA1). Las reglas incumplidas llegan del backend y se marcan
  * por campo, con la fila del deporte cuando aplica (HU005 CA2 y CA3, HU006 CA2).
+ * Editar hábitos deportivos ya registrados es la actualización parcial de HU008
+ * (ADR-035): solo viajan las secciones modificadas y el backend conserva las demás.
  * Los valores solo viven en la memoria de la pantalla (HU005 CA4). Un
  * `409 version_conflict` no sobrescribe: se recarga el perfil y se muestran los
  * valores vigentes (HU005 CA6, HU006 CA4). La proyección es eventual: se
@@ -163,6 +171,7 @@ export class ProfilePage {
    */
   protected readonly consentVersion = inject(APP_CONFIG).healthDataConsentVersion;
   protected readonly maxRetries = MAX_AUTOMATIC_RETRIES;
+  protected readonly sectionCount = SPORT_HABITS_SECTIONS.length;
   /** El organizador y el profesional no tienen perfil deportivo: no se consulta. */
   protected readonly athleteSections = inject(PROFILE_SCOPE) === 'athlete';
 
@@ -171,6 +180,11 @@ export class ProfilePage {
   protected readonly physiological = new SectionState<PhysiologicalProfile>();
   protected readonly sportHabits = new SectionState<SportHabits>();
   protected readonly nutritionHabits = new SectionState<NutritionHabits>();
+  /**
+   * Secciones de los hábitos deportivos que se enviaron en la última
+   * actualización parcial (HU008); `null` tras un registro (HU006).
+   */
+  protected readonly sportHabitsUpdated = signal<readonly SportHabitsSectionName[] | null>(null);
 
   /** Se agotaron las recargas automáticas o una recarga falló: se ofrece actualizar. */
   protected readonly projectionStalled = signal(false);
@@ -244,9 +258,31 @@ export class ProfilePage {
     );
   }
 
+  /**
+   * Sin hábitos vigentes los registra (HU006, `PUT`); con hábitos, envía solo las
+   * secciones que cambiaron (HU008, `PATCH`) con la versión mostrada. Si no cambió
+   * nada no se envía: el backend rechazaría un cuerpo sin secciones.
+   */
   protected saveSportHabits(draft: SportHabitsDraft): Promise<void> {
+    const current = this.sportHabits.displayed();
+    if (current === null) {
+      this.sportHabitsUpdated.set(null);
+      return this.save(this.sportHabits, 'sport-habits', (expected, key, onRetry) =>
+        this.gateway.saveSportHabits(draft, expected, key, onRetry),
+      );
+    }
+    const sections = modifiedSportHabitsSections(current, draft);
+    if (sections.length === 0) {
+      return Promise.resolve();
+    }
+    this.sportHabitsUpdated.set(sections);
     return this.save(this.sportHabits, 'sport-habits', (expected, key, onRetry) =>
-      this.gateway.saveSportHabits(draft, expected, key, onRetry),
+      this.gateway.updateSportHabits(
+        { draft, sections },
+        expected ?? current.version,
+        key,
+        onRetry,
+      ),
     );
   }
 
@@ -263,9 +299,13 @@ export class ProfilePage {
   }
 
   protected failureMessage(error: ApiError): string {
-    return error.code === IDEMPOTENCY_KEY_REUSED
-      ? 'profile.errors.idempotencyKeyReused'
-      : `common.errors.${error.kind}`;
+    if (error.code === IDEMPOTENCY_KEY_REUSED) {
+      return 'profile.errors.idempotencyKeyReused';
+    }
+    if (error.code === SPORT_HABITS_NOT_FOUND) {
+      return 'profile.habits.errors.notFound';
+    }
+    return `common.errors.${error.kind}`;
   }
 
   /** Tras agotar los reintentos automáticos, volver a guardar no duplica el registro. */

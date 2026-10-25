@@ -22,6 +22,7 @@ import {
   SaveOutcome,
   SportHabits,
   SportHabitsDraft,
+  SportHabitsUpdate,
   conflictVersion,
   toAthleteProfile,
   toDemographicProfile,
@@ -31,6 +32,7 @@ import {
   toPhysiologicalProfile,
   toPhysiologicalRequest,
   toSportHabits,
+  toSportHabitsPatchRequest,
   toSportHabitsRequest,
 } from './profile.model';
 
@@ -47,10 +49,10 @@ export const PROFILE_RETRY_DELAYS_MS = new InjectionToken<readonly number[]>(
 );
 
 /**
- * Implementación de HU005, HU006 y HU009 sobre `GET /v1/me/profile`,
+ * Implementación de HU005, HU006, HU008 y HU009 sobre `GET /v1/me/profile`,
  * `PUT /v1/me/demographic-profile`, `PUT /v1/me/physiological-profile`,
- * `PUT /v1/me/sport-habits` y `PUT /v1/me/nutrition-habits` del BFF web
- * (contrato 0.21.0). Los valores del
+ * `PUT` y `PATCH /v1/me/sport-habits` y `PUT /v1/me/nutrition-habits` del BFF
+ * web (contrato 0.30.0). Los valores del
  * perfil son datos sensibles: no se registran en consola ni se guardan fuera de
  * la memoria de la pestaña.
  */
@@ -112,6 +114,20 @@ export class HttpProfileGateway extends ProfileGateway {
     const body = toSportHabitsRequest(draft, expectedVersion);
     return this.save(
       (token) => this.api.putSportHabits(token, body, idempotencyKey),
+      toSportHabits,
+      onRetry,
+    );
+  }
+
+  updateSportHabits(
+    update: SportHabitsUpdate,
+    expectedVersion: number,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>> {
+    const body = toSportHabitsPatchRequest(update, expectedVersion);
+    return this.save(
+      (token) => this.api.patchSportHabits(token, body, idempotencyKey),
       toSportHabits,
       onRetry,
     );
@@ -191,7 +207,8 @@ export class HttpProfileGateway extends ProfileGateway {
         return { kind: 'conflict', currentVersion: conflictVersion(body.details ?? []) };
       }
     }
-    // Incluye `permission_required`, `idempotency_key_reused`, transitorios agotados
+    // Incluye `permission_required`, `idempotency_key_reused`,
+    // `sport_habits_not_found` (HU008), transitorios agotados
     // y cualquier respuesta no prevista: nunca se interpreta como éxito.
     return { kind: 'failed', error: toApiError(error) };
   }
