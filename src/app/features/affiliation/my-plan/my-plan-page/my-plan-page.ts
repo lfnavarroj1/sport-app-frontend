@@ -13,6 +13,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiError, toApiError } from '../../../../core/api/api-error';
@@ -20,6 +21,7 @@ import { SUBSCRIPTION_CHANGE_ERROR_CODES } from '../../../../core/api/bff-web/af
 import { SessionAccess, SessionAccessStore } from '../../../../core/session/session-access.store';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
+import { ACCOUNT_STATEMENT_FRAGMENT } from '../../account-statement/account-statement.model';
 import { MyPlanGateway } from '../my-plan.gateway';
 import {
   ChangeOutcome,
@@ -80,7 +82,15 @@ type MenuStatus = 'updating' | 'updated' | 'failed';
  */
 @Component({
   selector: 'app-my-plan-page',
-  imports: [AsyncState, DatePipe, MatButtonModule, MatCardModule, MatRadioModule, TranslatePipe],
+  imports: [
+    AsyncState,
+    DatePipe,
+    MatButtonModule,
+    MatCardModule,
+    MatRadioModule,
+    RouterLink,
+    TranslatePipe,
+  ],
   templateUrl: './my-plan-page.html',
   styleUrl: './my-plan-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -98,6 +108,8 @@ export class MyPlanPage {
   /** Reintento automático en curso (1 a 3), o `null`. */
   protected readonly retryAttempt = signal<number | null>(null);
   protected readonly maxRetries = MAX_CHANGE_RETRIES;
+  /** HU007: «Estado de cuenta» de «Mi perfil». */
+  protected readonly statementFragment = ACCOUNT_STATEMENT_FRAGMENT;
   private readonly outcome = signal<ChangeOutcome | null>(null);
   /** Vista de capacidades anterior a la nueva consulta; `undefined` si no se pidió. */
   private readonly accessBefore = signal<ViewState<SessionAccess> | null | undefined>(undefined);
