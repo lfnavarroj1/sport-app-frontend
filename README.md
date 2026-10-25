@@ -241,11 +241,21 @@ Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`co
 - Los horarios llegan en UTC con la zona del servicio: se muestran en la zona del navegador sin alterar el instante y, si difiere, se indica la zona del servicio. Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo.
 - Ningún error se presenta como catálogo vacío: `401` termina la sesión como vencida; `403`, `422`, `503` y `504` muestran el error con su código de referencia.
 
+## Datos personales (HU002)
+
+Feature `src/app/features/identity/profile/account-form`, contrato `bff-web` 0.28.0 (`core/api/bff-web/account.api.ts`) y ADR-035.
+
+- **Tres actores:** «Mi perfil» navega a `/deportista/perfil`, `/organizador/perfil` y `/profesional/perfil`, sin permiso ni capacidad. La sección «Datos personales» lee la cuenta con `GET /v1/me/account` y edita el nombre y el correo con `PUT /v1/me/account` (`expected_version`, `full_name`, `email`). El organizador y el profesional solo ven esta sección (`ACCOUNT_PROFILE_ROUTES`, `PROFILE_SCOPE = 'account'`); no se consulta el perfil deportivo.
+- En la web solo se validan obligatorios, longitudes (nombre 1–120 tras recortar, correo hasta 254) y el formato del correo. La normalización y la unicidad las decide el backend: se muestra lo que confirma el `200`, el `422` se marca por campo y `409 email_already_registered` se marca en el correo sin revelar nada de la otra cuenta.
+- `409 version_conflict` no sobrescribe: recarga la cuenta (proyección eventual de `user_directory`) y muestra los valores vigentes; mientras no la alcanza, impide editar y ofrece «Actualizar datos». `404 user_not_found` (cuenta aún no proyectada) se informa con un reintento. `Idempotency-Key` y reintentos como en HU005.
+- Tras el `200`, la cabecera muestra el nombre confirmado sin cerrar la sesión (`SessionStore.updateUser`); la siguiente renovación adopta el usuario del BFF. El cambio de correo no revoca la sesión: el siguiente inicio usa el correo nuevo.
+- Pruebas: `e2e/account.spec.ts` (`@simulado`, simulador `e2e/support/account-simulator.ts`, que `simulateProfile` también registra) y `e2e/account.integrated.spec.ts` (`@integrado`: los tres actores, recarga desde la proyección, inicio con el correo nuevo, correo ajeno y conflicto entre pestañas), que requiere `bff-web` 0.28.0 y `users-management` 0.13.0 con el proyector actualizado.
+
 ## Datos demográficos y fisiológicos (HU005)
 
 Feature `src/app/features/identity/profile`, contrato `bff-web` 0.13.0 (`core/api/bff-web/profile.api.ts`) y ADR-034.
 
-- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. «Datos personales» (HU002) aparece como «Próximamente»; «Hábitos deportivos» es la sección de HU006 (ver la sección siguiente). Para el organizador y el profesional, «Mi perfil» sigue como «Próximamente» hasta HU002.
+- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. La página empieza con «Datos personales» (HU002, ver «Datos personales»); «Hábitos deportivos» es la sección de HU006 (ver la sección siguiente).
 - Una sección vacía (`null`) es una invitación a registrar, nunca un error. Se muestra la respuesta del comando mientras la proyección no la alcance; si no llega tras los reintentos, se avisa y se ofrece «Actualizar datos».
 - Catálogos cerrados en listas, unidades en la etiqueta de cada campo, decimales como texto (acepta coma o punto) y la fecha de la medición en la hora del navegador, enviada en UTC. La edad es informativa. En la web solo se validan las restricciones por campo del contrato; la edad permitida, la presión coherente y la ventana de la medición las decide el backend y se marcan desde `details[{field, issue}]`.
 - **Consentimiento:** «Guardar datos fisiológicos» solo se habilita al marcar la casilla con la versión de `healthDataConsentVersion`, y la casilla se vuelve a pedir en cada guardado. Sin esa versión (`null`) el registro fisiológico no está disponible. El texto de la política aún no existe: no hay enlace.
