@@ -161,7 +161,7 @@ describe('ActorShell (ADR-025, HU003)', () => {
   });
 
   describe('CA7: deportista según su plan (ADR-024)', () => {
-    it('FREE: opciones base y las del plan con HU web, como «Próximamente»', async () => {
+    it('FREE: opciones base y las del plan con HU web, ya navegables', async () => {
       const element = await render('athlete');
 
       expect(item(element, 'plan')?.textContent).toContain('Mi plan');
@@ -176,7 +176,9 @@ describe('ActorShell (ADR-025, HU003)', () => {
         '/deportista/entrenamientos/planes',
       );
       expect(item(element, 'athlete-training-plans')?.textContent).not.toContain('Próximamente');
-      expect(item(element, 'sport-calendar')?.textContent).toContain('Próximamente');
+      // HU018: «Calendario deportivo» ya navega al calendario integrado.
+      expect(item(element, 'sport-calendar')?.getAttribute('href')).toBe('/deportista/calendario');
+      expect(item(element, 'sport-calendar')?.textContent).not.toContain('Próximamente');
       // HU020: «Servicios» es una opción base y ya navega.
       expect(item(element, 'athlete-services')?.getAttribute('href')).toBe('/deportista/servicios');
       expect(item(element, 'athlete-services')?.textContent).not.toContain('Próximamente');

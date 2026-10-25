@@ -1,0 +1,62 @@
+@let entry = item();
+<span class="calendar-item__source" data-testid="calendar-item-source">
+  {{ 'events.integratedCalendar.sources.' + entry.source | translate }}
+</span>
+<span class="calendar-item__title">{{ entry.title }}</span>
+<span class="calendar-item__meta" data-testid="calendar-item-time">
+  @if (entry.startsAt; as startsAt) {
+    @if (compact()) {
+      {{ startsAt | date: 'shortTime' }}
+    } @else {
+      {{
+        'events.integratedCalendar.item.time'
+          | translate
+            : {
+                start: startsAt | date: 'EEE d MMM y, HH:mm',
+                end: entry.endsAt | date: (spansDays() ? 'EEE d MMM, HH:mm' : 'HH:mm'),
+              }
+      }}
+    }
+  } @else {
+    {{ 'events.integratedCalendar.item.allDay' | translate }}
+  }
+</span>
+@if (!compact()) {
+  @let detail = entry.detail;
+  @if (detail.kind === 'event') {
+    <span class="calendar-item__meta">
+      {{ detail.sport }} · {{ detail.location.name }}, {{ detail.location.city }}
+    </span>
+  } @else if (detail.kind === 'registration') {
+    <span class="calendar-item__meta">{{ detail.location.name }}, {{ detail.location.city }}</span>
+  } @else if (detail.kind === 'session') {
+    @let sport = sportKey(detail.sport);
+    <span class="calendar-item__meta">
+      {{ sport ? (sport | translate) : detail.sport }} ·
+      {{
+        'events.integratedCalendar.item.session'
+          | translate: { minutes: detail.durationMinutes, rpe: detail.rpe }
+      }}
+    </span>
+  } @else {
+    @let category = categoryKey(detail.category);
+    @let modality = modalityKey(detail.modality);
+    <span class="calendar-item__meta">
+      {{ category ? (category | translate) : detail.category }} ·
+      {{ modality ? (modality | translate) : detail.modality }} ·
+      {{ 'events.integratedCalendar.item.capacity' | translate: { count: detail.capacity } }}
+    </span>
+  }
+}
+@if (entry.timeZone; as timeZone) {
+  <span class="calendar-item__zone" data-testid="calendar-item-zone">
+    @if (zonedStart(); as local) {
+      {{ 'events.integratedCalendar.item.zoneWithTime' | translate: { zone: timeZone, time: local } }}
+    } @else {
+      {{ 'events.integratedCalendar.item.zone' | translate: { zone: timeZone } }}
+    }
+  </span>
+}
+<span class="calendar-item__status" data-testid="calendar-item-status">
+  {{ 'events.integratedCalendar.status.' + entry.status | translate }}
+</span>

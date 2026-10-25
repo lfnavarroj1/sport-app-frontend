@@ -1,0 +1,49 @@
+// Elemento del calendario integrado (HU018); la fuente se dice con texto, no solo con color.
+:host {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  background: var(--mat-sys-surface);
+  overflow-wrap: anywhere;
+}
+
+:host([data-source='OWN_EVENT']),
+:host([data-source='EVENT_PUBLISHED']),
+:host([data-source='EVENT_REGISTRATION']) {
+  border-left-color: var(--mat-sys-primary);
+}
+
+:host([data-source='TRAINING_PLAN_SESSION']) {
+  border-left-color: var(--mat-sys-tertiary);
+}
+
+:host([data-source='OWN_SERVICE_AVAILABILITY']),
+:host([data-source='ASSOCIATED_SERVICE_AVAILABILITY']) {
+  border-left-color: var(--mat-sys-secondary);
+}
+
+:host(.calendar-item--draft) {
+  border-style: dashed;
+}
+
+.calendar-item__source,
+.calendar-item__status {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+}
+
+.calendar-item__title {
+  font: var(--mat-sys-title-small);
+}
+
+.calendar-item__meta,
+.calendar-item__zone {
+  font: var(--mat-sys-body-small);
+}
+
+.calendar-item__zone {
+  color: var(--mat-sys-on-surface-variant);
+}

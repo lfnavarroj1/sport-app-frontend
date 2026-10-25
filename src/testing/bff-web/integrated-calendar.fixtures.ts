@@ -167,6 +167,25 @@ type SourceName =
   | 'OWN_SERVICE_AVAILABILITY'
   | 'ASSOCIATED_SERVICE_AVAILABILITY';
 
+type SourceStatus = 'OK' | 'UNAVAILABLE' | 'TIMEOUT';
+
+/** Cualquier elemento del simulador. */
+export type IntegratedItemFixture =
+  | typeof OWN_DRAFT_ITEM
+  | typeof OWN_PUBLISHED_ITEM
+  | typeof PUBLISHED_EVENT_ITEM
+  | typeof REGISTRATION_ITEM
+  | typeof TRAINING_SESSION_ITEM
+  | typeof OWN_SERVICE_PUBLISHED_ITEM
+  | typeof OWN_SERVICE_DRAFT_ITEM
+  | typeof ASSOCIATED_SERVICE_ITEM;
+
+export interface IntegratedSourceFixture {
+  readonly name: SourceName;
+  readonly status: SourceStatus;
+  readonly truncated: boolean;
+}
+
 /** Fuentes de cada actor según ADR-039, en el orden en que las declara el BFF. */
 export const ACTOR_SOURCES: Readonly<Record<string, readonly SourceName[]>> = {
   organizer: ['OWN_EVENT'],
@@ -180,7 +199,7 @@ export const ACTOR_SOURCES: Readonly<Record<string, readonly SourceName[]>> = {
 };
 
 /** Elementos de cada actor en marzo de 2027, en el orden del contrato. */
-export const ACTOR_ITEMS: Readonly<Record<string, readonly object[]>> = {
+export const ACTOR_ITEMS: Readonly<Record<string, readonly IntegratedItemFixture[]>> = {
   organizer: [OWN_DRAFT_ITEM, OWN_PUBLISHED_ITEM],
   service_provider: [PUBLISHED_EVENT_ITEM, OWN_SERVICE_PUBLISHED_ITEM, OWN_SERVICE_DRAFT_ITEM],
   athlete: [TRAINING_SESSION_ITEM, PUBLISHED_EVENT_ITEM, REGISTRATION_ITEM, ASSOCIATED_SERVICE_ITEM],
@@ -189,8 +208,8 @@ export const ACTOR_ITEMS: Readonly<Record<string, readonly object[]>> = {
 /** `sources[]` con todas las fuentes `OK`, salvo las indicadas. */
 export function sourcesOf(
   actor: string,
-  overrides: Partial<Record<SourceName, { status?: string; truncated?: boolean }>> = {},
-) {
+  overrides: Partial<Record<SourceName, { status?: SourceStatus; truncated?: boolean }>> = {},
+): IntegratedSourceFixture[] {
   return ACTOR_SOURCES[actor].map((name) => ({
     name,
     status: overrides[name]?.status ?? 'OK',
@@ -200,8 +219,8 @@ export function sourcesOf(
 
 /** Respuesta `200` del periodo `period` con `items` y `sources`. */
 export function integratedCalendar(
-  items: readonly object[],
-  sources: readonly object[],
+  items: readonly IntegratedItemFixture[],
+  sources: readonly IntegratedSourceFixture[],
   period: { readonly from: string; readonly to: string } = MARCH_2027,
 ) {
   return {

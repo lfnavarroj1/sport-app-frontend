@@ -37,8 +37,10 @@ test.describe('HU003 Inicio y navegación por actor (simulador del contrato) @si
     await expect(menu(page).locator('[data-menu-item="athlete-training-plans"]')).toContainText(
       'Planes de entrenamiento',
     );
-    await expect(menu(page).locator('[data-menu-item="sport-calendar"]')).toContainText(
-      'Próximamente',
+    // HU018: «Calendario deportivo» ya navega al calendario integrado.
+    await expect(menu(page).locator('[data-menu-item="sport-calendar"]')).toHaveAttribute(
+      'href',
+      '/deportista/calendario',
     );
     await expect(menuItem(page, 'sports-medicine')).toHaveCount(0);
     await expect(planStatus(page)).toHaveText(
@@ -141,15 +143,18 @@ test.describe('HU003 Inicio y navegación por actor (simulador del contrato) @si
   });
 
   test('las opciones «Próximamente» no navegan; «Inicio» sí', async ({ page }) => {
-    await loginAs(page, 'organizer');
+    // Desde HU018 el organizador ya no tiene opciones «Próximamente»: se usa el
+    // historial de molestias o lesiones del profesional (HU012).
+    await loginAs(page, 'service_provider');
 
-    const upcoming = menuItem(page, 'integrated-calendar');
+    const upcoming = menuItem(page, 'health-history');
+    await expect(upcoming).toContainText('Próximamente');
     await expect(upcoming.locator('a, button')).toHaveCount(0);
     await upcoming.click();
-    await expect(page).toHaveURL(/\/organizador\/inicio$/);
+    await expect(page).toHaveURL(/\/profesional\/inicio$/);
 
     const home = menu(page).getByRole('link', { name: 'Inicio' });
-    await expect(home).toHaveAttribute('href', '/organizador/inicio');
+    await expect(home).toHaveAttribute('href', '/profesional/inicio');
     await expect(home).toHaveAttribute('aria-current', 'page');
   });
 

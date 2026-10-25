@@ -239,6 +239,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'HU010',
         true,
       ),
+      // HU018: calendario integrado del deportista (ADR-039).
       planOption(
         'sport-calendar',
         'calendar',
@@ -246,7 +247,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar_month',
         '/deportista/calendario',
         'calendar.sport.view',
-        'HU023',
+        'HU018',
+        true,
       ),
       // Abre la pantalla de HU020 filtrada por medicina deportiva (ADR-038), donde
       // HU017 agrega «Asociar»/«Quitar» y «Mis servicios asociados».
@@ -326,7 +328,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'training.routes.author',
         'HU026',
       ),
-      upcoming(
+      permissionOption(
         'integrated-calendar',
         'calendar',
         160,
@@ -420,7 +422,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'nutrition.plan.author',
         'HU014',
       ),
-      upcoming(
+      permissionOption(
         'integrated-calendar',
         'calendar',
         170,

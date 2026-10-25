@@ -1529,6 +1529,95 @@
         "dayEvents": "Eventos del {{date}}"
       }
     },
+    "integratedCalendar": {
+      "title": {
+        "athlete": "Calendario deportivo",
+        "organizer": "Calendario integrado",
+        "service_provider": "Calendario integrado"
+      },
+      "intro": {
+        "athlete": "Consulta en un solo lugar los eventos publicados, las sesiones de tus planes de entrenamiento, la disponibilidad de tus servicios asociados y tus inscripciones.",
+        "organizer": "Consulta en un solo lugar tus eventos en borrador y publicados.",
+        "service_provider": "Consulta en un solo lugar la disponibilidad de tus servicios y los eventos publicados."
+      },
+      "browserZone": "Los horarios se muestran en tu zona horaria ({{zone}}).",
+      "periodLabel": "Periodo del calendario",
+      "modeLabel": "Vista del calendario",
+      "modes": {
+        "month": "Mes",
+        "list": "Lista"
+      },
+      "actions": {
+        "previousMonth": "Mes anterior",
+        "nextMonth": "Mes siguiente",
+        "apply": "Consultar"
+      },
+      "fields": {
+        "from": "Desde",
+        "to": "Hasta",
+        "period": "Periodo"
+      },
+      "hints": {
+        "period": "Ambos días incluidos; hasta {{max}} días."
+      },
+      "issues": {
+        "title": "No pudimos consultar el calendario:",
+        "item": "{{field}}: {{rule}}",
+        "invalid_datetime": "la fecha no es válida.",
+        "ends_before_starts": "la fecha final es anterior a la inicial.",
+        "out_of_range": "el periodo supera los {{max}} días permitidos.",
+        "required": "indica la fecha inicial y la final.",
+        "unknown": "el valor no es válido."
+      },
+      "incomplete": {
+        "title": "Información incompleta",
+        "item": "{{source}}: {{status}}.",
+        "notice": "Puede haber actividades de esas fuentes que no se muestran. Vuelve a consultar en unos minutos."
+      },
+      "sourceStatus": {
+        "UNAVAILABLE": "no está disponible",
+        "TIMEOUT": "no respondió a tiempo"
+      },
+      "truncated": {
+        "title": "Hay más actividades de las que se muestran",
+        "notice": "Estas fuentes tienen más de 200 actividades en el periodo y solo se muestran las primeras. Acota el periodo en la vista de lista para verlas todas."
+      },
+      "sourcesFilter": "Mostrar fuentes",
+      "sourceOption": "{{source}} ({{count}})",
+      "sources": {
+        "OWN_EVENT": "Mis eventos",
+        "EVENT_PUBLISHED": "Eventos publicados",
+        "EVENT_REGISTRATION": "Mis inscripciones",
+        "TRAINING_PLAN_SESSION": "Sesiones de mis planes",
+        "OWN_SERVICE_AVAILABILITY": "Disponibilidad de mis servicios",
+        "ASSOCIATED_SERVICE_AVAILABILITY": "Mis servicios asociados"
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado",
+        "REGISTERED": "Inscrito",
+        "ASSIGNED": "Asignada",
+        "AVAILABLE": "Disponible"
+      },
+      "empty": {
+        "none": "No tienes actividades en este periodo.",
+        "incomplete": "Las fuentes que respondieron no tienen actividades en este periodo. Como hay información incompleta, no podemos confirmar que no tengas actividades.",
+        "noSource": "Elige al menos una fuente para ver sus actividades.",
+        "filtered": "Las fuentes elegidas no tienen actividades en este periodo."
+      },
+      "count": "Actividades mostradas: {{count}}. Consultado el {{date}}.",
+      "item": {
+        "time": "{{start}} – {{end}}",
+        "allDay": "Sin hora fija",
+        "session": "{{minutes}} min · esfuerzo percibido (RPE) {{rpe}}",
+        "capacity": "cupo: {{count}}",
+        "zone": "Zona: {{zone}}",
+        "zoneWithTime": "Hora local: {{time}} ({{zone}})"
+      },
+      "month": {
+        "dayItems": "Actividades del {{date}}"
+      }
+    },
     "attendees": {
       "title": "Inscritos de mis eventos",
       "intro": "Elige uno de tus eventos para ver quiénes se inscribieron, cuántas inscripciones tiene y su estado.",

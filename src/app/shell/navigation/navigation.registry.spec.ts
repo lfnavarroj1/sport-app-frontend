@@ -66,6 +66,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['athlete-services', '/deportista/servicios', 'HU020'],
       ['athlete-nutrition', '/deportista/alimentacion', 'HU014'],
       ['athlete-training-plans', '/deportista/entrenamientos/planes', 'HU010'],
+      ['sport-calendar', '/deportista/calendario', 'HU018'],
       ['sports-medicine', '/deportista/servicios/medico-deportivos', 'HU017'],
     ]);
     expect(navigable('organizer')).toEqual([
@@ -76,6 +77,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['event-publish', '/organizador/eventos/publicacion', 'HU024'],
       ['event-pricing', '/organizador/eventos/tarifas', 'HU025'],
       ['organizer-routes', '/organizador/rutas', 'HU026'],
+      ['integrated-calendar', '/organizador/calendario', 'HU018'],
       ['profile', '/organizador/perfil', 'HU002'],
     ]);
     expect(navigable('service_provider')).toEqual([
@@ -86,6 +88,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['training-templates', '/profesional/entrenamientos/plantillas', 'HU028'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
       ['nutrition-plans', '/profesional/alimentacion/planes', 'HU014'],
+      ['integrated-calendar', '/profesional/calendario', 'HU018'],
       ['profile', '/profesional/perfil', 'HU002'],
     ]);
   });
@@ -269,7 +272,9 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
         accessOf('service_provider', 'NOT_APPLICABLE', SERVICE_PROVIDER_WEB_PERMISSIONS, []),
       );
 
-      expect(provider).toEqual(jasmine.arrayContaining(['service-create', 'service-publish']));
+      expect(provider).toEqual(
+      jasmine.arrayContaining(['service-create', 'service-publish', 'integrated-calendar']),
+    );
       expect(provider).not.toContain('event-create');
       expect(provider).not.toContain('plan');
     });
@@ -360,9 +365,23 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       jasmine.objectContaining({
         route: '/deportista/calendario',
         capability: 'calendar.sport.view',
-        hu: 'HU023',
+        hu: 'HU018',
+        available: true,
       }),
     );
+    for (const [actor, route] of [
+      ['organizer', '/organizador/calendario'],
+      ['service_provider', '/profesional/calendario'],
+    ] as const) {
+      expect(NAVIGATION[actor].items.find((item) => item.id === 'integrated-calendar')).toEqual(
+        jasmine.objectContaining({
+          route,
+          permission: 'calendar.integrated.view',
+          hu: 'HU018',
+          available: true,
+        }),
+      );
+    }
   });
 
   it('agrupa y ordena el menú: Inicio primero y la cuenta al final', () => {

@@ -1,0 +1,59 @@
+// Calendario integrado (HU018) sobre los estilos del calendario de eventos (HU023).
+.integrated-calendar__notice {
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+
+  p {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+
+  button {
+    margin-top: 0.5rem;
+  }
+}
+
+.integrated-calendar__notice-title {
+  font: var(--mat-sys-title-small);
+}
+
+.integrated-calendar__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+
+  legend {
+    padding: 0 0.25rem;
+    font: var(--mat-sys-label-large);
+  }
+}
+
+.integrated-calendar__empty {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-body-large);
+}
+
+.integrated-calendar__days {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.integrated-calendar__day {
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+  text-transform: capitalize;
+}

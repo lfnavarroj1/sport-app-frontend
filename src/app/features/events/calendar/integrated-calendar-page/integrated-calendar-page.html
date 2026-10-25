@@ -1,0 +1,238 @@
+<section class="events-page calendar-page integrated-calendar">
+  <header class="events-page__header">
+    <h1>{{ 'events.integratedCalendar.title.' + actor | translate }}</h1>
+    <p>{{ 'events.integratedCalendar.intro.' + actor | translate }}</p>
+    <p class="calendar-page__zone" data-testid="integrated-browser-zone">
+      {{ 'events.integratedCalendar.browserZone' | translate: { zone: browserZone } }}
+    </p>
+  </header>
+
+  <mat-card appearance="outlined" class="events-page__card">
+    <mat-card-content>
+      <form
+        [formGroup]="period"
+        (ngSubmit)="apply()"
+        novalidate
+        class="calendar-page__filters"
+        [attr.aria-label]="'events.integratedCalendar.periodLabel' | translate"
+      >
+        <mat-button-toggle-group
+          [value]="mode()"
+          (change)="setMode($event.value)"
+          [attr.aria-label]="'events.integratedCalendar.modeLabel' | translate"
+          [hideSingleSelectionIndicator]="true"
+        >
+          <mat-button-toggle value="month" data-testid="integrated-mode-month">
+            {{ 'events.integratedCalendar.modes.month' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle value="list" data-testid="integrated-mode-list">
+            {{ 'events.integratedCalendar.modes.list' | translate }}
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+
+        @if (mode() === 'month') {
+          <div class="calendar-page__month-nav">
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-label]="'events.integratedCalendar.actions.previousMonth' | translate"
+              (click)="shiftMonth(-1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <span
+              class="calendar-page__month-label"
+              aria-live="polite"
+              data-testid="integrated-month-label"
+            >
+              {{ monthStart() | date: 'MMMM y' }}
+            </span>
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-label]="'events.integratedCalendar.actions.nextMonth' | translate"
+              (click)="shiftMonth(1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <div class="calendar-page__grid">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'events.integratedCalendar.fields.from' | translate }}</mat-label>
+              <input matInput type="date" formControlName="from" required />
+              <mat-error><app-field-error [control]="period.controls.from" /></mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'events.integratedCalendar.fields.to' | translate }}</mat-label>
+              <input matInput type="date" formControlName="to" required />
+              <mat-hint>{{
+                'events.integratedCalendar.hints.period' | translate: { max: maxDays }
+              }}</mat-hint>
+              <mat-error>
+                @let toErrors = period.controls.to.errors;
+                @if (toErrors?.['period'] || toErrors?.['server']) {
+                  {{
+                    violationKey(toErrors!['period'] ?? toErrors!['server'])
+                      | translate: { max: maxDays }
+                  }}
+                } @else {
+                  <app-field-error [control]="period.controls.to" />
+                }
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <button
+            mat-flat-button
+            type="submit"
+            class="calendar-page__submit"
+            data-testid="integrated-apply"
+          >
+            {{ 'events.integratedCalendar.actions.apply' | translate }}
+          </button>
+        }
+      </form>
+
+      @if (violations().length > 0) {
+        <div class="calendar-page__error" role="alert" data-testid="integrated-violations">
+          <p>{{ 'events.integratedCalendar.issues.title' | translate }}</p>
+          <ul>
+            @for (violation of violations(); track $index) {
+              <li>
+                {{
+                  'events.integratedCalendar.issues.item'
+                    | translate
+                      : {
+                          field: (violationFieldKey(violation.field) | translate),
+                          rule: (violationKey(violation.issue) | translate: { max: maxDays }),
+                        }
+                }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <app-async-state [state]="state()" (retry)="load()">
+        @if (calendar(); as data) {
+          @if (incomplete().length > 0) {
+            <div class="integrated-calendar__notice" role="alert" data-testid="integrated-incomplete">
+              <p class="integrated-calendar__notice-title">
+                {{ 'events.integratedCalendar.incomplete.title' | translate }}
+              </p>
+              <ul>
+                @for (source of incomplete(); track source.name) {
+                  <li [attr.data-incomplete]="source.name">
+                    {{
+                      'events.integratedCalendar.incomplete.item'
+                        | translate
+                          : {
+                              source: ('events.integratedCalendar.sources.' + source.name | translate),
+                              status: ('events.integratedCalendar.sourceStatus.' + source.status | translate),
+                            }
+                    }}
+                  </li>
+                }
+              </ul>
+              <p>{{ 'events.integratedCalendar.incomplete.notice' | translate }}</p>
+              <button mat-stroked-button type="button" (click)="load()">
+                {{ 'common.state.retry' | translate }}
+              </button>
+            </div>
+          }
+
+          @if (truncated().length > 0) {
+            <div class="integrated-calendar__notice" role="status" data-testid="integrated-truncated">
+              <p class="integrated-calendar__notice-title">
+                {{ 'events.integratedCalendar.truncated.title' | translate }}
+              </p>
+              <ul>
+                @for (source of truncated(); track source.name) {
+                  <li [attr.data-truncated]="source.name">
+                    {{ 'events.integratedCalendar.sources.' + source.name | translate }}
+                  </li>
+                }
+              </ul>
+              <p>{{ 'events.integratedCalendar.truncated.notice' | translate }}</p>
+            </div>
+          }
+
+          <fieldset class="integrated-calendar__sources" data-testid="integrated-sources">
+            <legend>{{ 'events.integratedCalendar.sourcesFilter' | translate }}</legend>
+            @for (source of data.sources; track source.name) {
+              <mat-checkbox
+                [checked]="selected().has(source.name)"
+                (change)="toggleSource(source.name, $event.checked)"
+                [attr.data-source-filter]="source.name"
+              >
+                {{
+                  'events.integratedCalendar.sourceOption'
+                    | translate
+                      : {
+                          source: ('events.integratedCalendar.sources.' + source.name | translate),
+                          count: countOf(source.name),
+                        }
+                }}
+              </mat-checkbox>
+            }
+          </fieldset>
+
+          @if (data.items.length === 0) {
+            <p class="integrated-calendar__empty" role="status" data-testid="integrated-empty">
+              {{
+                (incomplete().length > 0
+                  ? 'events.integratedCalendar.empty.incomplete'
+                  : 'events.integratedCalendar.empty.none'
+                ) | translate
+              }}
+            </p>
+          } @else if (selected().size === 0) {
+            <p class="integrated-calendar__empty" role="status" data-testid="integrated-no-source">
+              {{ 'events.integratedCalendar.empty.noSource' | translate }}
+            </p>
+          } @else if (visibleItems().length === 0) {
+            <p class="integrated-calendar__empty" role="status" data-testid="integrated-filtered">
+              {{ 'events.integratedCalendar.empty.filtered' | translate }}
+            </p>
+          }
+
+          @if (mode() === 'month') {
+            <app-integrated-month
+              [year]="month().year"
+              [month]="month().month"
+              [items]="visibleItems()"
+            />
+          } @else if (visibleItems().length > 0) {
+            <ol class="integrated-calendar__days" data-testid="integrated-list">
+              @for (day of days(); track day.key) {
+                <li [attr.data-day]="day.key">
+                  <h2 class="integrated-calendar__day">
+                    <time [attr.datetime]="day.key">{{ dayDate(day.key) | date: 'fullDate' }}</time>
+                  </h2>
+                  <ul class="calendar-page__events">
+                    @for (item of day.items; track item.id) {
+                      <li [attr.data-item]="item.id">
+                        <app-calendar-item [item]="item" />
+                      </li>
+                    }
+                  </ul>
+                </li>
+              }
+            </ol>
+          }
+
+          <p class="calendar-page__note" role="status" data-testid="integrated-count">
+            {{
+              'events.integratedCalendar.count'
+                | translate
+                  : {
+                      count: visibleItems().length,
+                      date: (data.evaluatedAt | date: 'medium'),
+                    }
+            }}
+          </p>
+        }
+      </app-async-state>
+    </mat-card-content>
+  </mat-card>
+</section>
