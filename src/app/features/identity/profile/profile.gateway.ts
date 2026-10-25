@@ -9,11 +9,12 @@ import {
   SaveOutcome,
   SportHabits,
   SportHabitsDraft,
+  SportHabitsUpdate,
 } from './profile.model';
 
 /**
- * Puerto hacia el BFF web para el perfil del deportista (HU005, HU006 y HU009).
- * `HttpProfileGateway` traduce el contrato bff-web 0.21.0.
+ * Puerto hacia el BFF web para el perfil del deportista (HU005, HU006, HU008 y
+ * HU009). `HttpProfileGateway` traduce el contrato bff-web 0.30.0.
  */
 export abstract class ProfileGateway {
   /**
@@ -49,6 +50,21 @@ export abstract class ProfileGateway {
   abstract saveSportHabits(
     draft: SportHabitsDraft,
     expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>>;
+
+  /**
+   * Actualiza parcialmente los hábitos deportivos vigentes (HU008): solo envía
+   * `update.sections`; el backend conserva las demás. Mismas reglas de clave,
+   * reintentos y resultados que el reemplazo; `404 sport_habits_not_found` es un
+   * fallo con su código.
+   *
+   * @param expectedVersion la última versión conocida (obligatoria).
+   */
+  abstract updateSportHabits(
+    update: SportHabitsUpdate,
+    expectedVersion: number,
     idempotencyKey: string,
     onRetry?: (attempt: number) => void,
   ): Promise<SaveOutcome<SportHabits>>;

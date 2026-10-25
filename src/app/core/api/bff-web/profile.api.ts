@@ -6,13 +6,14 @@ import { BffWebUrl } from '../bff-web-url';
 import { SPORTS, SportDto } from './training.api';
 
 /**
- * Transporte del perfil del deportista (HU005 y HU006, ADR-034; HU009, ADR-035)
- * del contrato bff-web 0.21.0 (ver `contract.ts`): `GET /v1/me/profile`
+ * Transporte del perfil del deportista (HU005 y HU006, ADR-034; HU008 y HU009,
+ * ADR-035) del contrato bff-web 0.30.0 (ver `contract.ts`): `GET /v1/me/profile`
  * (`get_profile_v1_me_profile_get`), `PUT /v1/me/demographic-profile`
  * (`put_demographic_v1_me_demographic_profile_put`),
  * `PUT /v1/me/physiological-profile`
  * (`put_physiological_v1_me_physiological_profile_put`) y
- * `PUT /v1/me/sport-habits` (`put_sport_habits_v1_me_sport_habits_put`) y
+ * `PUT /v1/me/sport-habits` (`put_sport_habits_v1_me_sport_habits_put`),
+ * `PATCH /v1/me/sport-habits` (`patch_sport_habits_v1_me_sport_habits_patch`) y
  * `PUT /v1/me/nutrition-habits` (`put_nutrition_habits_v1_me_nutrition_habits_put`). Solo
  * `athlete`; la identidad sale del token y el cuerpo nunca lleva `user_id` ni
  * `bmi`. Estos tipos son del transporte: la interfaz los transforma antes de
@@ -187,6 +188,19 @@ export interface SportHabitsRequestDto {
   readonly sports: readonly SportHabitDto[];
   readonly availability: SportAvailabilityDto;
   readonly primary_goal: PrimaryGoalDto | null;
+}
+
+/**
+ * Esquema `SportHabitsPatchRequest` (HU008, ADR-035): una o más secciones; cada
+ * sección enviada reemplaza completa a la vigente y las no enviadas se conservan.
+ * `expected_version` es obligatoria; `primary_goal: null` borra el objetivo. Sin
+ * secciones el backend responde `422 required`, por eso el cliente no lo envía.
+ */
+export interface SportHabitsPatchRequestDto {
+  readonly expected_version: number;
+  readonly sports?: readonly SportHabitDto[];
+  readonly availability?: SportAvailabilityDto;
+  readonly primary_goal?: PrimaryGoalDto | null;
 }
 
 /**
@@ -381,6 +395,12 @@ export const PROFILE_ERROR_CODES = {
 } as const;
 
 /**
+ * `404` del `PATCH` de hábitos deportivos (HU008): aún no hay hábitos que
+ * actualizar; primero se registran (HU006).
+ */
+export const SPORT_HABITS_NOT_FOUND = 'sport_habits_not_found';
+
+/**
  * Catálogo de `details[].issue` de `validation_error` (ADR-034, reglas comunes).
  * El OpenAPI lo referencia como «catálogo de ADR-034».
  */
@@ -410,7 +430,7 @@ export const VERSION_CONFLICT_FIELD = 'expected_version';
 /** Cabecera de respuesta que marca el resultado de un reintento idempotente. */
 export const PROFILE_IDEMPOTENT_REPLAYED_HEADER = 'Idempotent-Replayed';
 
-/** Cliente del BFF web para el perfil del deportista (HU005, HU006 y HU009). */
+/** Cliente del BFF web para el perfil del deportista (HU005, HU006, HU008 y HU009). */
 @Injectable({ providedIn: 'root' })
 export class BffWebProfileApi {
   private readonly http = inject(HttpClient);
@@ -462,6 +482,22 @@ export class BffWebProfileApi {
     idempotencyKey: string,
   ): Observable<HttpResponse<SportHabitsResponseDto>> {
     return this.http.put<SportHabitsResponseDto>(
+      this.bffWebUrl.resolve('v1/me/sport-habits'),
+      body,
+      { headers: commandHeaders(accessToken, idempotencyKey), observe: 'response' },
+    );
+  }
+
+  /**
+   * Actualiza parcialmente los hábitos deportivos (HU008): solo las secciones
+   * presentes en `body`; mismas cabeceras y respuesta completa que el `PUT`.
+   */
+  patchSportHabits(
+    accessToken: string,
+    body: SportHabitsPatchRequestDto,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<SportHabitsResponseDto>> {
+    return this.http.patch<SportHabitsResponseDto>(
       this.bffWebUrl.resolve('v1/me/sport-habits'),
       body,
       { headers: commandHeaders(accessToken, idempotencyKey), observe: 'response' },

@@ -17,12 +17,14 @@ import {
   PROFILE_PATH,
   PROFILE_WITH_NUTRITION_HABITS,
   PROFILE_WITH_SPORT_HABITS,
+  SPORT_HABITS_PATCH_RESPONSES,
   SPORT_HABITS_PATH,
   SPORT_HABITS_RESPONSE,
   SPORT_HABITS_RESPONSES,
   VALID_DEMOGRAPHIC_REQUEST,
   VALID_NUTRITION_HABITS_REQUEST,
   VALID_PHYSIOLOGICAL_REQUEST,
+  VALID_SPORT_HABITS_PATCH_REQUEST,
   VALID_SPORT_HABITS_REQUEST,
 } from '../../../../testing/bff-web/profile.fixtures';
 import { SimulatedResponse } from '../../../../testing/bff-web/register-user.fixtures';
@@ -63,6 +65,8 @@ import {
   PhysiologicalProfileResponseDto,
   ProfileResponseDto,
   SPORT_HABITS_LIMITS,
+  SPORT_HABITS_NOT_FOUND,
+  SportHabitsPatchRequestDto,
   SportHabitsRequestDto,
   SportHabitsResponseDto,
   TIME_SLOTS,
@@ -80,6 +84,7 @@ const getOperation: OpenApiOperation = contract.paths[PROFILE_PATH]['get'];
 const demographicOperation: OpenApiOperation = contract.paths[DEMOGRAPHIC_PROFILE_PATH]['put'];
 const physiologicalOperation: OpenApiOperation = contract.paths[PHYSIOLOGICAL_PROFILE_PATH]['put'];
 const sportHabitsOperation: OpenApiOperation = contract.paths[SPORT_HABITS_PATH]['put'];
+const patchSportHabitsOperation: OpenApiOperation = contract.paths[SPORT_HABITS_PATH]['patch'];
 const nutritionHabitsOperation: OpenApiOperation = contract.paths[NUTRITION_HABITS_PATH]['put'];
 const schemas = contract.components.schemas as Record<string, Schema>;
 
@@ -455,6 +460,110 @@ describe('Contrato bff-web: hábitos deportivos (HU006, ADR-034)', () => {
   });
 });
 
+describe('Contrato bff-web: actualización de hábitos deportivos (HU008, ADR-035)', () => {
+  const request = () => requestSchema(patchSportHabitsOperation);
+  /**
+   * El esquema sin su `anyOf` de secciones: `validateAgainstSchema` resuelve el
+   * `anyOf` antes que las propiedades, así que las secciones se comprueban aparte.
+   */
+  const properties = (): Schema => {
+    const { anyOf: _sections, ...rest } = request();
+    return rest as Schema;
+  };
+
+  it('usa el operationId de PATCH /v1/me/sport-habits con Authorization e Idempotency-Key', () => {
+    expect(patchSportHabitsOperation.operationId).toBe(
+      'patch_sport_habits_v1_me_sport_habits_patch',
+    );
+    expect(
+      (patchSportHabitsOperation.parameters ?? []).map((p) => [p.in, p.name.toLowerCase()]),
+    ).toEqual([
+      ['header', 'idempotency-key'],
+      ['header', 'authorization'],
+    ]);
+    expect(Object.keys(patchSportHabitsOperation.responses['200'].headers ?? {})).toContain(
+      PROFILE_IDEMPOTENT_REPLAYED_HEADER,
+    );
+  });
+
+  it('exige expected_version y al menos una de las tres secciones', () => {
+    const schema = request();
+
+    expect(schema.required).toEqual(['expected_version']);
+    expect((schema['anyOf'] as { required: string[] }[]).map((option) => option.required)).toEqual([
+      ['sports'],
+      ['availability'],
+      ['primary_goal'],
+    ]);
+    expect(Object.keys(schema.properties).sort()).toEqual(
+      ['availability', 'expected_version', 'primary_goal', 'sports'].sort(),
+    );
+  });
+
+  it('las solicitudes parciales del cliente cumplen el esquema y rechazan user_id', () => {
+    const body: SportHabitsPatchRequestDto = VALID_SPORT_HABITS_PATCH_REQUEST;
+    const availability: SportHabitsPatchRequestDto = {
+      expected_version: 1,
+      availability: { days: ['TUE'], time_slots: ['EVENING'] },
+    };
+    const clearGoal: SportHabitsPatchRequestDto = { expected_version: 1, primary_goal: null };
+
+    for (const valid of [body, availability, clearGoal]) {
+      expect(validateAgainstSchema(contract, properties(), valid)).toEqual([]);
+    }
+    expect(validateAgainstSchema(contract, properties(), { ...body, user_id: 'x' })).toEqual([
+      '$.user_id: propiedad no permitida',
+    ]);
+    expect(validateAgainstSchema(contract, properties(), { sports: body.sports })).toEqual([
+      '$.expected_version: es obligatorio',
+    ]);
+  });
+
+  it('cada sección tiene el mismo esquema que en el PUT de HU006', () => {
+    const put = requestSchema(sportHabitsOperation).properties;
+    const patch = request().properties;
+
+    const sports = nonNull(patch['sports']);
+    for (const key of ['items', 'minItems', 'maxItems']) {
+      expect(sports[key]).withContext(key).toEqual(put['sports'][key]);
+    }
+    expect(nonNull(patch['availability'])['properties']).toEqual(
+      nonNull(put['availability'])['properties'],
+    );
+    expect(patch['primary_goal']['anyOf']).toEqual(put['primary_goal']['anyOf']);
+  });
+
+  it('declara los códigos del PUT más sport_habits_not_found', () => {
+    const codes = (operation: OpenApiOperation) =>
+      [401, 403, 404, 409, 422, 503, 504]
+        .flatMap((status) => declaredCodes(operation, status))
+        .sort();
+
+    expect(codes(patchSportHabitsOperation)).toEqual(
+      [...codes(sportHabitsOperation), SPORT_HABITS_NOT_FOUND].sort(),
+    );
+    expect(declaredCodes(patchSportHabitsOperation, 404)).toEqual([SPORT_HABITS_NOT_FOUND]);
+    expect(patchSportHabitsOperation.responses['409'].description).toContain(
+      `field: "${VERSION_CONFLICT_FIELD}", issue: "<versión vigente>"`,
+    );
+  });
+
+  it('los motivos de los 422 simulados son del catálogo de ADR-034', () => {
+    for (const response of [
+      SPORT_HABITS_PATCH_RESPONSES.validationError,
+      SPORT_HABITS_PATCH_RESPONSES.noSections,
+    ]) {
+      for (const detail of response.body.details) {
+        expect<readonly string[]>(PROFILE_ISSUES).toContain(detail.issue);
+      }
+    }
+  });
+
+  it('las respuestas simuladas del comando cumplen el contrato', () => {
+    expectValidResponses(patchSportHabitsOperation, SPORT_HABITS_PATCH_RESPONSES);
+  });
+});
+
 describe('Contrato bff-web: hábitos alimenticios (HU009, ADR-035)', () => {
   const request = () => requestSchema(nutritionHabitsOperation);
 
@@ -657,6 +766,21 @@ describe('BffWebProfileApi', () => {
     expect(request.request.body).toEqual(VALID_NUTRITION_HABITS_REQUEST);
     request.flush(NUTRITION_HABITS_RESPONSE, { status: 201, statusText: 'Created' });
     expect(status).toBe(201);
+  });
+
+  it('actualiza parcialmente los hábitos deportivos con PATCH, token e Idempotency-Key', () => {
+    let status = 0;
+    api
+      .patchSportHabits('token-sintetico', VALID_SPORT_HABITS_PATCH_REQUEST, 'clave-uuid')
+      .subscribe((response) => (status = response.status));
+
+    const request = http.expectOne('http://bff.test/v1/me/sport-habits');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer token-sintetico');
+    expect(request.request.headers.get('Idempotency-Key')).toBe('clave-uuid');
+    expect(request.request.body).toEqual(VALID_SPORT_HABITS_PATCH_REQUEST);
+    request.flush(SPORT_HABITS_PATCH_RESPONSES.updated.body, { status: 200, statusText: 'OK' });
+    expect(status).toBe(200);
   });
 
   it('reemplaza los hábitos deportivos con token, Idempotency-Key y la respuesta completa', () => {

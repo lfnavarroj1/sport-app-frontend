@@ -49,6 +49,7 @@ import {
   SportHabit,
   SportHabits,
   SportHabitsDraft,
+  modifiedSportHabitsSections,
 } from '../profile.model';
 import {
   SportHabitControl,
@@ -126,6 +127,11 @@ function uniqueSports(array: AbstractControl): ValidationErrors | null {
  * un deporte ya elegido no se ofrece en otra fila y no se puede agregar una
  * sexta. Las reglas que informa el backend llegan como `serverErrors`, marcadas
  * en la fila y el campo de su posición (`sports[1].sport`) (CA2).
+ *
+ * Con hábitos vigentes es el modo edición de HU008 (ADR-035): se pueden cambiar
+ * los deportes, la disponibilidad o el objetivo por separado; la página solo
+ * envía las secciones modificadas y el backend conserva las demás. Si no cambió
+ * nada, no se envía (el backend rechazaría un cuerpo sin secciones) y se avisa.
  */
 @Component({
   selector: 'app-sport-habits-form',
@@ -177,6 +183,11 @@ export class SportHabitsForm implements OnInit {
   protected readonly rowCount = computed(() => this.chosen().length);
   protected readonly atMax = computed(() => this.rowCount() >= LIMITS.sportsMax);
 
+  /** Hay hábitos vigentes: es una actualización parcial (HU008), no un registro. */
+  protected readonly editing = computed(() => this.initial() !== null);
+  /** Se intentó guardar sin modificar ninguna sección. */
+  protected readonly unchanged = signal(false);
+
   /** Resumen de las reglas que informó el backend en el último envío. */
   protected readonly summary = computed(() =>
     (this.serverErrors() ?? []).map((violation) => ({
@@ -193,6 +204,7 @@ export class SportHabitsForm implements OnInit {
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.syncChosen();
       this.clearServerMarks();
+      this.unchanged.set(false);
       this.edited.emit();
     });
   }
@@ -269,7 +281,7 @@ export class SportHabitsForm implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
-    this.submitted.emit({
+    const draft: SportHabitsDraft = {
       sports: value.sports.map((row) => ({
         sport: row.sport as HabitSport,
         frequencyPerWeek: row.frequencyPerWeek as number,
@@ -281,7 +293,20 @@ export class SportHabitsForm implements OnInit {
       days: WEEK_DAYS.filter((day) => value.days[day]),
       timeSlots: TIME_SLOTS.filter((slot) => value.timeSlots[slot]),
       primaryGoal: value.primaryGoal,
-    });
+    };
+    const initial = this.initial();
+    if (initial !== null && modifiedSportHabitsSections(initial, draft).length === 0) {
+      this.unchanged.set(true);
+      afterNextRender(
+        () =>
+          this.host.nativeElement
+            .querySelector<HTMLElement>('[data-testid="sport-habits-unchanged"]')
+            ?.focus(),
+        { injector: this.injector },
+      );
+      return;
+    }
+    this.submitted.emit(draft);
   }
 
   private setChecked<T extends string>(

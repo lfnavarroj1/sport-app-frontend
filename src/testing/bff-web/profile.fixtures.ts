@@ -1,9 +1,9 @@
 /**
- * Simulador del perfil del deportista (HU005, HU006 y HU009) derivado del contrato
- * bff-web 0.21.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de los
- * ejemplos de ADR-034 y ADR-035: `GET /v1/me/profile`, `PUT /v1/me/demographic-profile`,
- * `PUT /v1/me/physiological-profile`, `PUT /v1/me/sport-habits` y
- * `PUT /v1/me/nutrition-habits`. Lo usan las pruebas unitarias y
+ * Simulador del perfil del deportista (HU005, HU006, HU008 y HU009) derivado del
+ * contrato bff-web 0.30.0 (`src/app/core/api/contracts/bff-web.openapi.json`) y de
+ * los ejemplos de ADR-034 y ADR-035: `GET /v1/me/profile`,
+ * `PUT /v1/me/demographic-profile`, `PUT /v1/me/physiological-profile`,
+ * `PUT` y `PATCH /v1/me/sport-habits` y `PUT /v1/me/nutrition-habits`. Lo usan las pruebas unitarias y
  * Playwright; `profile.contract.spec.ts` valida cada respuesta contra el esquema
  * del contrato. Datos sintéticos.
  *
@@ -120,6 +120,19 @@ export const SPORT_HABITS_RESPONSE = {
   user_id: SIMULATED_PROFILE_USER_ID,
   ...SPORT_HABITS_SECTION,
 };
+
+/**
+ * Actualización parcial de los hábitos de la versión 1 (HU008): solo los
+ * deportes, con la carrera a cuatro veces por semana; la disponibilidad y el
+ * objetivo no se envían y se conservan.
+ */
+export const VALID_SPORT_HABITS_PATCH_REQUEST = {
+  expected_version: 1,
+  sports: [
+    { ...VALID_SPORT_HABITS_REQUEST.sports[0], frequency_per_week: 4 },
+    VALID_SPORT_HABITS_REQUEST.sports[1],
+  ],
+} as const;
 
 /**
  * Solicitud de hábitos alimenticios de creación (HU009, ADR-035), con las listas
@@ -313,6 +326,31 @@ export const SPORT_HABITS_RESPONSES = {
   /** Más de cinco deportes (CA2). */
   tooManySports: error(422, 'validation_error', 'La solicitud no es válida.', [
     { field: 'sports', issue: 'too_many_items' },
+  ]),
+} as const satisfies Record<string, SimulatedResponse>;
+
+export const SPORT_HABITS_PATCH_RESPONSES = {
+  /** Versión 2: cambian los deportes; la disponibilidad y el objetivo se conservan (CA1). */
+  updated: {
+    status: 200,
+    body: {
+      ...SPORT_HABITS_RESPONSE,
+      version: 2,
+      sports: VALID_SPORT_HABITS_PATCH_REQUEST.sports,
+      updated_at: '2026-10-25T09:15:00Z',
+    },
+  },
+  ...COMMAND_ERRORS,
+  /** Aún no hay hábitos que actualizar: primero se registran (HU006). */
+  notFound: error(404, 'sport_habits_not_found', 'Primero registra tus hábitos deportivos.'),
+  /** Cuerpo sin secciones (CA5): `required` sin campo. */
+  noSections: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: null, issue: 'required' },
+  ]),
+  /** Deporte repetido en la segunda fila y franja fuera del catálogo (CA5). */
+  validationError: error(422, 'validation_error', 'La solicitud no es válida.', [
+    { field: 'sports[1].sport', issue: 'duplicate_value' },
+    { field: 'availability.time_slots[0]', issue: 'unknown_value' },
   ]),
 } as const satisfies Record<string, SimulatedResponse>;
 

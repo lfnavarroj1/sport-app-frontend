@@ -12,6 +12,7 @@ import {
   PROFILE_WITH_SPORT_HABITS,
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_CORRELATION_ID,
+  SPORT_HABITS_PATCH_RESPONSES,
   SPORT_HABITS_RESPONSES,
 } from '../../../../../testing/bff-web/profile.fixtures';
 import { ACCOUNT_READ } from '../../../../../testing/bff-web/account.fixtures';
@@ -70,6 +71,8 @@ const WITH_HABITS: AthleteProfile = toAthleteProfile(
 );
 const HABITS_V1: SportHabits = WITH_HABITS.sportHabits!;
 const HABITS_V2: SportHabits = toSportHabits(SPORT_HABITS_RESPONSES.replaced.body);
+/** Versión 2 de HU008: cambian los deportes; disponibilidad y objetivo se conservan. */
+const HABITS_UPDATED: SportHabits = toSportHabits(SPORT_HABITS_PATCH_RESPONSES.updated.body);
 
 const WITH_NUTRITION: AthleteProfile = toAthleteProfile(
   PROFILE_WITH_NUTRITION_HABITS as unknown as ProfileResponseDto,
@@ -166,6 +169,7 @@ describe('ProfilePage (HU005)', () => {
       'saveDemographic',
       'savePhysiological',
       'saveSportHabits',
+      'updateSportHabits',
       'saveNutritionHabits',
     ]);
     TestBed.configureTestingModule({
@@ -738,7 +742,7 @@ describe('ProfilePage (HU005)', () => {
     });
   });
 
-  describe('hábitos deportivos (HU006)', () => {
+  describe('hábitos deportivos (HU006 y HU008)', () => {
     beforeEach(() => configure());
 
     function habitsForm(): SportHabitsForm {
@@ -754,6 +758,544 @@ describe('ProfilePage (HU005)', () => {
     function habitKeys(): string[] {
       return gateway.saveSportHabits.calls.allArgs().map(([, , key]) => key);
     }
+
+    function updateKeys(): string[] {
+      return gateway.updateSportHabits.calls.allArgs().map(([, , key]) => key);
+    }
+
+    /** HU008: el deportista solo cambia la frecuencia de la carrera. */
+    const MORE_RUNNING: SportHabitsDraft = {
+      ...HABITS_DRAFT,
+      sports: [{ ...HABITS_DRAFT.sports[0], frequencyPerWeek: 4 }, HABITS_DRAFT.sports[1]],
+    };
+
+    it('sin hábitos invita a registrarlos, sin error', async () => {
+      await create(FULL);
+
+      expect(testId('sport-habits-empty')?.textContent).toContain(
+        'Aún no has registrado tus hábitos deportivos.',
+      );
+      expect(button('Registrar hábitos deportivos')).toBeDefined();
+      expect(testId('profile-hu006')?.textContent).toContain(
+        'Registrarlos no crea planes ni recomendaciones.',
+      );
+      expect(testId('state-error')).toBeNull();
+    });
+
+    it('muestra la carga y el error del perfil también en la sección de hábitos', async () => {
+      await create(Promise.reject(new HttpErrorResponse({ status: 503 })));
+
+      const section = testId('profile-hu006')!;
+      expect(section.querySelector('[data-testid="state-error"]')).not.toBeNull();
+      expect(testId('sport-habits-section')).toBeNull();
+    });
+
+    it('CA1: muestra los hábitos proyectados con sus catálogos y unidades', async () => {
+      await create(WITH_HABITS);
+
+      const first = testId('sport-habit-0')!;
+      expect(first.textContent).toContain('Carrera');
+      expect(first.textContent).toContain('3 veces por semana');
+      expect(first.textContent).toContain('45 min por sesión');
+      expect(first.textContent).toContain('Intensidad: Moderada');
+      expect(first.textContent).toContain('Nivel: Intermedio');
+      expect(first.textContent).toContain('4 años practicándolo');
+      const second = testId('sport-habit-1')!;
+      expect(second.textContent).toContain('Natación');
+      expect(second.textContent).toContain('1 vez por semana');
+      expect(second.textContent).toContain('Años de práctica sin especificar');
+      expect(
+        [...testId('sport-habits-days')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Lunes', 'Miércoles', 'Sábado']);
+      expect(testId('sport-habits-time-slots')?.textContent?.trim()).toBe('Mañana');
+      expect(testId('sport-habits-goal')?.textContent?.trim()).toBe('Salud');
+      expect(button('Editar hábitos deportivos')?.disabled).toBeFalse();
+    });
+
+    it('CA1: registra (201) sin versión esperada y muestra la respuesta del comando', async () => {
+      await create(FULL);
+      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V1, true));
+      await click('Registrar hábitos deportivos');
+      await submitHabits();
+
+      expect(gateway.saveSportHabits).toHaveBeenCalledOnceWith(
+        HABITS_DRAFT,
+        null,
+        jasmine.stringMatching(/^[0-9a-f-]{36}$/),
+        jasmine.any(Function),
+      );
+      const message = testId('sport-habits-saved')!;
+      expect(message.getAttribute('role')).toBe('status');
+      expect(message.textContent).toContain('Registramos tus hábitos deportivos.');
+      expect(document.activeElement).toBe(message);
+      // La proyección aún no tiene hábitos: se conserva la sección que confirmó el comando.
+      expect(testId('sport-habit-0')?.textContent).toContain('Carrera');
+      expect(testId('sport-habits-form')).toBeNull();
+      // Las secciones de HU005 no cambian.
+      expect(gateway.saveDemographic).not.toHaveBeenCalled();
+      expect(testId('demographic-summary')?.textContent).toContain('Bogotá');
+    });
+
+    it('HU008 CA1: al editar envía solo las secciones modificadas y conserva las demás', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo(saved(HABITS_UPDATED));
+      await click('Editar hábitos deportivos');
+
+      expect(habitsForm().initial()).toEqual(HABITS_V1);
+      await submitHabits(MORE_RUNNING);
+
+      expect(gateway.updateSportHabits).toHaveBeenCalledOnceWith(
+        { draft: MORE_RUNNING, sections: ['sports'] },
+        1,
+        jasmine.stringMatching(/^[0-9a-f-]{36}$/),
+        jasmine.any(Function),
+      );
+      expect(gateway.saveSportHabits).not.toHaveBeenCalled();
+      const message = testId('sport-habits-saved')!;
+      expect(message.getAttribute('role')).toBe('status');
+      expect(document.activeElement).toBe(message);
+      expect(message.textContent).toContain('Actualizamos tus hábitos deportivos.');
+      expect(
+        [...testId('sport-habits-updated-sections')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Deportes']);
+      expect(message.textContent).toContain('Lo que no cambiaste se conservó.');
+      // La respuesta trae el estado completo: deportes nuevos y disponibilidad conservada.
+      expect(testId('sport-habit-0')?.textContent).toContain('4 veces por semana');
+      expect(testId('sport-habit-1')?.textContent).toContain('Natación');
+      expect(
+        [...testId('sport-habits-days')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Lunes', 'Miércoles', 'Sábado']);
+      expect(testId('sport-habits-goal')?.textContent?.trim()).toBe('Salud');
+
+      // Otra edición parte de la versión nueva, con otra clave y solo el objetivo.
+      await click('Editar hábitos deportivos');
+      await submitHabits({ ...MORE_RUNNING, primaryGoal: null });
+      expect(gateway.updateSportHabits.calls.mostRecent().args.slice(0, 2)).toEqual([
+        { draft: { ...MORE_RUNNING, primaryGoal: null }, sections: ['primaryGoal'] },
+        2,
+      ]);
+      expect(updateKeys()[1]).not.toBe(updateKeys()[0]);
+    });
+
+    it('HU008 CA1: varias secciones a la vez se listan en la confirmación', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo(saved({ ...HABITS_V1, version: 2 }));
+      await click('Editar hábitos deportivos');
+      await submitHabits({ ...MORE_RUNNING, days: ['TUE'], primaryGoal: 'COMPETITION' });
+
+      expect(gateway.updateSportHabits.calls.mostRecent().args[0].sections).toEqual([
+        'sports',
+        'availability',
+        'primaryGoal',
+      ]);
+      expect(
+        [...testId('sport-habits-updated-sections')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Deportes', 'Disponibilidad', 'Objetivo principal']);
+      expect(testId('sport-habits-saved')?.textContent).not.toContain('se conservó');
+    });
+
+    it('HU008 CA5: sin cambios no llama al BFF', async () => {
+      await create(WITH_HABITS);
+      await click('Editar hábitos deportivos');
+      await submitHabits(HABITS_DRAFT);
+
+      expect(gateway.updateSportHabits).not.toHaveBeenCalled();
+      expect(gateway.saveSportHabits).not.toHaveBeenCalled();
+      expect(testId('sport-habits-form')).not.toBeNull();
+    });
+
+    it('HU008 CA3: informa que la respuesta corresponde a un envío anterior', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo(saved(HABITS_UPDATED, false, true));
+      await click('Editar hábitos deportivos');
+      await submitHabits(MORE_RUNNING);
+
+      expect(testId('sport-habits-replayed')?.textContent).toContain('no se duplicó el registro');
+    });
+
+    it('HU008 CA5: entrega al formulario las reglas incumplidas y conserva el estado anterior', async () => {
+      await create(WITH_HABITS);
+      const violations = [{ field: 'sports[1].sport', issue: 'duplicate_value' }];
+      gateway.updateSportHabits.and.resolveTo({ kind: 'invalid', violations });
+      await click('Editar hábitos deportivos');
+      await submitHabits(MORE_RUNNING);
+
+      expect(habitsForm().serverErrors()).toEqual(violations);
+      expect(testId('sport-habits-errors')?.textContent).toContain(
+        'Este deporte ya está en otra fila.',
+      );
+      expect(testId('sport-habits-saved')).toBeNull();
+
+      // Sin editar, volver a enviar es el mismo intento lógico.
+      await submitHabits(MORE_RUNNING);
+      expect(updateKeys()[1]).toBe(updateKeys()[0]);
+
+      // Al cancelar se ve el estado anterior, sin cambios.
+      await click('Cancelar');
+      expect(testId('sport-habit-0')?.textContent).toContain('3 veces por semana');
+      expect(testId('sport-habit-1')?.textContent).toContain('Natación');
+    });
+
+    it('HU008 CA2: un conflicto no sobrescribe, recarga y muestra los hábitos vigentes', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      gateway.loadProfile.and.resolveTo({ ...WITH_HABITS, sportHabits: HABITS_V2 });
+      await click('Editar hábitos deportivos');
+      await submitHabits({ ...HABITS_DRAFT, days: ['TUE'] });
+
+      const conflict = testId('sport-habits-conflict')!;
+      expect(conflict.getAttribute('role')).toBe('alert');
+      expect(conflict.textContent).toContain('no se sobrescribieron');
+      expect(document.activeElement).toBe(conflict);
+      expect(testId('sport-habits-form')).toBeNull();
+      expect(gateway.loadProfile).toHaveBeenCalledTimes(2);
+      // Los valores vigentes de la otra sesión, no los del envío rechazado.
+      expect(testId('sport-habit-0')?.textContent).toContain('4 veces por semana');
+      expect(testId('sport-habits-days')?.textContent).toContain('Martes');
+      expect(testId('sport-habits-days')?.textContent).not.toContain('Lunes');
+      expect(testId('profile-projection-pending')).toBeNull();
+
+      gateway.updateSportHabits.and.resolveTo(saved({ ...HABITS_V2, version: 3 }));
+      await click('Editar hábitos deportivos');
+      await submitHabits({ ...MORE_RUNNING, sports: [MORE_RUNNING.sports[0]], days: ['FRI'] });
+      expect(gateway.updateSportHabits.calls.mostRecent().args[1]).toBe(2);
+      expect(updateKeys()[1]).not.toBe(updateKeys()[0]);
+    });
+
+    it('tras un conflicto sin proyección al día, no permite editar a ciegas y ofrece actualizar', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      await click('Editar hábitos deportivos');
+      await submitHabits(MORE_RUNNING);
+      await settleUntil(() => testId('profile-projection-pending') !== null);
+
+      expect(testId('profile-projection-pending')).not.toBeNull();
+      expect(button('Editar hábitos deportivos')?.disabled).toBeTrue();
+      expect(button('Editar datos demográficos')?.disabled).toBeFalse();
+    });
+
+    it('HU008: sport_habits_not_found se explica sin datos y permite cancelar', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo({
+        kind: 'failed',
+        error: {
+          kind: 'not_found',
+          status: 404,
+          code: 'sport_habits_not_found',
+          correlationId: SIMULATED_PROFILE_CORRELATION_ID,
+        },
+      });
+      await click('Editar hábitos deportivos');
+      await submitHabits(MORE_RUNNING);
+
+      const error = testId('sport-habits-error')!;
+      expect(error.getAttribute('role')).toBe('alert');
+      expect(error.textContent).toContain('Aún no hay hábitos deportivos que actualizar.');
+      expect(error.textContent).toContain(SIMULATED_PROFILE_CORRELATION_ID);
+      expect(testId('sport-habits-saved')).toBeNull();
+    });
+
+    it('tras un fallo recuperable, reintentar usa la misma clave; editar la renueva', async () => {
+      await create(EMPTY);
+      gateway.saveDemographic.and.resolveTo({ kind: 'failed', error: UNAVAILABLE });
+      await click('Registrar datos demográficos');
+      await submitDemographic();
+
+      const error = testId('demographic-error')!;
+      expect(error.getAttribute('role')).toBe('alert');
+      expect(error.textContent).toContain('El servicio no está disponible');
+      expect(error.textContent).toContain('no se duplicará el registro');
+      expect(error.textContent).toContain(SIMULATED_PROFILE_CORRELATION_ID);
+      expect(testId('demographic-form')).not.toBeNull();
+
+      await submitDemographic();
+      expect(demographicKeys()[1]).toBe(demographicKeys()[0]);
+
+      demographicForm().edited.emit();
+      await submitDemographic();
+      expect(demographicKeys()[2]).not.toBe(demographicKeys()[1]);
+    });
+
+    it('idempotency_key_reused se explica y el siguiente envío usa otra clave', async () => {
+      await create(EMPTY);
+      gateway.saveDemographic.and.resolveTo({
+        kind: 'failed',
+        error: {
+          kind: 'conflict',
+          status: 409,
+          code: 'idempotency_key_reused',
+          correlationId: null,
+        },
+      });
+      await click('Registrar datos demográficos');
+      await submitDemographic();
+
+      const error = testId('demographic-error')!;
+      expect(error.textContent).toContain('No pudimos confirmar el envío');
+      expect(error.textContent).not.toContain('no se duplicará el registro');
+      await submitDemographic();
+      expect(demographicKeys()[1]).not.toBe(demographicKeys()[0]);
+    });
+
+    it('CA5: un rechazo por permiso se informa sin datos', async () => {
+      await create(EMPTY);
+      gateway.saveDemographic.and.resolveTo({
+        kind: 'failed',
+        error: { kind: 'forbidden', status: 403, code: 'permission_required', correlationId: null },
+      });
+      await click('Registrar datos demográficos');
+      await submitDemographic();
+
+      expect(testId('demographic-error')?.textContent).toContain(
+        'No tienes permiso para realizar esta acción.',
+      );
+      expect(testId('demographic-saved')).toBeNull();
+    });
+
+    it('una excepción inesperada del gateway se presenta como error, no como éxito', async () => {
+      await create(EMPTY);
+      gateway.saveDemographic.and.rejectWith(new Error('fallo sintético'));
+      await click('Registrar datos demográficos');
+      await submitDemographic();
+
+      expect(testId('demographic-error')?.textContent).toContain('Ocurrió un error inesperado.');
+      expect(testId('demographic-saved')).toBeNull();
+    });
+
+    it('no envía dos veces mientras el guardado está en curso', async () => {
+      await create(EMPTY);
+      gateway.saveDemographic.and.returnValue(new Promise(() => undefined));
+      await click('Registrar datos demográficos');
+      demographicForm().submitted.emit(DEMOGRAPHIC_DRAFT);
+      demographicForm().submitted.emit(DEMOGRAPHIC_DRAFT);
+      await settle();
+
+      expect(gateway.saveDemographic).toHaveBeenCalledTimes(1);
+      expect(button('Guardar datos demográficos')?.disabled).toBeTrue();
+    });
+
+    it('avisa los reintentos automáticos mientras ocurren', async () => {
+      await create(EMPTY);
+      let finish!: (outcome: SaveOutcome<DemographicProfile>) => void;
+      gateway.saveDemographic.and.callFake((_draft, _version, _key, onRetry) => {
+        onRetry?.(2);
+        return new Promise((resolve) => (finish = resolve));
+      });
+      await click('Registrar datos demográficos');
+      await submitDemographic();
+
+      expect(testId('demographic-retrying')?.textContent).toContain(
+        'Reintentando guardar tus datos demográficos (2 de 3)',
+      );
+      finish(saved(DEMOGRAPHIC_V1, true));
+      await settle();
+      expect(testId('demographic-retrying')).toBeNull();
+      expect(testId('demographic-saved')).not.toBeNull();
+    });
+
+    it('cancelar vuelve a la vista sin enviar y descarta la clave', async () => {
+      await create(FULL);
+      gateway.saveDemographic.and.resolveTo({ kind: 'failed', error: UNAVAILABLE });
+      await click('Editar datos demográficos');
+      await submitDemographic();
+      await click('Cancelar');
+
+      expect(testId('demographic-form')).toBeNull();
+      expect(testId('demographic-error')).toBeNull();
+      expect(testId('demographic-summary')?.textContent).toContain('Bogotá');
+
+      await click('Editar datos demográficos');
+      await submitDemographic();
+      expect(demographicKeys()[1]).not.toBe(demographicKeys()[0]);
+    });
+
+    it('CA1 y CA3: guarda los fisiológicos con el consentimiento y muestra el IMC del backend', async () => {
+      await create(EMPTY);
+      gateway.savePhysiological.and.resolveTo(saved(PHYSIOLOGICAL_V1, true));
+      await click('Registrar datos fisiológicos');
+
+      expect(physiologicalForm().consentVersion()).toBe(SIMULATED_HEALTH_CONSENT_VERSION);
+      physiologicalForm().submitted.emit(PHYSIOLOGICAL_DRAFT);
+      await settle();
+
+      expect(gateway.savePhysiological).toHaveBeenCalledOnceWith(
+        PHYSIOLOGICAL_DRAFT,
+        null,
+        jasmine.any(String),
+        jasmine.any(Function),
+      );
+      expect(testId('physiological-saved')?.textContent).toContain(
+        'Registramos tus datos fisiológicos.',
+      );
+      expect(testId('physiological-bmi')?.textContent?.trim()).toBe('23,2');
+    });
+
+    it('CA3: el rechazo del consentimiento llega al formulario fisiológico', async () => {
+      await create(FULL);
+      const violations = [{ field: 'consent.version', issue: 'unsupported_consent_version' }];
+      gateway.savePhysiological.and.resolveTo({ kind: 'invalid', violations });
+      await click('Editar datos fisiológicos');
+
+      expect(physiologicalForm().initial()).toEqual(PHYSIOLOGICAL_V1);
+      physiologicalForm().submitted.emit(PHYSIOLOGICAL_DRAFT);
+      await settle();
+
+      expect(gateway.savePhysiological.calls.mostRecent().args[1]).toBe(1);
+      expect(physiologicalForm().serverErrors()).toEqual(violations);
+      expect(testId('physiological-consent-error')?.textContent).toContain(
+        'acepta la versión actual',
+      );
+    });
+
+    it('CA4: no escribe en consola ni en almacenamiento durante un guardado completo', async () => {
+      const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
+        spyOn(console, method),
+      );
+      const storage = spyOn(Storage.prototype, 'setItem');
+
+      await create(EMPTY);
+      gateway.saveDemographic.and.resolveTo(saved(DEMOGRAPHIC_V1, true));
+      gateway.savePhysiological.and.resolveTo(saved(PHYSIOLOGICAL_V1, true));
+      await click('Registrar datos demográficos');
+      await submitDemographic();
+      await click('Registrar datos fisiológicos');
+      physiologicalForm().submitted.emit(PHYSIOLOGICAL_DRAFT);
+      await settle();
+
+      expect(testId('physiological-saved')).not.toBeNull();
+      for (const spy of spies) {
+        expect(spy).not.toHaveBeenCalled();
+      }
+      expect(storage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('proyección', () => {
+    beforeEach(() => configure());
+
+    it('conserva la sección confirmada mientras la proyección está atrasada', async () => {
+      await create(FULL);
+      gateway.savePhysiological.and.resolveTo(saved(PHYSIOLOGICAL_V2));
+      await click('Editar datos fisiológicos');
+      physiologicalForm().submitted.emit(PHYSIOLOGICAL_DRAFT);
+      await settle();
+
+      expect(testId('physiological-summary')?.textContent).toContain('70,0 kg');
+      expect(testId('physiological-bmi')?.textContent?.trim()).toBe('23,7');
+      expect(button('Editar datos fisiológicos')?.disabled).toBeFalse();
+    });
+
+    it('tras un conflicto sin proyección al día, agota las recargas y ofrece actualizar', async () => {
+      await create(FULL);
+      gateway.saveDemographic.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      // La proyección sigue en la versión 1.
+      gateway.loadProfile.and.resolveTo(FULL);
+      await click('Editar datos demográficos');
+      await submitDemographic();
+      await settleUntil(() => testId('profile-projection-pending') !== null);
+
+      // Carga inicial, recarga tras el conflicto y una recarga programada ([0]).
+      expect(gateway.loadProfile).toHaveBeenCalledTimes(3);
+      const pending = testId('profile-projection-pending')!;
+      expect(pending.getAttribute('role')).toBe('status');
+      expect(pending.textContent).toContain('Algunos datos aún se están actualizando');
+      expect(testId('demographic-summary')?.textContent).toContain('Bogotá');
+      expect(button('Editar datos demográficos')?.disabled).toBeTrue();
+      expect(button('Editar datos fisiológicos')?.disabled).toBeFalse();
+
+      gateway.loadProfile.and.resolveTo({ ...FULL, demographic: DEMOGRAPHIC_V2 });
+      testId('profile-refresh')!.click();
+      await settle();
+
+      expect(testId('profile-projection-pending')).toBeNull();
+      expect(testId('demographic-summary')?.textContent).toContain('Medellín');
+      expect(button('Editar datos demográficos')?.disabled).toBeFalse();
+    });
+
+    it('si la recarga falla, conserva lo mostrado y ofrece actualizar', async () => {
+      await create(FULL);
+      gateway.saveDemographic.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      gateway.loadProfile.and.rejectWith(new HttpErrorResponse({ status: 503 }));
+      await click('Editar datos demográficos');
+      await submitDemographic();
+
+      expect(testId('profile-projection-pending')).not.toBeNull();
+      expect(testId('profile-refresh')).not.toBeNull();
+      expect(testId('state-error')).toBeNull();
+      expect(testId('demographic-summary')?.textContent).toContain('Bogotá');
+    });
+
+    it('limpia la recarga programada al destruirse', async () => {
+      configureDelays([60_000]);
+      await create(FULL);
+      gateway.saveDemographic.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      await click('Editar datos demográficos');
+      await submitDemographic();
+      const calls = gateway.loadProfile.calls.count();
+
+      fixture.destroy();
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(gateway.loadProfile.calls.count()).toBe(calls);
+    });
+  });
+
+  describe('sin versión de consentimiento configurada', () => {
+    beforeEach(() => configure(null));
+
+    it('no permite registrar los fisiológicos, pero muestra los existentes', async () => {
+      await create(FULL);
+
+      expect(testId('physiological-unavailable')?.textContent).toContain(
+        'no está disponible en este ambiente',
+      );
+      expect(testId('physiological-summary')).not.toBeNull();
+      expect(button('Editar datos fisiológicos')).toBeUndefined();
+      expect(button('Editar datos demográficos')).toBeDefined();
+    });
+
+    it('sin sección fisiológica no ofrece registrarla', async () => {
+      await create(EMPTY);
+
+      expect(testId('physiological-unavailable')).not.toBeNull();
+      expect(button('Registrar datos fisiológicos')).toBeUndefined();
+      expect(button('Registrar datos demográficos')).toBeDefined();
+    });
+  });
+
+  describe('hábitos deportivos (HU006 y HU008)', () => {
+    beforeEach(() => configure());
+
+    function habitsForm(): SportHabitsForm {
+      return fixture.debugElement.query((el) => el.componentInstance instanceof SportHabitsForm)
+        .componentInstance as SportHabitsForm;
+    }
+
+    async function submitHabits(draft: SportHabitsDraft = HABITS_DRAFT): Promise<void> {
+      habitsForm().submitted.emit(draft);
+      await settle();
+    }
+
+    function habitKeys(): string[] {
+      return gateway.saveSportHabits.calls.allArgs().map(([, , key]) => key);
+    }
+
+    function updateKeys(): string[] {
+      return gateway.updateSportHabits.calls.allArgs().map(([, , key]) => key);
+    }
+
+    /** HU008: el deportista solo cambia la frecuencia de la carrera. */
+    const MORE_RUNNING: SportHabitsDraft = {
+      ...HABITS_DRAFT,
+      sports: [{ ...HABITS_DRAFT.sports[0], frequencyPerWeek: 4 }, HABITS_DRAFT.sports[1]],
+    };
 
     it('sin hábitos invita a registrarlos, sin error', async () => {
       await create(FULL);

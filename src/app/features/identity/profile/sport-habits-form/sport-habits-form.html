@@ -25,6 +25,12 @@
     </div>
   }
 
+  @if (editing()) {
+    <p class="profile-form__note" data-testid="sport-habits-partial-hint">
+      {{ 'profile.habits.hints.partial' | translate }}
+    </p>
+  }
+
   <fieldset class="profile-form__group" formArrayName="sports" data-testid="sport-habits-sports">
     <legend>{{ 'profile.habits.fields.sports' | translate }}</legend>
     <p class="profile-form__note">
@@ -240,6 +246,12 @@
       <mat-error><app-profile-field-error [control]="form.controls.primaryGoal" /></mat-error>
     </mat-form-field>
   </div>
+
+  @if (unchanged()) {
+    <p class="profile-form__note" role="status" tabindex="-1" data-testid="sport-habits-unchanged">
+      {{ 'profile.habits.unchanged' | translate }}
+    </p>
+  }
 
   <div class="profile-form__actions">
     <button mat-flat-button type="submit" [disabled]="submitting()">
