@@ -1,14 +1,17 @@
 import {
   PROFILE_WITH_SPORT_HABITS,
   SPORT_HABITS_SECTION,
+  VALID_SPORT_HABITS_PATCH_REQUEST,
   VALID_SPORT_HABITS_REQUEST,
 } from '../../../../testing/bff-web/profile.fixtures';
 import { ProfileResponseDto, TIME_SLOTS, WEEK_DAYS } from '../../../core/api/bff-web/profile.api';
 import {
   SportHabitsDraft,
   inCatalogOrder,
+  modifiedSportHabitsSections,
   toAthleteProfile,
   toSportHabits,
+  toSportHabitsPatchRequest,
   toSportHabitsRequest,
 } from './profile.model';
 
@@ -115,6 +118,109 @@ describe('Modelo de hábitos deportivos (HU006, ADR-034)', () => {
       expect(profile.sportHabits?.version).toBe(1);
       expect(profile.sportHabits?.primaryGoal).toBe('HEALTH');
       expect(toAthleteProfile({ ...dto, sport_habits: null }).sportHabits).toBeNull();
+    });
+  });
+});
+
+describe('Actualización parcial de hábitos deportivos (HU008, ADR-035)', () => {
+  const current = toSportHabits(SPORT_HABITS_SECTION);
+
+  describe('modifiedSportHabitsSections', () => {
+    it('sin cambios no hay secciones que enviar (CA5: nunca un cuerpo vacío)', () => {
+      expect(modifiedSportHabitsSections(current, DRAFT)).toEqual([]);
+    });
+
+    it('CA1: detecta cada sección por separado', () => {
+      const moreRunning = {
+        ...DRAFT,
+        sports: [{ ...DRAFT.sports[0], frequencyPerWeek: 4 }, DRAFT.sports[1]],
+      };
+
+      expect(modifiedSportHabitsSections(current, moreRunning)).toEqual(['sports']);
+      expect(modifiedSportHabitsSections(current, { ...DRAFT, days: ['TUE'] })).toEqual([
+        'availability',
+      ]);
+      expect(modifiedSportHabitsSections(current, { ...DRAFT, timeSlots: ['NIGHT'] })).toEqual([
+        'availability',
+      ]);
+      expect(modifiedSportHabitsSections(current, { ...DRAFT, primaryGoal: null })).toEqual([
+        'primaryGoal',
+      ]);
+    });
+
+    it('combina varias secciones en el orden deportes, disponibilidad y objetivo', () => {
+      const draft: SportHabitsDraft = {
+        sports: [DRAFT.sports[0]],
+        days: DRAFT.days,
+        timeSlots: ['MORNING', 'EVENING'],
+        primaryGoal: 'COMPETITION',
+      };
+
+      expect(modifiedSportHabitsSections(current, draft)).toEqual([
+        'sports',
+        'availability',
+        'primaryGoal',
+      ]);
+    });
+
+    it('el orden de las filas, días o franjas no es un cambio', () => {
+      const reordered: SportHabitsDraft = {
+        ...DRAFT,
+        sports: [DRAFT.sports[1], DRAFT.sports[0]],
+        days: ['SAT', 'MON', 'WED'],
+      };
+
+      expect(modifiedSportHabitsSections(current, reordered)).toEqual([]);
+    });
+
+    it('agregar los años de práctica de un deporte es un cambio de deportes', () => {
+      const draft = {
+        ...DRAFT,
+        sports: [DRAFT.sports[0], { ...DRAFT.sports[1], yearsPracticing: 2 }],
+      };
+
+      expect(modifiedSportHabitsSections(current, draft)).toEqual(['sports']);
+    });
+  });
+
+  describe('toSportHabitsPatchRequest', () => {
+    it('CA1: envía expected_version y solo los deportes modificados', () => {
+      const draft = {
+        ...DRAFT,
+        sports: [{ ...DRAFT.sports[0], frequencyPerWeek: 4 }, DRAFT.sports[1]],
+      };
+
+      expect(toSportHabitsPatchRequest({ draft, sections: ['sports'] }, 1)).toEqual(
+        VALID_SPORT_HABITS_PATCH_REQUEST,
+      );
+    });
+
+    it('la disponibilidad viaja completa (días y franjas) y normalizada al catálogo', () => {
+      const body = toSportHabitsPatchRequest(
+        { draft: { ...DRAFT, days: ['SUN', 'TUE'] }, sections: ['availability'] },
+        2,
+      );
+
+      expect(body).toEqual({
+        expected_version: 2,
+        availability: { days: ['TUE', 'SUN'], time_slots: ['MORNING'] },
+      });
+    });
+
+    it('un objetivo borrado viaja como primary_goal: null', () => {
+      const body = toSportHabitsPatchRequest(
+        { draft: { ...DRAFT, primaryGoal: null }, sections: ['primaryGoal'] },
+        3,
+      );
+
+      expect(body).toEqual({ expected_version: 3, primary_goal: null });
+      expect('primary_goal' in body).toBeTrue();
+    });
+
+    it('nunca envía user_id ni las secciones no modificadas', () => {
+      const body = toSportHabitsPatchRequest({ draft: DRAFT, sections: ['primaryGoal'] }, 1);
+
+      expect(Object.keys(body).sort()).toEqual(['expected_version', 'primary_goal']);
     });
   });
 });

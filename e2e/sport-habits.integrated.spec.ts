@@ -49,10 +49,13 @@ async function choose(page: Page, index: number, label: string, option: string):
   await page.getByRole('option', { name: option, exact: true }).click();
 }
 
-/** Guarda los hábitos y devuelve el estado HTTP del `PUT`. */
-async function save(page: Page): Promise<number> {
+/**
+ * Guarda los hábitos y devuelve el estado HTTP del comando: `PUT` al registrar y,
+ * desde HU008, `PATCH` al editar unos hábitos ya registrados.
+ */
+async function save(page: Page, method: 'PUT' | 'PATCH' = 'PUT'): Promise<number> {
   const response = page.waitForResponse(
-    (r) => new URL(r.url()).pathname === SPORT_HABITS_PATH && r.request().method() === 'PUT',
+    (r) => new URL(r.url()).pathname === SPORT_HABITS_PATH && r.request().method() === method,
   );
   await button(page, 'Guardar hábitos deportivos').click();
   return (await response).status();
@@ -110,14 +113,15 @@ test.describe('HU006 Hábitos deportivos contra el BFF web @integrado', () => {
 
     await button(page, 'Editar hábitos deportivos').click();
     await row(page, 0).getByLabel('Veces por semana').fill('5');
-    expect(await save(page)).toBe(200);
+    expect(await save(page, 'PATCH')).toBe(200);
+    // Desde HU008 la edición envía solo los deportes (PATCH); la confirmación los lista.
     await expect(page.getByTestId('sport-habits-saved')).toHaveText(
-      'Actualizamos tus hábitos deportivos.',
+      /^Actualizamos tus hábitos deportivos\.\s*Secciones actualizadas:\s*Deportes\s*Lo que no cambiaste se conservó\.$/,
     );
 
     await button(other, 'Editar hábitos deportivos').click();
     await row(other, 0).getByLabel('Veces por semana').fill('1');
-    expect(await save(other)).toBe(409);
+    expect(await save(other, 'PATCH')).toBe(409);
     await expect(other.getByTestId('sport-habits-conflict')).toContainText(
       'cambiaron en otra sesión y no se sobrescribieron',
     );

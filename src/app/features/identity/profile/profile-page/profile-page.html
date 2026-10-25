@@ -391,14 +391,27 @@
                   tabindex="-1"
                   data-testid="sport-habits-saved"
                 >
-                  <p>
-                    {{
-                      (saved.created
-                        ? 'profile.habits.saved.created'
-                        : 'profile.habits.saved.replaced'
-                      ) | translate
-                    }}
-                  </p>
+                  @if (!saved.created && sportHabitsUpdated(); as sections) {
+                    <p>{{ 'profile.habits.saved.updated' | translate }}</p>
+                    <p>{{ 'profile.habits.saved.updatedSections' | translate }}</p>
+                    <ul class="profile-page__tags" data-testid="sport-habits-updated-sections">
+                      @for (section of sections; track section) {
+                        <li>{{ 'profile.habits.sections.' + section | translate }}</li>
+                      }
+                    </ul>
+                    @if (sections.length < sectionCount) {
+                      <p>{{ 'profile.habits.saved.preserved' | translate }}</p>
+                    }
+                  } @else {
+                    <p>
+                      {{
+                        (saved.created
+                          ? 'profile.habits.saved.created'
+                          : 'profile.habits.saved.replaced'
+                        ) | translate
+                      }}
+                    </p>
+                  }
                   @if (saved.replayed) {
                     <p data-testid="sport-habits-replayed">
                       {{ 'profile.saved.replayed' | translate }}

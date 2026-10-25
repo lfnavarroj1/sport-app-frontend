@@ -12,6 +12,7 @@ import {
   PROFILE_WITH_SPORT_HABITS,
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_CORRELATION_ID,
+  SPORT_HABITS_PATCH_RESPONSES,
   SPORT_HABITS_RESPONSES,
 } from '../../../../../testing/bff-web/profile.fixtures';
 import { ACCOUNT_READ } from '../../../../../testing/bff-web/account.fixtures';
@@ -70,6 +71,8 @@ const WITH_HABITS: AthleteProfile = toAthleteProfile(
 );
 const HABITS_V1: SportHabits = WITH_HABITS.sportHabits!;
 const HABITS_V2: SportHabits = toSportHabits(SPORT_HABITS_RESPONSES.replaced.body);
+/** Versión 2 de HU008: cambian los deportes; disponibilidad y objetivo se conservan. */
+const HABITS_UPDATED: SportHabits = toSportHabits(SPORT_HABITS_PATCH_RESPONSES.updated.body);
 
 const WITH_NUTRITION: AthleteProfile = toAthleteProfile(
   PROFILE_WITH_NUTRITION_HABITS as unknown as ProfileResponseDto,
@@ -166,6 +169,7 @@ describe('ProfilePage (HU005)', () => {
       'saveDemographic',
       'savePhysiological',
       'saveSportHabits',
+      'updateSportHabits',
       'saveNutritionHabits',
     ]);
     TestBed.configureTestingModule({
@@ -738,7 +742,7 @@ describe('ProfilePage (HU005)', () => {
     });
   });
 
-  describe('hábitos deportivos (HU006)', () => {
+  describe('hábitos deportivos (HU006 y HU008)', () => {
     beforeEach(() => configure());
 
     function habitsForm(): SportHabitsForm {
@@ -754,6 +758,16 @@ describe('ProfilePage (HU005)', () => {
     function habitKeys(): string[] {
       return gateway.saveSportHabits.calls.allArgs().map(([, , key]) => key);
     }
+
+    function updateKeys(): string[] {
+      return gateway.updateSportHabits.calls.allArgs().map(([, , key]) => key);
+    }
+
+    /** HU008: el deportista solo cambia la frecuencia de la carrera. */
+    const MORE_RUNNING: SportHabitsDraft = {
+      ...HABITS_DRAFT,
+      sports: [{ ...HABITS_DRAFT.sports[0], frequencyPerWeek: 4 }, HABITS_DRAFT.sports[1]],
+    };
 
     it('sin hábitos invita a registrarlos, sin error', async () => {
       await create(FULL);
@@ -824,43 +838,95 @@ describe('ProfilePage (HU005)', () => {
       expect(testId('demographic-summary')?.textContent).toContain('Bogotá');
     });
 
-    it('CA1: reemplaza (200) con la versión mostrada y presenta la nueva', async () => {
+    it('HU008 CA1: al editar envía solo las secciones modificadas y conserva las demás', async () => {
       await create(WITH_HABITS);
-      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V2));
+      gateway.updateSportHabits.and.resolveTo(saved(HABITS_UPDATED));
       await click('Editar hábitos deportivos');
 
       expect(habitsForm().initial()).toEqual(HABITS_V1);
-      await submitHabits();
+      await submitHabits(MORE_RUNNING);
 
-      expect(gateway.saveSportHabits.calls.mostRecent().args[1]).toBe(1);
-      expect(testId('sport-habits-saved')?.textContent).toContain(
-        'Actualizamos tus hábitos deportivos.',
+      expect(gateway.updateSportHabits).toHaveBeenCalledOnceWith(
+        { draft: MORE_RUNNING, sections: ['sports'] },
+        1,
+        jasmine.stringMatching(/^[0-9a-f-]{36}$/),
+        jasmine.any(Function),
       );
+      expect(gateway.saveSportHabits).not.toHaveBeenCalled();
+      const message = testId('sport-habits-saved')!;
+      expect(message.getAttribute('role')).toBe('status');
+      expect(document.activeElement).toBe(message);
+      expect(message.textContent).toContain('Actualizamos tus hábitos deportivos.');
+      expect(
+        [...testId('sport-habits-updated-sections')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Deportes']);
+      expect(message.textContent).toContain('Lo que no cambiaste se conservó.');
+      // La respuesta trae el estado completo: deportes nuevos y disponibilidad conservada.
       expect(testId('sport-habit-0')?.textContent).toContain('4 veces por semana');
-      expect(testId('sport-habit-1')).toBeNull();
-      expect(testId('sport-habits-goal')?.textContent?.trim()).toBe('Sin especificar');
+      expect(testId('sport-habit-1')?.textContent).toContain('Natación');
+      expect(
+        [...testId('sport-habits-days')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Lunes', 'Miércoles', 'Sábado']);
+      expect(testId('sport-habits-goal')?.textContent?.trim()).toBe('Salud');
 
+      // Otra edición parte de la versión nueva, con otra clave y solo el objetivo.
       await click('Editar hábitos deportivos');
-      await submitHabits();
-      expect(gateway.saveSportHabits.calls.mostRecent().args[1]).toBe(2);
-      expect(habitKeys()[1]).not.toBe(habitKeys()[0]);
+      await submitHabits({ ...MORE_RUNNING, primaryGoal: null });
+      expect(gateway.updateSportHabits.calls.mostRecent().args.slice(0, 2)).toEqual([
+        { draft: { ...MORE_RUNNING, primaryGoal: null }, sections: ['primaryGoal'] },
+        2,
+      ]);
+      expect(updateKeys()[1]).not.toBe(updateKeys()[0]);
     });
 
-    it('CA4: informa que la respuesta corresponde a un envío anterior', async () => {
+    it('HU008 CA1: varias secciones a la vez se listan en la confirmación', async () => {
       await create(WITH_HABITS);
-      gateway.saveSportHabits.and.resolveTo(saved(HABITS_V2, false, true));
+      gateway.updateSportHabits.and.resolveTo(saved({ ...HABITS_V1, version: 2 }));
       await click('Editar hábitos deportivos');
-      await submitHabits();
+      await submitHabits({ ...MORE_RUNNING, days: ['TUE'], primaryGoal: 'COMPETITION' });
+
+      expect(gateway.updateSportHabits.calls.mostRecent().args[0].sections).toEqual([
+        'sports',
+        'availability',
+        'primaryGoal',
+      ]);
+      expect(
+        [...testId('sport-habits-updated-sections')!.querySelectorAll('li')].map((li) =>
+          li.textContent?.trim(),
+        ),
+      ).toEqual(['Deportes', 'Disponibilidad', 'Objetivo principal']);
+      expect(testId('sport-habits-saved')?.textContent).not.toContain('se conservó');
+    });
+
+    it('HU008 CA5: sin cambios no llama al BFF', async () => {
+      await create(WITH_HABITS);
+      await click('Editar hábitos deportivos');
+      await submitHabits(HABITS_DRAFT);
+
+      expect(gateway.updateSportHabits).not.toHaveBeenCalled();
+      expect(gateway.saveSportHabits).not.toHaveBeenCalled();
+      expect(testId('sport-habits-form')).not.toBeNull();
+    });
+
+    it('HU008 CA3: informa que la respuesta corresponde a un envío anterior', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo(saved(HABITS_UPDATED, false, true));
+      await click('Editar hábitos deportivos');
+      await submitHabits(MORE_RUNNING);
 
       expect(testId('sport-habits-replayed')?.textContent).toContain('no se duplicó el registro');
     });
 
-    it('CA2: entrega al formulario las reglas incumplidas y conserva el estado anterior', async () => {
+    it('HU008 CA5: entrega al formulario las reglas incumplidas y conserva el estado anterior', async () => {
       await create(WITH_HABITS);
       const violations = [{ field: 'sports[1].sport', issue: 'duplicate_value' }];
-      gateway.saveSportHabits.and.resolveTo({ kind: 'invalid', violations });
+      gateway.updateSportHabits.and.resolveTo({ kind: 'invalid', violations });
       await click('Editar hábitos deportivos');
-      await submitHabits();
+      await submitHabits(MORE_RUNNING);
 
       expect(habitsForm().serverErrors()).toEqual(violations);
       expect(testId('sport-habits-errors')?.textContent).toContain(
@@ -869,20 +935,21 @@ describe('ProfilePage (HU005)', () => {
       expect(testId('sport-habits-saved')).toBeNull();
 
       // Sin editar, volver a enviar es el mismo intento lógico.
-      await submitHabits();
-      expect(habitKeys()[1]).toBe(habitKeys()[0]);
+      await submitHabits(MORE_RUNNING);
+      expect(updateKeys()[1]).toBe(updateKeys()[0]);
 
       // Al cancelar se ve el estado anterior, sin cambios.
       await click('Cancelar');
+      expect(testId('sport-habit-0')?.textContent).toContain('3 veces por semana');
       expect(testId('sport-habit-1')?.textContent).toContain('Natación');
     });
 
-    it('CA4: un conflicto no sobrescribe, recarga y muestra los hábitos vigentes', async () => {
+    it('HU008 CA2: un conflicto no sobrescribe, recarga y muestra los hábitos vigentes', async () => {
       await create(WITH_HABITS);
-      gateway.saveSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      gateway.updateSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
       gateway.loadProfile.and.resolveTo({ ...WITH_HABITS, sportHabits: HABITS_V2 });
       await click('Editar hábitos deportivos');
-      await submitHabits();
+      await submitHabits({ ...HABITS_DRAFT, days: ['TUE'] });
 
       const conflict = testId('sport-habits-conflict')!;
       expect(conflict.getAttribute('role')).toBe('alert');
@@ -890,26 +957,50 @@ describe('ProfilePage (HU005)', () => {
       expect(document.activeElement).toBe(conflict);
       expect(testId('sport-habits-form')).toBeNull();
       expect(gateway.loadProfile).toHaveBeenCalledTimes(2);
+      // Los valores vigentes de la otra sesión, no los del envío rechazado.
       expect(testId('sport-habit-0')?.textContent).toContain('4 veces por semana');
+      expect(testId('sport-habits-days')?.textContent).toContain('Martes');
+      expect(testId('sport-habits-days')?.textContent).not.toContain('Lunes');
       expect(testId('profile-projection-pending')).toBeNull();
 
-      gateway.saveSportHabits.and.resolveTo(saved({ ...HABITS_V2, version: 3 }));
+      gateway.updateSportHabits.and.resolveTo(saved({ ...HABITS_V2, version: 3 }));
       await click('Editar hábitos deportivos');
-      await submitHabits();
-      expect(gateway.saveSportHabits.calls.mostRecent().args[1]).toBe(2);
-      expect(habitKeys()[1]).not.toBe(habitKeys()[0]);
+      await submitHabits({ ...MORE_RUNNING, sports: [MORE_RUNNING.sports[0]], days: ['FRI'] });
+      expect(gateway.updateSportHabits.calls.mostRecent().args[1]).toBe(2);
+      expect(updateKeys()[1]).not.toBe(updateKeys()[0]);
     });
 
     it('tras un conflicto sin proyección al día, no permite editar a ciegas y ofrece actualizar', async () => {
       await create(WITH_HABITS);
-      gateway.saveSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
+      gateway.updateSportHabits.and.resolveTo({ kind: 'conflict', currentVersion: 2 });
       await click('Editar hábitos deportivos');
-      await submitHabits();
+      await submitHabits(MORE_RUNNING);
       await settleUntil(() => testId('profile-projection-pending') !== null);
 
       expect(testId('profile-projection-pending')).not.toBeNull();
       expect(button('Editar hábitos deportivos')?.disabled).toBeTrue();
       expect(button('Editar datos demográficos')?.disabled).toBeFalse();
+    });
+
+    it('HU008: sport_habits_not_found se explica sin datos y permite cancelar', async () => {
+      await create(WITH_HABITS);
+      gateway.updateSportHabits.and.resolveTo({
+        kind: 'failed',
+        error: {
+          kind: 'not_found',
+          status: 404,
+          code: 'sport_habits_not_found',
+          correlationId: SIMULATED_PROFILE_CORRELATION_ID,
+        },
+      });
+      await click('Editar hábitos deportivos');
+      await submitHabits(MORE_RUNNING);
+
+      const error = testId('sport-habits-error')!;
+      expect(error.getAttribute('role')).toBe('alert');
+      expect(error.textContent).toContain('Aún no hay hábitos deportivos que actualizar.');
+      expect(error.textContent).toContain(SIMULATED_PROFILE_CORRELATION_ID);
+      expect(testId('sport-habits-saved')).toBeNull();
     });
 
     it('tras un fallo recuperable, reintentar usa la misma clave; editar la renueva', async () => {

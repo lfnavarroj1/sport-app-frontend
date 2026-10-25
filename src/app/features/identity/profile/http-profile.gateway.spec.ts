@@ -10,10 +10,12 @@ import {
   SIMULATED_HEALTH_CONSENT_VERSION,
   SIMULATED_PROFILE_CORRELATION_ID,
   SIMULATED_PROFILE_USER_ID,
+  SPORT_HABITS_PATCH_RESPONSES,
   SPORT_HABITS_RESPONSES,
   VALID_DEMOGRAPHIC_REQUEST,
   VALID_NUTRITION_HABITS_REQUEST,
   VALID_PHYSIOLOGICAL_REQUEST,
+  VALID_SPORT_HABITS_PATCH_REQUEST,
   VALID_SPORT_HABITS_REQUEST,
 } from '../../../../testing/bff-web/profile.fixtures';
 import { SimulatedResponse } from '../../../../testing/bff-web/register-user.fixtures';
@@ -25,6 +27,7 @@ import {
   NutritionHabitsDraft,
   PhysiologicalDraft,
   SportHabitsDraft,
+  SportHabitsUpdate,
 } from './profile.model';
 
 const BFF = 'http://bff.example.com';
@@ -91,7 +94,7 @@ const SPORT_HABITS_DRAFT: SportHabitsDraft = {
   primaryGoal: 'HEALTH',
 };
 
-describe('HttpProfileGateway (HU005 y HU006, contrato bff-web 0.19.0)', () => {
+describe('HttpProfileGateway (HU005, HU006, HU008 y HU009, contrato bff-web 0.30.0)', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let gateway: HttpProfileGateway;
@@ -464,6 +467,108 @@ describe('HttpProfileGateway (HU005 y HU006, contrato bff-web 0.19.0)', () => {
         'swimming',
       ]);
       expect(loaded.sportHabits?.days).toEqual(['MON', 'WED', 'SAT']);
+    });
+  });
+
+  describe('actualización parcial de hábitos deportivos (HU008)', () => {
+    const MORE_RUNNING: SportHabitsDraft = {
+      ...SPORT_HABITS_DRAFT,
+      sports: [
+        { ...SPORT_HABITS_DRAFT.sports[0], frequencyPerWeek: 4 },
+        SPORT_HABITS_DRAFT.sports[1],
+      ],
+    };
+    const update = (sections: SportHabitsUpdate['sections']): SportHabitsUpdate => ({
+      draft: MORE_RUNNING,
+      sections,
+    });
+
+    it('CA1: envía PATCH con expected_version y solo los deportes; recibe el estado completo', async () => {
+      const outcome = gateway.updateSportHabits(update(['sports']), 1, KEY);
+      const request = await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.updated);
+
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
+      expect(request.request.headers.get('Idempotency-Key')).toBe(KEY);
+      expect(request.request.body).toEqual(VALID_SPORT_HABITS_PATCH_REQUEST);
+      expect(await outcome).toEqual({
+        kind: 'saved',
+        created: false,
+        replayed: false,
+        section: {
+          version: 2,
+          sports: MORE_RUNNING.sports,
+          // La disponibilidad y el objetivo no enviados se conservan.
+          days: ['MON', 'WED', 'SAT'],
+          timeSlots: ['MORNING'],
+          primaryGoal: 'HEALTH',
+          updatedAt: SPORT_HABITS_PATCH_RESPONSES.updated.body.updated_at,
+        },
+      });
+    });
+
+    it('CA3: reconoce el resultado de un reintento por Idempotent-Replayed', async () => {
+      const outcome = gateway.updateSportHabits(update(['sports']), 1, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.updated, {
+        'Idempotent-Replayed': 'true',
+      });
+
+      expect(await outcome).toEqual(jasmine.objectContaining({ kind: 'saved', replayed: true }));
+    });
+
+    it('CA2: version_conflict informa la versión vigente', async () => {
+      const outcome = gateway.updateSportHabits(update(['sports']), 1, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.versionConflict);
+
+      expect(await outcome).toEqual({ kind: 'conflict', currentVersion: 2 });
+    });
+
+    it('CA5: traduce validation_error por campo e índice, y sin secciones sin campo', async () => {
+      const outcome = gateway.updateSportHabits(update(['sports', 'availability']), 1, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.validationError);
+      expect(await outcome).toEqual({
+        kind: 'invalid',
+        violations: [
+          { field: 'sports[1].sport', issue: 'duplicate_value' },
+          { field: 'availability.time_slots[0]', issue: 'unknown_value' },
+        ],
+      });
+
+      const empty = gateway.updateSportHabits(update([]), 1, KEY);
+      const request = await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.noSections);
+      expect(request.request.body).toEqual({ expected_version: 1 });
+      expect(await empty).toEqual({
+        kind: 'invalid',
+        violations: [{ field: '', issue: 'required' }],
+      });
+    });
+
+    it('404 sport_habits_not_found es un fallo con su código, sin reintentar', async () => {
+      const outcome = gateway.updateSportHabits(update(['primaryGoal']), 1, KEY);
+      await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.notFound);
+
+      expect(await outcome).toEqual(
+        jasmine.objectContaining({
+          kind: 'failed',
+          error: jasmine.objectContaining({ status: 404, code: 'sport_habits_not_found' }),
+        }),
+      );
+      http.expectNone(SPORT_HABITS_URL);
+    });
+
+    it('ante 504 reintenta con la misma clave y el mismo cuerpo parcial', async () => {
+      const retries: number[] = [];
+      const outcome = gateway.updateSportHabits(update(['sports']), 1, KEY, (attempt) =>
+        retries.push(attempt),
+      );
+      const first = await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.upstreamTimeout);
+      const second = await respond(SPORT_HABITS_URL, SPORT_HABITS_PATCH_RESPONSES.updated);
+
+      expect(second.request.method).toBe('PATCH');
+      expect(second.request.headers.get('Idempotency-Key')).toBe(KEY);
+      expect(second.request.body).toEqual(first.request.body);
+      expect(retries).toEqual([1]);
+      expect(await outcome).toEqual(jasmine.objectContaining({ kind: 'saved', created: false }));
     });
   });
 
