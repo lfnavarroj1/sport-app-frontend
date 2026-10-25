@@ -67,7 +67,9 @@ test.describe('HU002 Datos personales (simulador del contrato) @simulado', () =>
       if (actorType !== 'athlete') {
         // El organizador y el profesional solo tienen datos personales.
         await expect(page.getByTestId('profile-hu005')).toHaveCount(0);
-        await expect(page.getByRole('heading', { level: 2 })).toHaveCount(1);
+        await expect(
+          page.getByTestId('profile-page').getByRole('heading', { level: 2 }),
+        ).toHaveCount(1);
       }
 
       await editAccount(page, '  Persona   Renombrada ', 'Persona.Nueva@Example.com');
@@ -162,8 +164,13 @@ test.describe('HU002 Datos personales (simulador del contrato) @simulado', () =>
     page,
   }) => {
     await loginAs(page);
+    // A carga antes de que B inicie sesión: la cookie de renovación es del contexto y
+    // el ingreso de B la reemplaza; A conserva su sesión en memoria.
     await openProfile(page, 'deportista');
     const other = await page.context().newPage();
+    await simulateSession(other, sessionFor('athlete'));
+    await login(other);
+    await expect(other).toHaveURL(/\/deportista\/inicio$/);
     await other.goto('/deportista/perfil');
     await expect(other.getByTestId('account-full-name')).toHaveText('Persona Sintética');
 

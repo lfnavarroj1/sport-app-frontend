@@ -283,9 +283,11 @@ test.describe('HU005 Datos demográficos y fisiológicos (simulador del contrato
   test('CA5: el organizador no tiene perfil de deportista', async ({ page }) => {
     const simulation = await loginAs(page, 'organizer');
 
-    const profile = page.locator('mat-sidenav [data-menu-item="profile"]');
-    await expect(profile).toContainText('Próximamente');
-    await expect(profile.locator('a, button')).toHaveCount(0);
+    // HU002: su «Mi perfil» solo tiene datos personales y no consulta el perfil deportivo.
+    await page.locator('mat-sidenav [data-menu-item="profile"]').click();
+    await expect(page).toHaveURL(/\/organizador\/perfil$/);
+    await expect(page.getByTestId('account-summary')).toBeVisible();
+    await expect(page.getByTestId('profile-hu005')).toHaveCount(0);
 
     await page.goto('/deportista/perfil');
     await expect(page).toHaveURL(/\/acceso-no-autorizado$/);
