@@ -20,6 +20,7 @@ import { PROFILE_ERROR_CODES } from '../../../../core/api/bff-web/profile.api';
 import { APP_CONFIG } from '../../../../core/config/app-config';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
+import { AccountStatementSection } from '../../../affiliation/account-statement/account-statement-section/account-statement-section';
 import { AccountSection } from '../account-form/account-section';
 import { DemographicForm } from '../demographic-form/demographic-form';
 import { NutritionHabitsForm } from '../nutrition-habits-form/nutrition-habits-form';
@@ -128,12 +129,14 @@ class SectionState<T extends { readonly version: number }> {
  * conserva la respuesta del comando mientras no la alcance. Registrar hábitos
  * no crea planes ni recomendaciones. Los hábitos alimenticios exigen el
  * consentimiento de datos de salud, como la sección fisiológica (HU009, ADR-035),
- * y no sustituyen la valoración de un profesional.
+ * y no sustituyen la valoración de un profesional. Para los tres actores termina
+ * con el «Estado de cuenta» de Afiliación (HU007, `<app-account-statement-section>`).
  */
 @Component({
   selector: 'app-profile-page',
   imports: [
     AccountSection,
+    AccountStatementSection,
     AsyncState,
     DemographicForm,
     MatButtonModule,

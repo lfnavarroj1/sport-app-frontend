@@ -3,6 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import {
+  ACCOUNT_STATEMENT_PATH,
+  ACCOUNT_STATEMENT_RESPONSES,
+  SIMULATED_STATEMENT_PAGE_SIZE,
+} from '../../../../testing/bff-web/account-statement.fixtures';
+import {
   MY_SUBSCRIPTION_PATH,
   MY_SUBSCRIPTION_RESPONSES,
   PLANS_PATH,
@@ -20,7 +25,13 @@ import {
 import { APP_CONFIG } from '../../config/app-config';
 import contractJson from '../contracts/bff-web.openapi.json';
 import {
+  ACCOUNT_STATEMENT_ERROR_CODES,
   AFFILIATION_QUERY_ERROR_CODES,
+  AccountStatementResponseDto,
+  COMMITMENT_STATUSES,
+  CommitmentItemDto,
+  MOVEMENT_TYPES,
+  MovementItemDto,
   BffWebAffiliationApi,
   PERIODICITIES,
   PlanDto,
@@ -28,6 +39,7 @@ import {
   PlansResponseDto,
   SUBSCRIPTION_CHANGE_ERROR_CODES,
   SUBSCRIPTION_IDEMPOTENT_REPLAYED_HEADER,
+  STATEMENT_STATUSES,
   SUBSCRIPTION_STATUSES,
   SubscriptionChangeRequestDto,
   SubscriptionResponseDto,
@@ -162,6 +174,73 @@ describe('Contrato bff-web: operaciones de HU016', () => {
   }
 });
 
+describe('Contrato bff-web: operación de HU007', () => {
+  const statement = contract.paths[ACCOUNT_STATEMENT_PATH]['get'];
+
+  it('usa el operationId del estado de cuenta y se autentica con Authorization', () => {
+    expect(statement.operationId).toBe('account_statement_v1_me_account_statement_get');
+    expect(headerNames(statement)).toEqual([['authorization', 'false']]);
+  });
+
+  it('pagina con limit y cursor opcionales', () => {
+    const query = (statement.parameters ?? [])
+      .filter((parameter) => parameter.in === 'query')
+      .map((parameter) => [parameter.name, String(parameter.required ?? false)]);
+
+    expect(query).toEqual([
+      ['limit', 'false'],
+      ['cursor', 'false'],
+    ]);
+    expect(SIMULATED_STATEMENT_PAGE_SIZE).toBeGreaterThanOrEqual(1);
+    expect(SIMULATED_STATEMENT_PAGE_SIZE).toBeLessThanOrEqual(100);
+  });
+
+  it('la respuesta del cliente tiene exactamente las propiedades obligatorias del contrato', () => {
+    const body: AccountStatementResponseDto = ACCOUNT_STATEMENT_RESPONSES.activePremium.body;
+    const commitment: CommitmentItemDto = body.commitments[0];
+    const movement: MovementItemDto = body.movements[0];
+
+    expect(Object.keys(body).sort()).toEqual(requiredProperties('AccountStatementResponse'));
+    expect(Object.keys(commitment).sort()).toEqual(requiredProperties('CommitmentItem'));
+    expect(Object.keys(movement).sort()).toEqual(requiredProperties('MovementItem'));
+  });
+
+  it('los estados y tipos de movimiento coinciden con el contrato; los pagos no están integrados', () => {
+    expect<string[]>([...STATEMENT_STATUSES]).toEqual(
+      property('AccountStatementResponse', 'statement_status')['enum'] as string[],
+    );
+    expect<string[]>([...COMMITMENT_STATUSES]).toEqual(
+      property('CommitmentItem', 'status')['enum'] as string[],
+    );
+    expect<string[]>([...MOVEMENT_TYPES]).toEqual(
+      property('MovementItem', 'movement_type')['enum'] as string[],
+    );
+    expect(property('AccountStatementResponse', 'payments_status')['const']).toBe(
+      'NOT_INTEGRATED',
+    );
+    expect(property('AccountStatementResponse', 'balance')['type']).toBe('null');
+  });
+
+  it('los códigos de error del cliente son los que declara el contrato', () => {
+    expect<string[]>(Object.values(ACCOUNT_STATEMENT_ERROR_CODES).sort()).toEqual(
+      declaredCodes(statement, [401, 403, 422, 503, 504]),
+    );
+  });
+
+  for (const [key, response] of Object.entries(ACCOUNT_STATEMENT_RESPONSES)) {
+    it(`GET /v1/me/account-statement: la respuesta simulada "${key}" (${response.status}) cumple el contrato`, () => {
+      expect(
+        validateAgainstSchema(contract, responseSchema(statement, response.status), response.body),
+      ).toEqual([]);
+      if (response.status >= 400) {
+        expect(declaredCodes(statement, [response.status])).toContain(
+          (response.body as { code: string }).code,
+        );
+      }
+    });
+  }
+});
+
 describe('BffWebAffiliationApi', () => {
   let api: BffWebAffiliationApi;
   let http: HttpTestingController;
@@ -216,5 +295,21 @@ describe('BffWebAffiliationApi', () => {
       headers: { 'Idempotent-Replayed': 'true' },
     });
     expect(replayed).toBe('true');
+  });
+
+  it('consulta el estado de cuenta con el access token, el límite y el cursor sin modificar', () => {
+    api.getAccountStatement('token-sintetico', null, 20).subscribe();
+    const first = http.expectOne((r) => r.url === 'http://bff.test/v1/me/account-statement');
+    expect(first.request.method).toBe('GET');
+    expect(first.request.headers.get('Authorization')).toBe('Bearer token-sintetico');
+    expect(first.request.params.keys()).toEqual(['limit']);
+    expect(first.request.params.get('limit')).toBe('20');
+    first.flush(ACCOUNT_STATEMENT_RESPONSES.firstPage.body);
+
+    const cursor = ACCOUNT_STATEMENT_RESPONSES.firstPage.body.next_cursor!;
+    api.getAccountStatement('token-sintetico', cursor, 20).subscribe();
+    const next = http.expectOne((r) => r.url === 'http://bff.test/v1/me/account-statement');
+    expect(next.request.params.get('cursor')).toBe(cursor);
+    next.flush(ACCOUNT_STATEMENT_RESPONSES.lastPage.body);
   });
 });

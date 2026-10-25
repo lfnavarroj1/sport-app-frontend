@@ -90,6 +90,14 @@
               </dd>
             </dl>
           }
+          <a
+            mat-stroked-button
+            routerLink="/deportista/perfil"
+            [fragment]="statementFragment"
+            data-testid="my-plan-statement-link"
+          >
+            {{ 'affiliation.myPlan.statementLink' | translate }}
+          </a>
         </mat-card-content>
       </mat-card>
 

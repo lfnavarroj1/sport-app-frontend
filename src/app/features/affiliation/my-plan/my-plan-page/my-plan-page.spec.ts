@@ -175,6 +175,14 @@ describe('MyPlanPage (HU016)', () => {
       expect(button('Elegir Gratuito')).toBeUndefined();
     });
 
+    it('HU007: enlaza al estado de cuenta de «Mi perfil»', async () => {
+      await create();
+
+      const link = byTestId('my-plan-statement-link') as HTMLAnchorElement;
+      expect(link.textContent?.trim()).toBe('Ver mi estado de cuenta');
+      expect(link.getAttribute('href')).toBe('/deportista/perfil#estado-de-cuenta');
+    });
+
     it('compara los tres planes por capacidades propias y heredadas, y por ofertas en COP', async () => {
       await create();
 
