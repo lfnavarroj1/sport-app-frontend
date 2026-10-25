@@ -131,11 +131,8 @@
                       'events.integratedCalendar.incomplete.item'
                         | translate
                           : {
-                              source:
-                                ('events.integratedCalendar.sources.' + source.name | translate),
-                              status:
-                                ('events.integratedCalendar.sourceStatus.' + source.status
-                                | translate),
+                              source: (sourceKey(source.name) | translate),
+                              status: (sourceStatusKey(source.status) | translate),
                             }
                     }}
                   </li>
@@ -160,7 +157,7 @@
               <ul>
                 @for (source of truncated(); track source.name) {
                   <li [attr.data-truncated]="source.name">
-                    {{ 'events.integratedCalendar.sources.' + source.name | translate }}
+                    {{ sourceKey(source.name) | translate }}
                   </li>
                 }
               </ul>
@@ -180,7 +177,7 @@
                   'events.integratedCalendar.sourceOption'
                     | translate
                       : {
-                          source: ('events.integratedCalendar.sources.' + source.name | translate),
+                          source: (sourceKey(source.name) | translate),
                           count: countOf(source.name),
                         }
                 }}

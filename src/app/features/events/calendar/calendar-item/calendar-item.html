@@ -1,6 +1,6 @@
 @let entry = item();
 <span class="calendar-item__source" data-testid="calendar-item-source">
-  {{ 'events.integratedCalendar.sources.' + entry.source | translate }}
+  {{ sourceKey(entry.source) | translate }}
 </span>
 <span class="calendar-item__title">{{ entry.title }}</span>
 <span class="calendar-item__meta" data-testid="calendar-item-time">
@@ -38,7 +38,7 @@
           | translate: { minutes: detail.durationMinutes, rpe: detail.rpe }
       }}
     </span>
-  } @else {
+  } @else if (detail.kind === 'service') {
     @let category = categoryKey(detail.category);
     @let modality = modalityKey(detail.modality);
     <span class="calendar-item__meta">
@@ -60,5 +60,5 @@
   </span>
 }
 <span class="calendar-item__status" data-testid="calendar-item-status">
-  {{ 'events.integratedCalendar.status.' + entry.status | translate }}
+  {{ statusKey(entry.status) | translate }}
 </span>

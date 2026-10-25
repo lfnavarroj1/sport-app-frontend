@@ -11,7 +11,10 @@ import {
   groupByDay,
   incompleteSources,
   integratedMonthWeeks,
+  itemStatusKey,
   itemsOfSources,
+  sourceKey,
+  sourceStatusKey,
   toCalendarItem,
   toIntegratedCalendar,
   truncatedSources,
@@ -142,5 +145,80 @@ describe('integrated-calendar.model (HU018)', () => {
     expect(days.at(-1)).toEqual(
       jasmine.objectContaining({ key: '2027-04-04', inMonth: false, items: [] }),
     );
+  });
+});
+
+describe('integrated-calendar.model ante valores que el contrato 0.30.0 no declara', () => {
+  // Valores claramente ficticios: una versión compatible posterior del BFF puede
+  // agregar fuentes, pero ninguna se implementa aquí como comportamiento final.
+  const unknownItem = {
+    item_id: 'UNKNOWN_SOURCE:ficticio-1',
+    source: 'UNKNOWN_SOURCE',
+    status: 'UNKNOWN_STATUS',
+    occurs_on: '2027-03-09',
+    title: 'Elemento de una fuente futura',
+    starts_at: '2027-03-09T15:00:00Z',
+    ends_at: '2027-03-09T16:00:00Z',
+    time_zone: 'America/Bogota',
+    unknown_field: { nested: true },
+  };
+  const withUnknown = (items: object[], sources: object[]) =>
+    ({
+      ...athlete(),
+      items: [...athlete().items, ...items],
+      sources: [...athlete().sources, ...sources],
+    }) as unknown as IntegratedCalendarResponseDto;
+
+  it('muestra de forma genérica un elemento de una fuente desconocida, sin perder los demás', () => {
+    const calendar = toIntegratedCalendar(
+      withUnknown([unknownItem], [{ name: 'UNKNOWN_SOURCE', status: 'OK', truncated: false }]),
+    );
+    const generic = calendar.items.find((item) => item.source === 'UNKNOWN_SOURCE')!;
+
+    expect(calendar.items.length).toBe(5);
+    expect(generic).toEqual(
+      jasmine.objectContaining({
+        id: 'UNKNOWN_SOURCE:ficticio-1',
+        title: 'Elemento de una fuente futura',
+        startsAt: '2027-03-09T15:00:00Z',
+        detail: { kind: 'other' },
+        reference: {},
+      }),
+    );
+    expect(sourceKey('UNKNOWN_SOURCE')).toBe('events.integratedCalendar.sources.unknown');
+    expect(itemStatusKey('UNKNOWN_STATUS')).toBe('events.integratedCalendar.status.unknown');
+    expect(sourceKey('OWN_EVENT')).toBe('events.integratedCalendar.sources.OWN_EVENT');
+  });
+
+  it('omite un elemento desconocido sin título o fecha válidos', () => {
+    const calendar = toIntegratedCalendar(
+      withUnknown(
+        [
+          {
+            item_id: 'UNKNOWN_SOURCE:sin-titulo',
+            source: 'UNKNOWN_SOURCE',
+            occurs_on: '2027-03-09',
+          },
+          { ...unknownItem, item_id: 'UNKNOWN_SOURCE:fecha', occurs_on: 'mañana' },
+        ],
+        [],
+      ),
+    );
+
+    expect(calendar.items.length).toBe(4);
+  });
+
+  it('un estado de fuente desconocido cuenta como incompleto, con texto genérico', () => {
+    const calendar = toIntegratedCalendar(
+      withUnknown([], [{ name: 'UNKNOWN_SOURCE', status: 'UNKNOWN_STATUS', truncated: false }]),
+    );
+
+    expect(incompleteSources(calendar.sources).map((source) => source.name)).toEqual([
+      'UNKNOWN_SOURCE',
+    ]);
+    expect(sourceStatusKey('UNKNOWN_STATUS')).toBe(
+      'events.integratedCalendar.sourceStatus.unknown',
+    );
+    expect(sourceStatusKey('TIMEOUT')).toBe('events.integratedCalendar.sourceStatus.TIMEOUT');
   });
 });

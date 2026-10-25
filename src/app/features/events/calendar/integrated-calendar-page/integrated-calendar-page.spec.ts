@@ -289,6 +289,54 @@ describe('IntegratedCalendarPage (HU018)', () => {
     });
   });
 
+  describe('valores que el contrato 0.30.0 no declara', () => {
+    // Fuente y estados claramente ficticios: no anticipan ninguna versión futura.
+    const organizer = INTEGRATED_CALENDAR_RESPONSES.organizer.body;
+    const withUnknownSource = (status: string): SimulatedResponse => ({
+      status: 200,
+      body: {
+        ...organizer,
+        items: [
+          ...organizer.items,
+          {
+            item_id: 'UNKNOWN_SOURCE:ficticio-1',
+            source: 'UNKNOWN_SOURCE',
+            status: 'UNKNOWN_STATUS',
+            occurs_on: '2027-03-09',
+            title: 'Elemento de una fuente futura',
+            starts_at: '2027-03-09T15:00:00Z',
+            ends_at: '2027-03-09T16:00:00Z',
+            time_zone: 'America/Bogota',
+          },
+        ],
+        sources: [...organizer.sources, { name: 'UNKNOWN_SOURCE', status, truncated: false }],
+      },
+    });
+
+    it('muestra el elemento de una fuente desconocida con textos genéricos, sin error ni vacío', async () => {
+      await create('organizer', withUnknownSource('OK'));
+
+      const generic = element.querySelector<HTMLElement>('[data-source="UNKNOWN_SOURCE"]')!;
+      expect(generic.textContent).toContain('Elemento de una fuente futura');
+      expect(generic.textContent).toContain('Otra fuente');
+      expect(generic.textContent).toContain('Sin estado informado');
+      expect(generic.textContent).not.toContain('events.integratedCalendar');
+      expect(text('integrated-sources')).toContain('Otra fuente (1)');
+      expect(text('integrated-count')).toContain('Actividades mostradas: 3.');
+      expect(testId('state-error')).toBeNull();
+      expect(testId('integrated-empty')).toBeNull();
+      expect(testId('integrated-incomplete')).toBeNull();
+    });
+
+    it('un estado de fuente desconocido se declara como información incompleta', async () => {
+      await create('organizer', withUnknownSource('UNKNOWN_STATUS'));
+
+      expect(text('integrated-incomplete')).toContain('Otra fuente: no se pudo confirmar.');
+      expect(cell('2027-03-07')?.textContent).toContain('Media maratón de Bogotá');
+      expect(element.textContent).not.toContain('events.integratedCalendar');
+    });
+  });
+
   describe('errores', () => {
     it('con todas las fuentes caídas muestra un error trazable con reintento (CA5)', async () => {
       await create('organizer', INTEGRATED_CALENDAR_RESPONSES.upstreamUnavailable);

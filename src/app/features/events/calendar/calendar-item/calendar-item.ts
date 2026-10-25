@@ -15,7 +15,7 @@ import {
 } from '../../../../core/api/bff-web/services-availability.api';
 import { SPORTS } from '../../../../core/api/bff-web/training.api';
 import { browserTimeZone, formatInZone } from '../../create-event/event-time';
-import { CalendarItem } from '../integrated-calendar.model';
+import { CalendarItem, itemStatusKey, sourceKey } from '../integrated-calendar.model';
 
 const KNOWN_SPORTS: readonly string[] = SPORTS;
 const KNOWN_CATEGORIES: readonly string[] = SERVICE_CATEGORIES;
@@ -44,6 +44,9 @@ export class CalendarItemView {
   readonly item = input.required<CalendarItem>();
   /** Presentación reducida dentro de una celda del mes. */
   readonly compact = input(false);
+
+  protected readonly sourceKey = sourceKey;
+  protected readonly statusKey = itemStatusKey;
 
   private readonly locale = inject(LOCALE_ID);
   private readonly browserZone = browserTimeZone();

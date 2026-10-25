@@ -1,14 +1,24 @@
 import {
+  INTEGRATED_CALENDAR_SOURCES,
+  INTEGRATED_ITEM_STATUSES,
+  INTEGRATED_SOURCE_STATUSES,
   IntegratedCalendarItemDto,
   IntegratedCalendarResponseDto,
-  IntegratedCalendarSourceDto,
-  IntegratedItemStatusDto,
-  IntegratedSourceStatusDto,
 } from '../../../core/api/bff-web/integrated-calendar.api';
 import { localDayKey } from '../event-calendar/event-calendar.model';
 
-export type CalendarSource = IntegratedCalendarSourceDto;
-export type CalendarItemStatus = IntegratedItemStatusDto;
+/**
+ * Fuente de un elemento. Las del contrato tienen texto propio; una versión
+ * compatible posterior del BFF puede agregar otras, que se muestran de forma
+ * genérica sin romper la vista.
+ */
+export type CalendarSource = string;
+export type CalendarItemStatus = string;
+
+const KNOWN_SOURCES: readonly string[] = INTEGRATED_CALENDAR_SOURCES;
+const KNOWN_ITEM_STATUSES: readonly string[] = INTEGRATED_ITEM_STATUSES;
+const KNOWN_SOURCE_STATUSES: readonly string[] = INTEGRATED_SOURCE_STATUSES;
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Lo que se presenta de cada elemento según su dominio (sin unir datos de otros). */
 export type CalendarItemDetail =
@@ -29,7 +39,9 @@ export type CalendarItemDetail =
       readonly category: string;
       readonly modality: string;
       readonly capacity: number;
-    };
+    }
+  /** Elemento de una fuente que esta versión de la web no conoce. */
+  | { readonly kind: 'other' };
 
 export interface CalendarLocation {
   readonly name: string;
@@ -61,7 +73,8 @@ export interface CalendarItem {
 
 export interface CalendarSourceState {
   readonly name: CalendarSource;
-  readonly status: IntegratedSourceStatusDto;
+  /** `OK`, `UNAVAILABLE`, `TIMEOUT` u otro valor futuro, que también es incompleto. */
+  readonly status: string;
   /** La fuente tenía más de 200 elementos y solo llegaron los primeros (CA6). */
   readonly truncated: boolean;
 }
@@ -76,10 +89,45 @@ export interface IntegratedCalendar {
 
 export function toIntegratedCalendar(dto: IntegratedCalendarResponseDto): IntegratedCalendar {
   return {
-    items: chronological(dto.items.map(toCalendarItem)),
+    items: chronological(dto.items.flatMap(readItem)),
     sources: dto.sources.map((source) => ({ ...source })),
     evaluatedAt: dto.evaluated_at,
   };
+}
+
+/**
+ * Elemento de la respuesta. Uno de fuente desconocida se muestra de forma
+ * genérica si trae lo mínimo para ubicarlo (identificador, título y fecha); si
+ * no, se omite sin afectar a los demás.
+ */
+function readItem(dto: IntegratedCalendarItemDto): CalendarItem[] {
+  if (KNOWN_SOURCES.includes(dto.source)) {
+    return [toCalendarItem(dto)];
+  }
+  const raw = dto as unknown as Record<string, unknown>;
+  const text = (key: string) => (typeof raw[key] === 'string' ? (raw[key] as string) : null);
+  const id = text('item_id');
+  const title = text('title');
+  const occursOn = text('occurs_on');
+  if (id === null || title === null || occursOn === null || !DAY.test(occursOn)) {
+    return [];
+  }
+  const startsAt = text('starts_at');
+  const validStart = startsAt !== null && !Number.isNaN(Date.parse(startsAt)) ? startsAt : null;
+  return [
+    {
+      id,
+      source: String(raw['source']),
+      status: text('status') ?? '',
+      title,
+      day: validStart !== null ? localDayKey(new Date(validStart)) : occursOn,
+      startsAt: validStart,
+      endsAt: validStart !== null ? text('ends_at') : null,
+      timeZone: validStart !== null ? text('time_zone') : null,
+      detail: { kind: 'other' },
+      reference: {},
+    },
+  ];
 }
 
 export function toCalendarItem(dto: IntegratedCalendarItemDto): CalendarItem {
@@ -247,4 +295,21 @@ export function integratedMonthWeeks(
 export function dayDate(key: string): Date {
   const [year, month, day] = key.split('-').map(Number);
   return new Date(year, month - 1, day);
+}
+
+const I18N = 'events.integratedCalendar';
+
+/** Clave del nombre de la fuente; una fuente desconocida usa un texto genérico. */
+export function sourceKey(source: string): string {
+  return `${I18N}.sources.${KNOWN_SOURCES.includes(source) ? source : 'unknown'}`;
+}
+
+/** Clave del estado del elemento; un estado desconocido usa un texto genérico. */
+export function itemStatusKey(status: string): string {
+  return `${I18N}.status.${KNOWN_ITEM_STATUSES.includes(status) ? status : 'unknown'}`;
+}
+
+/** Clave del estado de una fuente incompleta; un estado desconocido usa un texto genérico. */
+export function sourceStatusKey(status: string): string {
+  return `${I18N}.sourceStatus.${KNOWN_SOURCE_STATUSES.includes(status) && status !== 'OK' ? status : 'unknown'}`;
 }

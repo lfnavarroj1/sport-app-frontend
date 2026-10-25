@@ -39,6 +39,8 @@ import {
   groupByDay,
   incompleteSources,
   itemsOfSources,
+  sourceKey,
+  sourceStatusKey,
   truncatedSources,
 } from '../integrated-calendar.model';
 import { IntegratedMonth } from '../integrated-month/integrated-month';
@@ -148,6 +150,8 @@ export class IntegratedCalendarPage {
   protected readonly days = computed(() => groupByDay(this.visibleItems()));
 
   protected readonly dayDate = dayDate;
+  protected readonly sourceKey = sourceKey;
+  protected readonly sourceStatusKey = sourceStatusKey;
 
   /** Evita que una respuesta de una carga anterior pise la vigente. */
   private generation = 0;

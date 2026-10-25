@@ -1576,7 +1576,8 @@
       },
       "sourceStatus": {
         "UNAVAILABLE": "no está disponible",
-        "TIMEOUT": "no respondió a tiempo"
+        "TIMEOUT": "no respondió a tiempo",
+        "unknown": "no se pudo confirmar"
       },
       "truncated": {
         "title": "Hay más actividades de las que se muestran",
@@ -1590,14 +1591,16 @@
         "EVENT_REGISTRATION": "Mis inscripciones",
         "TRAINING_PLAN_SESSION": "Sesiones de mis planes",
         "OWN_SERVICE_AVAILABILITY": "Disponibilidad de mis servicios",
-        "ASSOCIATED_SERVICE_AVAILABILITY": "Mis servicios asociados"
+        "ASSOCIATED_SERVICE_AVAILABILITY": "Mis servicios asociados",
+        "unknown": "Otra fuente"
       },
       "status": {
         "DRAFT": "Borrador",
         "PUBLISHED": "Publicado",
         "REGISTERED": "Inscrito",
         "ASSIGNED": "Asignada",
-        "AVAILABLE": "Disponible"
+        "AVAILABLE": "Disponible",
+        "unknown": "Sin estado informado"
       },
       "empty": {
         "none": "No tienes actividades en este periodo.",
