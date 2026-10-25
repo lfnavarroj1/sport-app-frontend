@@ -380,6 +380,16 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'training.plan.author',
         'HU010',
       ),
+      // HU028: el profesional publica plantillas de plan para sugerirlas en el móvil (ADR-041).
+      permissionOption(
+        'training-templates',
+        'training',
+        125,
+        'library_books',
+        '/profesional/entrenamientos/plantillas',
+        'training.plan.author',
+        'HU028',
+      ),
       permissionOption(
         'training-history',
         'training',

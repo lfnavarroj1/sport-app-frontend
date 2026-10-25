@@ -194,6 +194,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU028: el profesional publica plantillas de plan y retira las propias (ADR-041).
+      path: 'entrenamientos/plantillas',
+      loadChildren: () =>
+        import('./features/training/templates/training-templates.routes').then(
+          (module) => module.TRAINING_TEMPLATES_ROUTES,
+        ),
+    },
+    {
       // HU014: el profesional crea, asigna y consulta planes de alimentación (ADR-037).
       path: 'alimentacion/planes',
       loadChildren: () =>

@@ -1,0 +1,275 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.templates.title' | translate }}</h1>
+    <p>{{ 'training.templates.intro' | translate }}</p>
+  </header>
+
+  @if (published(); as result) {
+    <div class="templates__success" role="status" tabindex="-1" data-testid="template-published">
+      <p>
+        {{ 'training.templates.published.message' | translate: { title: result.template.title } }}
+      </p>
+      @if (result.replayed) {
+        <p data-testid="template-published-replayed">
+          {{ 'training.templates.published.replayed' | translate }}
+        </p>
+      }
+    </div>
+  }
+
+  @if (composing()) {
+    <mat-card appearance="outlined" class="training-page__card templates__card">
+      <mat-card-content>
+        <h2 class="training-page__step">{{ 'training.templates.form.title' | translate }}</h2>
+        @if (retryAttempt(); as attempt) {
+          <p class="templates__note" role="status" data-testid="template-retrying">
+            {{ 'training.templates.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+          </p>
+        }
+        @if (publishFailure(); as error) {
+          <div
+            class="training-page__error"
+            role="alert"
+            tabindex="-1"
+            data-testid="template-publish-error"
+          >
+            <p>{{ publishFailureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'training.templates.errors.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="training-page__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        <app-template-form
+          [submitting]="submitting()"
+          [serverErrors]="violations()"
+          (submitted)="publish($event)"
+          (edited)="onEdited()"
+          (cancelled)="cancelCompose()"
+        />
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="training-page__actions templates__compose">
+      <button mat-flat-button type="button" (click)="compose()">
+        {{ 'training.templates.actions.new' | translate }}
+      </button>
+    </div>
+  }
+
+  <mat-card appearance="outlined" class="training-page__card templates__card">
+    <mat-card-content>
+      <h2 class="training-page__step">{{ 'training.templates.list.title' | translate }}</h2>
+      <app-async-state
+        [state]="state()"
+        emptyMessageKey="training.templates.list.empty"
+        (retry)="load()"
+      >
+        @if (list(); as data) {
+          <ul class="templates__items" data-testid="templates-list">
+            @for (template of data.templates; track template.id) {
+              <li class="templates__item" [attr.data-template]="template.id">
+                <div class="templates__heading">
+                  <h3>{{ template.title }}</h3>
+                  <span
+                    class="templates__status"
+                    [class.templates__status--retired]="template.status === 'RETIRED'"
+                    data-testid="template-status"
+                  >
+                    {{ 'training.templates.status.' + template.status | translate }}
+                  </span>
+                </div>
+                <p class="templates__objectives">{{ template.objectives }}</p>
+                <dl class="templates__facts">
+                  <dt>{{ 'training.templates.fields.sport' | translate }}</dt>
+                  <dd>{{ 'training.sports.' + template.sport | translate }}</dd>
+                  <dt>{{ 'training.templates.fields.goal' | translate }}</dt>
+                  <dd>{{ 'training.templates.goals.' + template.goal | translate }}</dd>
+                  <dt>{{ 'training.templates.fields.level' | translate }}</dt>
+                  <dd>{{ 'training.templates.levels.' + template.level | translate }}</dd>
+                  <dt>{{ 'training.templates.fields.durationWeeks' | translate }}</dt>
+                  <dd data-testid="template-weeks">
+                    {{ template.durationWeeks | number }}
+                  </dd>
+                  <dt>{{ 'training.templates.fields.weeklySessions' | translate }}</dt>
+                  <dd data-testid="template-sessions-list">
+                    <p class="templates__summary">
+                      {{
+                        'training.templates.values.sessionsSummary'
+                          | translate
+                            : {
+                                count: (template.weeklySessions.length | number),
+                                minutes: (weeklyMinutes(template.weeklySessions) | number),
+                              }
+                      }}
+                    </p>
+                    <ol class="templates__sessions">
+                      @for (session of template.weeklySessions; track $index) {
+                        <li>
+                          <span class="templates__session-day">{{
+                            'training.templates.days.' + session.dayOfWeek | translate
+                          }}</span>
+                          ·
+                          {{
+                            'training.templates.values.minutes'
+                              | translate: { value: (session.durationMinutes | number) }
+                          }}
+                          · {{ session.description }}
+                        </li>
+                      }
+                    </ol>
+                  </dd>
+                  <dt>{{ 'training.templates.list.publishedAt' | translate }}</dt>
+                  <dd>{{ template.publishedAt | date: 'medium' }}</dd>
+                  @if (template.retiredAt) {
+                    <dt>{{ 'training.templates.list.retiredAt' | translate }}</dt>
+                    <dd data-testid="template-retired-at">
+                      {{ template.retiredAt | date: 'medium' }}
+                    </dd>
+                  }
+                  <dt>{{ 'training.templates.list.version' | translate }}</dt>
+                  <dd>{{ template.version | number }}</dd>
+                </dl>
+
+                @if (retireMessage(template.id); as message) {
+                  @switch (message.kind) {
+                    @case ('retired') {
+                      <p
+                        class="templates__note"
+                        role="status"
+                        tabindex="-1"
+                        [attr.data-testid]="'template-retire-message-' + template.id"
+                      >
+                        {{ 'training.templates.retired.message' | translate }}
+                      </p>
+                    }
+                    @case ('conflict') {
+                      <div
+                        class="training-page__error"
+                        role="alert"
+                        tabindex="-1"
+                        [attr.data-testid]="'template-retire-message-' + template.id"
+                      >
+                        <p>{{ 'training.templates.errors.versionConflict' | translate }}</p>
+                        <button mat-stroked-button type="button" (click)="load()">
+                          {{ 'training.templates.actions.refresh' | translate }}
+                        </button>
+                      </div>
+                    }
+                    @case ('failed') {
+                      @let error = retireError(message);
+                      <div
+                        class="training-page__error"
+                        role="alert"
+                        tabindex="-1"
+                        [attr.data-testid]="'template-retire-message-' + template.id"
+                      >
+                        <p>{{ retireFailureMessage(error!) | translate }}</p>
+                        @if (error!.correlationId) {
+                          <p class="training-page__reference">
+                            {{
+                              'common.errors.reference' | translate: { id: error!.correlationId }
+                            }}
+                          </p>
+                        }
+                      </div>
+                    }
+                  }
+                }
+
+                @if (template.status === 'PUBLISHED') {
+                  @if (confirming() === template.id) {
+                    <div
+                      class="templates__confirm"
+                      role="group"
+                      [attr.aria-labelledby]="'template-retire-title-' + template.id"
+                      tabindex="-1"
+                      [attr.data-testid]="'template-retire-confirm-' + template.id"
+                    >
+                      <p [id]="'template-retire-title-' + template.id">
+                        {{
+                          'training.templates.retire.confirm' | translate: { title: template.title }
+                        }}
+                      </p>
+                      <div class="training-page__actions">
+                        <button
+                          mat-flat-button
+                          type="button"
+                          [disabled]="retiring() !== null"
+                          (click)="retire(template)"
+                        >
+                          {{
+                            (retiring() === template.id
+                              ? 'training.templates.actions.retiring'
+                              : 'training.templates.actions.confirmRetire'
+                            ) | translate
+                          }}
+                        </button>
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          [disabled]="retiring() !== null"
+                          (click)="cancelRetire()"
+                        >
+                          {{ 'training.templates.actions.cancel' | translate }}
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="training-page__actions">
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [attr.aria-label]="
+                          'training.templates.actions.retireNamed'
+                            | translate: { title: template.title }
+                        "
+                        (click)="askRetire(template)"
+                      >
+                        {{ 'training.templates.actions.retire' | translate }}
+                      </button>
+                    </div>
+                  }
+                }
+              </li>
+            }
+          </ul>
+
+          @if (moreError(); as error) {
+            <div class="training-page__error" role="alert" data-testid="templates-more-error">
+              <p>{{ 'training.templates.list.moreError' | translate }}</p>
+              @if (error.correlationId) {
+                <p class="training-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (data.nextCursor !== null) {
+            <div class="training-page__actions">
+              <button
+                mat-stroked-button
+                type="button"
+                data-testid="templates-load-more"
+                [disabled]="loadingMore()"
+                (click)="loadMore()"
+              >
+                {{
+                  (loadingMore()
+                    ? 'training.templates.actions.loadingMore'
+                    : 'training.templates.actions.loadMore'
+                  ) | translate
+                }}
+              </button>
+            </div>
+          }
+        }
+      </app-async-state>
+      <p class="templates__note">{{ 'training.templates.list.note' | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+</section>
