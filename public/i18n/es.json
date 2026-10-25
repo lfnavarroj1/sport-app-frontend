@@ -1105,6 +1105,129 @@
         "loadMore": "Cargar más",
         "loadingMore": "Cargando…"
       }
+    },
+    "templates": {
+      "title": "Plantillas de entrenamiento",
+      "intro": "Publica plantillas de plan para que los deportistas las reciban como sugerencia en la app móvil según su deporte y objetivo. Una plantilla no se asigna a nadie: para asignar un plan a un deportista usa «Crear planes de entrenamiento».",
+      "form": {
+        "title": "Publicar una plantilla"
+      },
+      "sections": {
+        "template": "Datos de la plantilla"
+      },
+      "fields": {
+        "title": "Título",
+        "objectives": "Objetivos",
+        "sport": "Deporte",
+        "goal": "Objetivo principal",
+        "level": "Nivel",
+        "durationWeeks": "Duración (semanas)",
+        "weeklySessions": "Sesiones de la semana tipo"
+      },
+      "sessionN": "Sesión {{n}}",
+      "sessionDay": "Día de la sesión {{n}}",
+      "sessionMinutes": "Duración de la sesión {{n}} (minutos)",
+      "sessionDescription": "Descripción de la sesión {{n}}",
+      "hints": {
+        "objectives": "Entre {{min}} y {{max}} caracteres.",
+        "durationWeeks": "Un número entero de {{min}} a {{max}}.",
+        "durationMinutes": "De {{min}} a {{max}} minutos.",
+        "weeklySessions": "Entre {{min}} y {{max}} sesiones, en el orden en que se realizan durante la semana. Puedes repetir un día."
+      },
+      "units": {
+        "minutes": "min"
+      },
+      "goals": {
+        "HEALTH": "Salud",
+        "PERFORMANCE": "Rendimiento",
+        "WEIGHT_MANAGEMENT": "Control de peso",
+        "RECREATION": "Recreación",
+        "COMPETITION": "Competencia"
+      },
+      "levels": {
+        "BEGINNER": "Principiante",
+        "INTERMEDIATE": "Intermedio",
+        "ADVANCED": "Avanzado"
+      },
+      "days": {
+        "MON": "Lunes",
+        "TUE": "Martes",
+        "WED": "Miércoles",
+        "THU": "Jueves",
+        "FRI": "Viernes",
+        "SAT": "Sábado",
+        "SUN": "Domingo"
+      },
+      "status": {
+        "PUBLISHED": "Publicada",
+        "RETIRED": "Retirada"
+      },
+      "validation": {
+        "integer": "Usa un número entero."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "unknown": "El valor no es válido.",
+        "required": "Este dato es obligatorio.",
+        "invalid_length": "La longitud no es válida.",
+        "out_of_range": "El valor está fuera del rango permitido.",
+        "unknown_value": "El valor no es válido.",
+        "not_integer": "Debe ser un número entero.",
+        "field_not_allowed": "Este dato no se puede enviar."
+      },
+      "violationFields": {
+        "session": "Sesión {{n}}",
+        "sessionDayOfWeek": "Sesión {{n}} (día)",
+        "sessionDescription": "Sesión {{n}} (descripción)",
+        "sessionDurationMinutes": "Sesión {{n}} (duración)",
+        "request": "Solicitud"
+      },
+      "values": {
+        "sessionsSummary": "{{count}} por semana · {{minutes}} min en total",
+        "minutes": "{{value}} min"
+      },
+      "list": {
+        "title": "Tus plantillas",
+        "empty": "Aún no has publicado plantillas.",
+        "publishedAt": "Publicada",
+        "retiredAt": "Retirada",
+        "version": "Versión",
+        "moreError": "No pudimos cargar más plantillas. Inténtalo de nuevo.",
+        "note": "Una plantilla retirada deja de sugerirse, pero se conserva en tu lista. Sugerir una plantilla no la asigna ni inicia el plan."
+      },
+      "published": {
+        "message": "Publicamos la plantilla «{{title}}».",
+        "replayed": "Esta confirmación corresponde a un envío anterior: no se publicó otra plantilla."
+      },
+      "retire": {
+        "confirm": "¿Retirar «{{title}}»? Dejará de sugerirse a los deportistas; seguirá en tu lista como retirada."
+      },
+      "retired": {
+        "message": "Retiramos la plantilla. Ya no se sugerirá a los deportistas."
+      },
+      "retrying": "Reintentando publicar la plantilla ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "Revisa estos datos:",
+        "idempotencyKeyReused": "No pudimos confirmar la publicación. Revisa los datos y vuelve a publicar.",
+        "retryHint": "Puedes volver a intentarlo: no se publicará una plantilla duplicada.",
+        "versionConflict": "La plantilla cambió desde que la cargaste y no se retiró. Actualiza la lista y vuelve a intentarlo.",
+        "templateNotFound": "La plantilla no existe o no es tuya."
+      },
+      "actions": {
+        "new": "Publicar una plantilla",
+        "publish": "Publicar plantilla",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar",
+        "addSession": "Agregar sesión",
+        "removeSessionN": "Quitar la sesión {{n}}",
+        "retire": "Retirar",
+        "retireNamed": "Retirar la plantilla «{{title}}»",
+        "confirmRetire": "Sí, retirar",
+        "retiring": "Retirando…",
+        "refresh": "Actualizar lista",
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando…"
+      }
     }
   },
   "shell": {
@@ -1145,7 +1268,8 @@
       "athlete-services": "Servicios",
       "sport-calendar": "Calendario deportivo",
       "sports-medicine": "Servicios médicos y deportivos",
-      "organizer-routes": "Rutas"
+      "organizer-routes": "Rutas",
+      "training-templates": "Plantillas de entrenamiento"
     },
     "plan": {
       "title": "Opciones de tu plan",

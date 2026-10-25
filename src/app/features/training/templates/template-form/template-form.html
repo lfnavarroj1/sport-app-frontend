@@ -1,0 +1,218 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="template-form"
+  data-testid="template-form"
+>
+  @if (summary().length > 0) {
+    <div class="template-form__errors" role="alert" tabindex="-1" data-testid="template-errors">
+      <p>{{ 'training.templates.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'training.templates.issues.item'
+                | translate
+                  : {
+                      field: (item.field.key | translate: item.field.params),
+                      rule: (item.issue | translate),
+                    }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <fieldset class="template-form__group">
+    <legend>{{ 'training.templates.sections.template' | translate }}</legend>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.templates.fields.title' | translate }}</mat-label>
+      <input matInput formControlName="title" [maxlength]="limits.titleMax" required />
+      <mat-error><app-template-field-error [control]="form.controls.title" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.templates.fields.objectives' | translate }}</mat-label>
+      <textarea
+        matInput
+        formControlName="objectives"
+        rows="4"
+        [maxlength]="limits.objectivesMax"
+        required
+      ></textarea>
+      <mat-hint>{{
+        'training.templates.hints.objectives'
+          | translate: { min: limits.objectivesMin, max: limits.objectivesMax }
+      }}</mat-hint>
+      <mat-error><app-template-field-error [control]="form.controls.objectives" /></mat-error>
+    </mat-form-field>
+    <div class="template-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.templates.fields.sport' | translate }}</mat-label>
+        <mat-select formControlName="sport" required>
+          @for (sport of sports; track sport) {
+            <mat-option [value]="sport">{{ 'training.sports.' + sport | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-template-field-error [control]="form.controls.sport" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.templates.fields.goal' | translate }}</mat-label>
+        <mat-select formControlName="goal" required>
+          @for (goal of goals; track goal) {
+            <mat-option [value]="goal">{{
+              'training.templates.goals.' + goal | translate
+            }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-template-field-error [control]="form.controls.goal" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.templates.fields.level' | translate }}</mat-label>
+        <mat-select formControlName="level" required>
+          @for (level of levels; track level) {
+            <mat-option [value]="level">{{
+              'training.templates.levels.' + level | translate
+            }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-template-field-error [control]="form.controls.level" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.templates.fields.durationWeeks' | translate }}</mat-label>
+        <input
+          matInput
+          type="number"
+          step="1"
+          inputmode="numeric"
+          formControlName="durationWeeks"
+          [min]="limits.weeksMin"
+          [max]="limits.weeksMax"
+          required
+        />
+        <mat-hint>{{
+          'training.templates.hints.durationWeeks'
+            | translate: { min: limits.weeksMin, max: limits.weeksMax }
+        }}</mat-hint>
+        <mat-error><app-template-field-error [control]="form.controls.durationWeeks" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset
+    class="template-form__group"
+    formArrayName="weeklySessions"
+    data-testid="template-sessions"
+  >
+    <legend>{{ 'training.templates.fields.weeklySessions' | translate }}</legend>
+    <p class="template-form__note">
+      {{
+        'training.templates.hints.weeklySessions'
+          | translate: { min: limits.sessionsMin, max: limits.sessionsMax }
+      }}
+    </p>
+    @for (item of sessions.controls; track item; let i = $index) {
+      <div
+        class="template-form__session"
+        [formGroupName]="i"
+        [attr.data-session]="i"
+        role="group"
+        [attr.aria-label]="'training.templates.sessionN' | translate: { n: i + 1 }"
+      >
+        <div class="template-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'training.templates.sessionDay' | translate: { n: i + 1 } }}</mat-label>
+            <mat-select formControlName="dayOfWeek" required>
+              @for (day of days; track day) {
+                <mat-option [value]="day">{{
+                  'training.templates.days.' + day | translate
+                }}</mat-option>
+              }
+            </mat-select>
+            <mat-error><app-template-field-error [control]="item.controls.dayOfWeek" /></mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{
+              'training.templates.sessionMinutes' | translate: { n: i + 1 }
+            }}</mat-label>
+            <input
+              matInput
+              type="number"
+              step="1"
+              inputmode="numeric"
+              formControlName="durationMinutes"
+              [min]="limits.sessionMinutesMin"
+              [max]="limits.sessionMinutesMax"
+              required
+            />
+            <span matTextSuffix aria-hidden="true">{{
+              'training.templates.units.minutes' | translate
+            }}</span>
+            <mat-hint>{{
+              'training.templates.hints.durationMinutes'
+                | translate: { min: limits.sessionMinutesMin, max: limits.sessionMinutesMax }
+            }}</mat-hint>
+            <mat-error
+              ><app-template-field-error [control]="item.controls.durationMinutes"
+            /></mat-error>
+          </mat-form-field>
+        </div>
+        <div class="template-form__session-description">
+          <mat-form-field appearance="outline">
+            <mat-label>{{
+              'training.templates.sessionDescription' | translate: { n: i + 1 }
+            }}</mat-label>
+            <textarea
+              matInput
+              formControlName="description"
+              rows="2"
+              [maxlength]="limits.sessionDescriptionMax"
+              required
+            ></textarea>
+            <mat-error
+              ><app-template-field-error [control]="item.controls.description"
+            /></mat-error>
+          </mat-form-field>
+          <button
+            mat-icon-button
+            type="button"
+            class="template-form__remove"
+            [disabled]="!canRemoveSession()"
+            [attr.aria-label]="
+              'training.templates.actions.removeSessionN' | translate: { n: i + 1 }
+            "
+            (click)="removeSession(i)"
+          >
+            <mat-icon aria-hidden="true">delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+    <div>
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="template-add-session"
+        [disabled]="!canAddSession()"
+        (click)="addSession()"
+      >
+        {{ 'training.templates.actions.addSession' | translate }}
+      </button>
+    </div>
+  </fieldset>
+
+  <div class="template-form__actions">
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{
+        (submitting()
+          ? 'training.templates.actions.publishing'
+          : 'training.templates.actions.publish'
+        ) | translate
+      }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'training.templates.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>
