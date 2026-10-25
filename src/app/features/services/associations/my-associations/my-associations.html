@@ -1,0 +1,208 @@
+<section class="associations" data-testid="my-associations" aria-labelledby="my-associations-title">
+  <h2 id="my-associations-title" class="associations__title">
+    {{ 'services.associations.title' | translate }}
+  </h2>
+  <p class="associations__intro">{{ 'services.associations.intro' | translate }}</p>
+  <p class="associations__privacy" data-testid="associations-privacy">
+    {{ 'services.associations.privacyNote' | translate }}
+  </p>
+
+  <p class="associations__notice" role="status" tabindex="-1" data-testid="associations-notice">
+    @if (store.notice(); as notice) {
+      {{ 'services.associations.notice.' + notice.kind | translate: { name: notice.name } }}
+    }
+  </p>
+
+  @if (store.capabilityMissing()) {
+    <div class="associations__capability" role="alert" data-testid="associations-capability">
+      <p>{{ 'services.associations.errors.capabilityRequired' | translate }}</p>
+      <a mat-stroked-button [routerLink]="comparePlansRoute">
+        {{ 'services.associations.comparePlans' | translate }}
+      </a>
+    </div>
+  } @else {
+    <mat-checkbox
+      class="associations__history"
+      data-testid="associations-history"
+      [checked]="store.filter() === 'ALL'"
+      [disabled]="busy()"
+      (change)="toggleHistory($event)"
+    >
+      {{ 'services.associations.showHistory' | translate }}
+    </mat-checkbox>
+
+    <app-async-state
+      [state]="store.state()"
+      [emptyMessageKey]="
+        store.filter() === 'ALL'
+          ? 'services.associations.emptyHistory'
+          : 'services.associations.empty'
+      "
+      (retry)="store.load()"
+    >
+      <ul
+        class="associations__list"
+        data-testid="associations-list"
+        [attr.aria-label]="'services.associations.title' | translate"
+      >
+        @for (association of store.associations(); track association.id) {
+          @let unit =
+            'services.availability.billingUnits.' + association.fee.billingUnit | translate;
+          <li
+            class="associations__item"
+            tabindex="-1"
+            [class.associations__item--highlighted]="store.highlighted() === association.id"
+            [attr.data-association]="association.id"
+            [attr.data-service]="association.serviceId"
+            [attr.data-testid]="'association-item-' + association.id"
+          >
+            <h3 class="associations__name">{{ association.name }}</h3>
+            <p
+              class="associations__status"
+              [class.associations__status--inactive]="association.status === 'INACTIVE'"
+              data-testid="association-status"
+            >
+              {{ 'services.associations.status.' + association.status | translate }}
+            </p>
+            <dl class="associations__facts">
+              <dt>{{ 'services.availability.filters.category' | translate }}</dt>
+              <dd>
+                {{ 'services.availability.categories.' + association.category | translate }}
+              </dd>
+              <dt>{{ 'services.availability.filters.modality' | translate }}</dt>
+              <dd>
+                {{ 'services.availability.modalities.' + association.modality | translate }}
+              </dd>
+              <dt>{{ 'services.availability.price.label' | translate }}</dt>
+              <dd>
+                {{
+                  'services.availability.price.value'
+                    | translate: { amount: price(association.fee.amount), unit: unit }
+                }}
+              </dd>
+              <dt>{{ 'services.associations.associatedAt' | translate }}</dt>
+              <dd data-testid="association-associated-at">
+                {{ instant(association.associatedAt) }}
+              </dd>
+              @if (association.endedAt; as endedAt) {
+                <dt>{{ 'services.associations.endedAt' | translate }}</dt>
+                <dd data-testid="association-ended-at">{{ instant(endedAt) }}</dd>
+              }
+            </dl>
+
+            @if (failure(association); as error) {
+              <div
+                class="associations__error"
+                role="alert"
+                tabindex="-1"
+                [attr.data-testid]="'association-error-' + association.id"
+              >
+                <p>{{ failureKey(error) | translate }}</p>
+                @if (error.correlationId) {
+                  <p class="associations__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+                @if (retryable(error)) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="dissociate(association)"
+                  >
+                    {{ 'common.state.retry' | translate }}
+                  </button>
+                }
+              </div>
+            }
+
+            @if (association.status === 'ACTIVE') {
+              @if (confirming() === association.id) {
+                <div
+                  class="associations__confirm"
+                  role="group"
+                  tabindex="-1"
+                  [attr.aria-labelledby]="'association-confirm-title-' + association.id"
+                  [attr.data-testid]="'association-confirm-' + association.id"
+                >
+                  <p [id]="'association-confirm-title-' + association.id">
+                    {{
+                      'services.associations.confirm.dissociate'
+                        | translate: { name: association.name }
+                    }}
+                  </p>
+                  <div class="associations__buttons">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="dissociate(association)"
+                    >
+                      {{
+                        (store.dissociating() === association.id
+                          ? 'services.associations.action.dissociating'
+                          : 'services.associations.action.confirmDissociate'
+                        ) | translate
+                      }}
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="cancel(association)"
+                    >
+                      {{ 'services.associations.action.cancel' | translate }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="busy()"
+                  [attr.data-testid]="'association-dissociate-' + association.id"
+                  [attr.aria-label]="
+                    'services.associations.action.dissociateNamed'
+                      | translate: { name: association.name }
+                  "
+                  (click)="askDissociate(association)"
+                >
+                  {{ 'services.associations.action.dissociate' | translate }}
+                </button>
+              }
+            }
+          </li>
+        }
+      </ul>
+
+      @if (store.moreError(); as error) {
+        <div class="associations__error" role="alert" data-testid="associations-more-error">
+          <p>{{ 'common.errors.' + error.kind | translate }}</p>
+          @if (error.correlationId) {
+            <p class="associations__reference">
+              {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+            </p>
+          }
+        </div>
+      }
+      @if (store.nextCursor()) {
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="associations-load-more"
+          [disabled]="store.loadingMore()"
+          (click)="store.loadMore()"
+        >
+          {{
+            (store.loadingMore()
+              ? 'common.state.loading'
+              : store.moreError()
+                ? 'common.state.retry'
+                : 'services.associations.loadMore'
+            ) | translate
+          }}
+        </button>
+      }
+    </app-async-state>
+  }
+</section>

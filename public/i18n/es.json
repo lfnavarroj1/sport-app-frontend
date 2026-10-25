@@ -1685,6 +1685,55 @@
       "countAll": "Servicios mostrados: {{count}}.",
       "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
       "loadMore": "Cargar más"
+    },
+    "associations": {
+      "title": "Mis servicios asociados",
+      "intro": "Asocia a tu perfil los servicios médicos deportivos que quieras tener a mano y quítalos cuando ya no los necesites.",
+      "privacyNote": "Asociar un servicio no comparte tus datos de salud con el profesional, no contrata, no reserva ni paga nada.",
+      "showHistory": "Mostrar también los servicios que quitaste",
+      "empty": "Aún no tienes servicios médicos deportivos asociados.",
+      "emptyHistory": "Aún no has asociado servicios médicos deportivos.",
+      "loadMore": "Cargar más",
+      "associatedAt": "Asociado el",
+      "endedAt": "Quitado el",
+      "comparePlans": "Comparar planes",
+      "retrying": "Reintentando la asociación (intento {{attempt}} de 3)…",
+      "status": {
+        "ACTIVE": "Asociado",
+        "INACTIVE": "Quitado"
+      },
+      "confirm": {
+        "associate": "¿Asociar «{{name}}» a tu perfil?",
+        "dissociate": "¿Quitar «{{name}}» de tus servicios asociados? Seguirá en tu historial."
+      },
+      "action": {
+        "associate": "Asociar",
+        "associateNamed": "Asociar {{name}}",
+        "confirmAssociate": "Sí, asociar",
+        "associating": "Asociando…",
+        "dissociate": "Quitar",
+        "dissociateNamed": "Quitar {{name}}",
+        "confirmDissociate": "Sí, quitar",
+        "dissociating": "Quitando…",
+        "cancel": "Cancelar",
+        "associated": "Asociado a tu perfil",
+        "done": {
+          "associated": "Servicio asociado a tu perfil.",
+          "exists": "Este servicio ya estaba asociado a tu perfil.",
+          "dissociated": "Quitaste el servicio. Puedes verlo en el historial."
+        }
+      },
+      "notice": {
+        "associated": "Asociaste «{{name}}» a tu perfil.",
+        "exists": "«{{name}}» ya estaba asociado a tu perfil; está resaltado en la lista.",
+        "dissociated": "Quitaste «{{name}}». La asociación queda en tu historial."
+      },
+      "errors": {
+        "capabilityRequired": "Tu plan actual no incluye los servicios médicos y deportivos.",
+        "serviceNotFound": "Este servicio ya no está disponible para asociar.",
+        "associationNotFound": "Esta asociación ya no existe. Actualizamos tu lista.",
+        "idempotencyKeyReused": "No pudimos confirmar la solicitud. Inténtalo de nuevo."
+      }
     }
   },
   "affiliation": {

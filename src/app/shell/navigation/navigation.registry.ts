@@ -248,8 +248,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar.sport.view',
         'HU023',
       ),
-      // Abre la pantalla de HU020 filtrada por medicina deportiva (ADR-038); la
-      // búsqueda y asociación de servicios médicos sigue siendo HU017.
+      // Abre la pantalla de HU020 filtrada por medicina deportiva (ADR-038), donde
+      // HU017 agrega «Asociar»/«Quitar» y «Mis servicios asociados».
       planOption(
         'sports-medicine',
         'services',
