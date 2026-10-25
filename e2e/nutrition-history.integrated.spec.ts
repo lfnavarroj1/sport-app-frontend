@@ -191,7 +191,12 @@ async function seedIntakes(email: string): Promise<SeededIntake[]> {
       const consumedAt = utcSeconds(entry.at);
       const created = await api.post('/v1/me/food-intakes', {
         headers: { Authorization: `Bearer ${token}`, 'Idempotency-Key': randomUUID() },
-        data: { intake_id: intakeId, consumed_at: consumedAt, meal_type: entry.mealType, items: entry.items },
+        data: {
+          intake_id: intakeId,
+          consumed_at: consumedAt,
+          meal_type: entry.mealType,
+          items: entry.items,
+        },
       });
       await expectStatus(created, 201, 'bff-mobile POST /v1/me/food-intakes');
       seeded.push({ intakeId, mealType: entry.mealType, consumedAt });
@@ -205,7 +210,9 @@ async function seedIntakes(email: string): Promise<SeededIntake[]> {
 const entries = (page: Page) => page.getByTestId('food-intakes-list').locator('[data-intake]');
 
 async function shownIntakes(page: Page): Promise<(string | null)[]> {
-  return entries(page).evaluateAll((items) => items.map((item) => item.getAttribute('data-intake')));
+  return entries(page).evaluateAll((items) =>
+    items.map((item) => item.getAttribute('data-intake')),
+  );
 }
 
 /** La proyección es eventual: recarga hasta ver los consumos producidos. */

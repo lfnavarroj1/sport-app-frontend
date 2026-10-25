@@ -95,8 +95,11 @@ export function groupByDay(
   timeZone: string = browserTimeZone(),
 ): readonly DayGroup[] {
   const dayOf = dayFormatter(timeZone);
-  const days: { day: string; anchor: string; meals: { mealType: MealType; intakes: FoodIntake[] }[] }[] =
-    [];
+  const days: {
+    day: string;
+    anchor: string;
+    meals: { mealType: MealType; intakes: FoodIntake[] }[];
+  }[] = [];
   for (const intake of intakes) {
     const day = dayOf(intake.consumedAt);
     let group = days.find((candidate) => candidate.day === day);

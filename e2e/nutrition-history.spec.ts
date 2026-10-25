@@ -6,7 +6,10 @@ import {
   SIMULATED_INTAKES_ATHLETE_ID,
   foodIntakes,
 } from '../src/testing/bff-web/food-intakes.fixtures';
-import { TRAINING_ATHLETES_RESPONSES, trainingAthletes } from '../src/testing/bff-web/training-history.fixtures';
+import {
+  TRAINING_ATHLETES_RESPONSES,
+  trainingAthletes,
+} from '../src/testing/bff-web/training-history.fixtures';
 import { FoodIntakesSimulation, simulateFoodIntakes } from './support/food-intakes-simulator';
 import { NutritionPlansStore, simulateNutrition } from './support/nutrition-simulator';
 import { SessionSimulation, login, sessionFor, simulateSession } from './support/session-simulator';
@@ -80,8 +83,9 @@ test.describe('HU013 Ver historial de alimentación (simulador del contrato) @si
       'Consumos mostrados: 20. Hay más disponibles.',
     );
     const list = page.getByTestId('food-intakes-list');
-    await expect(list.locator('[data-day]').first().getByRole('heading', { level: 4 }).first())
-      .toHaveText('Cena');
+    await expect(
+      list.locator('[data-day]').first().getByRole('heading', { level: 4 }).first(),
+    ).toHaveText('Cena');
     await expect(list).toContainText('Pechuga de pollo');
     await expect(list).toContainText('1,5 cda.');
     await expect(page.locator('main')).not.toContainText(/calor|kcal/i);
@@ -173,9 +177,7 @@ test.describe('HU013 Ver historial de alimentación (simulador del contrato) @si
     await expect(entries(page)).toHaveCount(3);
   });
 
-  test('el profesional elige un deportista autorizado y ve solo sus consumos', async ({
-    page,
-  }) => {
+  test('el profesional elige un deportista autorizado y ve solo sus consumos', async ({ page }) => {
     const { intakes, athletes } = await loginAs(page, 'service_provider', foodIntakes(3));
     athletes.athletes = trainingAthletes(2).map((athlete, index) =>
       index === 0 ? { ...athlete, athlete_id: SIMULATED_INTAKES_ATHLETE_ID } : athlete,
@@ -246,9 +248,7 @@ test.describe('HU013 Ver historial de alimentación (simulador del contrato) @si
     await expect(page).toHaveURL(/\/acceso-no-autorizado$/);
   });
 
-  test('el deportista no entra al historial de alimentación del profesional', async ({
-    page,
-  }) => {
+  test('el deportista no entra al historial de alimentación del profesional', async ({ page }) => {
     await loginAs(page, 'athlete');
 
     await page.goto(`/profesional/historial/alimentacion/${SIMULATED_INTAKES_ATHLETE_ID}`);
