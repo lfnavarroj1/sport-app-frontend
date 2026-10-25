@@ -1,0 +1,42 @@
+.fee-editor__result {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font: var(--mat-sys-title-medium);
+  }
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+}
+
+.fee-editor__warning {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  font: var(--mat-sys-body-medium);
+}
+
+.fee-editor__amount {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.fee-editor__confirm {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font: var(--mat-sys-title-medium);
+  }
+}

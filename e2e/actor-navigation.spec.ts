@@ -143,7 +143,7 @@ test.describe('HU003 Inicio y navegación por actor (simulador del contrato) @si
   test('las opciones «Próximamente» no navegan; «Inicio» sí', async ({ page }) => {
     await loginAs(page, 'organizer');
 
-    const upcoming = menuItem(page, 'event-pricing');
+    const upcoming = menuItem(page, 'integrated-calendar');
     await expect(upcoming.locator('a, button')).toHaveCount(0);
     await upcoming.click();
     await expect(page).toHaveURL(/\/organizador\/inicio$/);

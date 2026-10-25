@@ -1,0 +1,251 @@
+<mat-card appearance="outlined" class="events-page__card" data-testid="event-fee-editor">
+  <mat-card-content>
+    @if (event(); as event) {
+      @let current = feeLabel(event.fee);
+      <h2 class="events-page__step" data-testid="fee-event-name">{{ event.name }}</h2>
+
+      @if (updated(); as done) {
+        <section role="status" class="fee-editor__result" data-testid="fee-result">
+          <h3 #resultHeading tabindex="-1">
+            {{
+              (done.removed ? 'events.pricing.result.removed' : 'events.pricing.result.assigned')
+                | translate
+            }}
+          </h3>
+          @let confirmed = feeLabel(done.event.fee);
+          <dl class="events-page__facts">
+            <dt>{{ 'events.pricing.fields.fee' | translate }}</dt>
+            <dd data-testid="fee-result-fee">
+              {{ confirmed.key | translate: { amount: confirmed.amount } }}
+            </dd>
+            <dt>{{ 'events.publish.fields.version' | translate }}</dt>
+            <dd data-testid="fee-result-version">{{ done.event.version }}</dd>
+            <dt>{{ 'events.pricing.fields.registrations' | translate }}</dt>
+            <dd data-testid="fee-result-registrations">{{ done.event.registrationCount }}</dd>
+          </dl>
+          @if (done.replayed) {
+            <p data-testid="fee-result-replayed">
+              {{ 'events.pricing.result.replayed' | translate }}
+            </p>
+          }
+          @if (done.event.registrationCount > 0) {
+            <p>{{ 'events.pricing.result.registrationsKept' | translate }}</p>
+          }
+          <p>{{ 'events.pricing.informative' | translate }}</p>
+          @if (done.event.status === 'PUBLISHED') {
+            <p class="events-page__note">{{ 'events.pricing.result.visibility' | translate }}</p>
+          }
+        </section>
+      }
+
+      <dl class="events-page__facts" data-testid="fee-event-detail">
+        <dt>{{ 'events.publish.fields.status' | translate }}</dt>
+        <dd>{{ 'events.publish.status.' + event.status | translate }}</dd>
+        <dt>{{ 'events.publish.fields.startsAt' | translate }}</dt>
+        <dd>
+          {{ event.startsAt | date: 'medium' }} ·
+          {{
+            'events.publish.eventTime'
+              | translate: { date: inZone(event), timeZone: event.timeZone }
+          }}
+        </dd>
+        <dt>{{ 'events.pricing.fields.fee' | translate }}</dt>
+        <dd data-testid="fee-current">{{ current.key | translate: { amount: current.amount } }}</dd>
+        <dt>{{ 'events.pricing.fields.registrations' | translate }}</dt>
+        <dd data-testid="fee-registrations">{{ event.registrationCount }}</dd>
+        <dt>{{ 'events.publish.fields.version' | translate }}</dt>
+        <dd data-testid="fee-version">{{ event.version }}</dd>
+      </dl>
+
+      @if (event.registrationCount > 0) {
+        <p class="fee-editor__warning" role="note" data-testid="fee-registrations-warning">
+          {{
+            'events.pricing.warnings.registrations' | translate: { count: event.registrationCount }
+          }}
+        </p>
+      }
+      @if (started()) {
+        <p class="events-page__note" role="note" data-testid="fee-started-warning">
+          {{ 'events.pricing.warnings.started' | translate }}
+        </p>
+      }
+
+      @if (conflict(); as conflict) {
+        <div
+          #problemSummary
+          class="events-page__error"
+          role="alert"
+          tabindex="-1"
+          data-testid="fee-conflict"
+        >
+          <p>
+            @if (conflict.currentVersion !== null) {
+              {{
+                'events.pricing.conflict.messageWithVersion'
+                  | translate: { version: conflict.currentVersion }
+              }}
+            } @else {
+              {{ 'events.pricing.conflict.message' | translate }}
+            }
+          </p>
+          <div class="events-page__actions">
+            <button mat-stroked-button type="button" (click)="refresh()">
+              {{ 'events.pricing.conflict.refresh' | translate }}
+            </button>
+          </div>
+        </div>
+      } @else if (otherViolations().length > 0) {
+        <div
+          #problemSummary
+          class="events-page__error"
+          role="alert"
+          tabindex="-1"
+          data-testid="fee-violations"
+        >
+          <p>{{ 'events.pricing.violations.title' | translate }}</p>
+          <ul>
+            @for (violation of otherViolations(); track $index) {
+              <li>
+                {{
+                  'events.create.issues.item'
+                    | translate
+                      : {
+                          field: (fieldKey(violation.field) | translate),
+                          rule: (issueKey(violation.issue) | translate),
+                        }
+                }}
+              </li>
+            }
+          </ul>
+          <p>{{ 'events.pricing.violations.unchanged' | translate }}</p>
+        </div>
+      }
+
+      <form class="fee-editor__form" novalidate [formGroup]="form" (ngSubmit)="askSet()">
+        <mat-form-field appearance="outline" class="fee-editor__amount">
+          <mat-label>{{ 'events.pricing.form.amount' | translate }}</mat-label>
+          <span matTextPrefix>{{ 'events.pricing.form.prefix' | translate }}&nbsp;</span>
+          <input
+            #amountInput
+            matInput
+            inputmode="decimal"
+            autocomplete="off"
+            data-testid="fee-amount"
+            [formControl]="amount"
+            [readonly]="submitting() || step() === 'confirm'"
+          />
+          <span matTextSuffix>&nbsp;{{ 'events.pricing.form.currency' | translate }}</span>
+          <mat-hint>{{ 'events.pricing.form.hint' | translate }}</mat-hint>
+          <mat-error data-testid="fee-amount-error">
+            @let errors = amount.errors;
+            @if (errors?.['feeRule']) {
+              {{ issueKey(errors!['feeRule']) | translate }}
+            } @else if (errors?.['required']) {
+              {{ 'events.pricing.form.errors.required' | translate }}
+            } @else if (errors?.['tooManyDecimals']) {
+              {{ 'events.pricing.form.errors.tooManyDecimals' | translate }}
+            } @else if (errors?.['outOfRange']) {
+              {{ 'events.pricing.form.errors.outOfRange' | translate }}
+            } @else {
+              {{ 'events.pricing.form.errors.format' | translate }}
+            }
+          </mat-error>
+        </mat-form-field>
+        @if (preview(); as amount) {
+          @let shown = previewLabel(amount);
+          <p class="events-page__note" data-testid="fee-preview">
+            {{ shown.key | translate: { amount: shown.amount } }}
+          </p>
+        }
+
+        @if (retryAttempt(); as attempt) {
+          <p class="events-page__note" role="status" data-testid="fee-retrying">
+            {{ 'events.pricing.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+          </p>
+        }
+        @if (failure(); as error) {
+          <div class="events-page__error" role="alert" data-testid="fee-error">
+            <p>{{ failureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'events.pricing.errors.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="events-page__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+
+        @if (step() === 'confirm') {
+          <div
+            class="fee-editor__confirm"
+            role="group"
+            aria-labelledby="fee-confirm-heading"
+            data-testid="fee-confirm"
+          >
+            <h3 #confirmHeading id="fee-confirm-heading" tabindex="-1">
+              @if (operation() === 'remove') {
+                {{ 'events.pricing.confirm.removeTitle' | translate: { name: event.name } }}
+              } @else if (pendingAmount(); as amount) {
+                @if (isFreeAmount(amount)) {
+                  {{ 'events.pricing.confirm.setFreeTitle' | translate: { name: event.name } }}
+                } @else {
+                  {{
+                    'events.pricing.confirm.setTitle'
+                      | translate: { name: event.name, fee: cop(amount) }
+                  }}
+                }
+              }
+            </h3>
+            @if (event.registrationCount > 0) {
+              <p>{{ 'events.pricing.confirm.registrations' | translate }}</p>
+            }
+            <p>{{ 'events.pricing.informative' | translate }}</p>
+            <div class="events-page__actions">
+              <button
+                mat-flat-button
+                type="button"
+                data-testid="fee-confirm-button"
+                [disabled]="submitting()"
+                (click)="confirm()"
+              >
+                {{
+                  (submitting()
+                    ? 'events.pricing.actions.saving'
+                    : 'events.pricing.actions.confirm'
+                  ) | translate
+                }}
+              </button>
+              <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancel()">
+                {{ 'events.pricing.actions.cancel' | translate }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="events-page__actions">
+            <button mat-flat-button type="submit" data-testid="fee-save">
+              {{ 'events.pricing.actions.save' | translate }}
+            </button>
+            @if (event.fee !== null) {
+              <button
+                mat-stroked-button
+                type="button"
+                data-testid="fee-remove"
+                (click)="askRemove()"
+              >
+                {{ 'events.pricing.actions.remove' | translate }}
+              </button>
+            }
+          </div>
+        }
+      </form>
+    } @else if (missing()) {
+      <div class="events-page__error" role="alert" data-testid="fee-event-not-found">
+        <p>{{ 'events.pricing.errors.notFound' | translate }}</p>
+      </div>
+    } @else {
+      <p role="status">{{ 'common.state.loading' | translate }}</p>
+    }
+  </mat-card-content>
+</mat-card>

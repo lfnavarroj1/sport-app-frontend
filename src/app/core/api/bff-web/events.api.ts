@@ -12,7 +12,10 @@ import { STRICT_CODEC } from './training-history.api';
  * `GET /v1/events/{event_id}` y `POST /v1/events/{event_id}/publish`; desde 0.17.0,
  * para HU023 (ADR-040), `GET /v1/events` (calendario de publicados) y
  * `GET /v1/me/events/{event_id}/conflicts` (coincidencias); desde 0.22.0, para
- * HU022 (ADR-039), `GET /v1/me/events/{event_id}/registrations` (inscritos). Todas se
+ * HU022 (ADR-039), `GET /v1/me/events/{event_id}/registrations` (inscritos), y desde
+ * 0.26.0, para HU025 (ADR-040), `PUT` y `DELETE /v1/events/{event_id}/fee` (tarifa
+ * informativa), con `fee` en las consultas y `registration_count` para el
+ * propietario. Todas se
  * autentican con el access token; `organizer_id` sale del token y nunca viaja en
  * la solicitud. Estos tipos son del transporte: la interfaz los transforma antes
  * de usarlos.
@@ -136,11 +139,24 @@ export interface EventAggregateResponseDto {
   readonly created_at: string;
   readonly updated_at: string;
   readonly published_at: string | null;
+  /** Tarifa informativa (HU025); `null` sin tarifa. No es un cobro. */
+  readonly fee: EventFeeDto | null;
+  /** Último cambio de la tarifa; `null` si nunca se definió. */
+  readonly fee_updated_at: string | null;
+}
+
+/**
+ * Esquema `OwnEventResponse`: el agregado como lo ve su organizador (HU025). Lo
+ * devuelven `GET /v1/me/events` y los comandos de tarifa.
+ */
+export interface OwnEventResponseDto extends EventAggregateResponseDto {
+  /** Inscripciones vigentes; cambiar la tarifa no las modifica (ADR-032). */
+  readonly registration_count: number;
 }
 
 /** Esquema `MyEventsResponse`: orden `starts_at` y `event_id` ascendentes. */
 export interface MyEventsResponseDto {
-  readonly items: readonly EventAggregateResponseDto[];
+  readonly items: readonly OwnEventResponseDto[];
   readonly next_cursor: string | null;
 }
 
@@ -161,12 +177,11 @@ export interface EventDetailLocationDto {
   readonly country_code: string;
 }
 
-/** Esquema `EventFee` (HU025). */
+/** Esquema `EventFee` (HU025, ADR-040): `0.00` es gratuito. */
 export interface EventFeeDto {
   /** Cadena decimal con dos decimales. */
   readonly amount: string;
   readonly currency: string;
-  readonly billing_unit: string;
 }
 
 /** Esquema `EventDetailResponse` de `GET /v1/events/{event_id}` en el canal web. */
@@ -183,8 +198,10 @@ export interface EventDetailResponseDto {
   /** `DRAFT` solo lo recibe el organizador propietario. */
   readonly status: EventStatusDto;
   readonly version: number;
-  /** `null` hasta HU025. */
+  /** Informativa; `null` sin tarifa (HU025). */
   readonly fee: EventFeeDto | null;
+  /** Inscripciones vigentes: solo para el organizador propietario; `null` para los demás. */
+  readonly registration_count: number | null;
 }
 
 /** Límites del parámetro `limit` de `GET /v1/me/events`. */
@@ -237,6 +254,8 @@ export interface PublishedEventItemDto {
   readonly time_zone: string;
   readonly status: 'PUBLISHED';
   readonly version: number;
+  /** Informativa; `null` sin tarifa (HU025). */
+  readonly fee: EventFeeDto | null;
 }
 
 /** Esquema `PublishedEventsResponse`: orden `starts_at` y `event_id` ascendentes. */
@@ -380,7 +399,45 @@ export const EVENT_ATTENDEES_ERROR_CODES = {
   upstreamTimeout: 'upstream_timeout',
 } as const;
 
-/** Cliente del BFF web para los eventos del organizador (HU021, HU022, HU023 y HU024). */
+/** Cuerpo `EventFeeRequest` de `PUT /v1/events/{event_id}/fee` (ADR-040). */
+export interface EventFeeRequestDto {
+  /** Cadena decimal con exactamente dos decimales, de `0.00` a `99999999.99`. */
+  readonly amount: string;
+  readonly currency: typeof EVENT_FEE_CURRENCY;
+  readonly expected_version: number;
+}
+
+/** Única moneda de la tarifa (ADR-027 y ADR-040). */
+export const EVENT_FEE_CURRENCY = 'COP';
+
+/** Patrón y límites de `amount` en el contrato (`0.00` es gratuito). */
+export const EVENT_FEE_AMOUNT_PATTERN = /^[0-9]+\.[0-9]{2}$/;
+export const EVENT_FEE_LIMITS = { min: '0.00', max: '99999999.99', integerDigits: 8 } as const;
+
+/** Códigos de error que el contrato declara para `PUT` y `DELETE /v1/events/{event_id}/fee`. */
+export const EVENT_FEE_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  eventNotFound: 'event_not_found',
+  versionConflict: 'version_conflict',
+  idempotencyKeyReused: 'idempotency_key_reused',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Motivos de `details[].issue` del `422` de la tarifa enumerados en el contrato. */
+export const EVENT_FEE_ISSUES = [
+  'required',
+  'unknown_value',
+  'too_many_decimals',
+  'out_of_range',
+  'unsupported_currency',
+  'field_not_allowed',
+  'event_already_started',
+] as const;
+
+/** Cliente del BFF web para los eventos del organizador (HU021 a HU025). */
 @Injectable({ providedIn: 'root' })
 export class BffWebEventsApi {
   private readonly http = inject(HttpClient);
@@ -499,6 +556,52 @@ export class BffWebEventsApi {
       },
     );
   }
+
+  /**
+   * Asigna la tarifa de un evento propio (HU025). Se devuelve la respuesta
+   * completa para leer `Idempotent-Replayed`.
+   *
+   * @param idempotencyKey UUID; igual en todos los reintentos del mismo intento.
+   */
+  putEventFee(
+    accessToken: string,
+    eventId: string,
+    body: EventFeeRequestDto,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<OwnEventResponseDto>> {
+    return this.http.put<OwnEventResponseDto>(
+      this.bffWebUrl.resolve(`v1/events/${encodeURIComponent(eventId)}/fee`),
+      body,
+      { headers: commandHeaders(accessToken, idempotencyKey), observe: 'response' },
+    );
+  }
+
+  /**
+   * Retira la tarifa (`fee = null`). `expected_version` viaja en la consulta,
+   * como lo publica el contrato.
+   */
+  deleteEventFee(
+    accessToken: string,
+    eventId: string,
+    expectedVersion: number,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<OwnEventResponseDto>> {
+    return this.http.delete<OwnEventResponseDto>(
+      this.bffWebUrl.resolve(`v1/events/${encodeURIComponent(eventId)}/fee`),
+      {
+        headers: commandHeaders(accessToken, idempotencyKey),
+        params: new HttpParams().set('expected_version', String(expectedVersion)),
+        observe: 'response',
+      },
+    );
+  }
+}
+
+function commandHeaders(accessToken: string, idempotencyKey: string): HttpHeaders {
+  return new HttpHeaders({
+    Authorization: `Bearer ${accessToken}`,
+    'Idempotency-Key': idempotencyKey,
+  });
 }
 
 function bearer(accessToken: string): HttpHeaders {
