@@ -176,6 +176,9 @@ test.describe('HU026 Rutas del organizador (simulador del contrato) @simulado', 
   test('CA4: una versión vencida no retira y ofrece actualizar la lista', async ({ page }) => {
     const simulation = await loginAs(page);
     await openRoutes(page);
+    // La lista debe mostrarse con la versión 1 antes de cambiarla: si la consulta llegara
+    // después, ya traería la versión 2 y el retiro no tendría conflicto.
+    await expect(items(page)).toHaveCount(2);
     // Otra sesión cambió la ruta: la vigente es la versión 2.
     simulation.routes = simulation.routes.map((route, index) =>
       index === 0 ? { ...route, version: 2 } : route,

@@ -43,8 +43,13 @@ async function addInterval(
   page: Page,
   values: { start: [string, string]; end: [string, string]; capacity: string },
 ): Promise<void> {
+  const groups = page.getByRole('group', { name: /^Horario \d+$/ });
+  const count = await groups.count();
   await page.getByRole('button', { name: 'Agregar horario' }).click();
-  const group = page.getByRole('group', { name: /^Horario \d+$/ }).last();
+  // Se espera el horario nuevo: con `.last()` antes de que se pinte, el primer campo
+  // caía en el horario anterior y el nuevo quedaba sin fecha de inicio.
+  await expect(groups).toHaveCount(count + 1);
+  const group = groups.nth(count);
   await group.getByLabel('Fecha de inicio').fill(values.start[0]);
   await group.getByLabel('Hora de inicio').fill(values.start[1]);
   await group.getByLabel('Fecha de fin').fill(values.end[0]);
