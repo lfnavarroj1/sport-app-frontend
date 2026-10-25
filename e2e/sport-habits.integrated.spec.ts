@@ -114,8 +114,9 @@ test.describe('HU006 Hábitos deportivos contra el BFF web @integrado', () => {
     await button(page, 'Editar hábitos deportivos').click();
     await row(page, 0).getByLabel('Veces por semana').fill('5');
     expect(await save(page, 'PATCH')).toBe(200);
-    await expect(page.getByTestId('sport-habits-saved')).toContainText(
-      'Actualizamos tus hábitos deportivos.',
+    // Desde HU008 la edición envía solo los deportes (PATCH); la confirmación los lista.
+    await expect(page.getByTestId('sport-habits-saved')).toHaveText(
+      /^Actualizamos tus hábitos deportivos\.\s*Secciones actualizadas:\s*Deportes\s*Lo que no cambiaste se conservó\.$/,
     );
 
     await button(other, 'Editar hábitos deportivos').click();

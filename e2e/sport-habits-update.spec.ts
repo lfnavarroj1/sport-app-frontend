@@ -64,9 +64,10 @@ test.describe('HU008 Actualizar hábitos deportivos (simulador del contrato) @si
 
     const saved = page.getByTestId('sport-habits-saved');
     await expect(saved).toBeFocused();
-    await expect(saved).toContainText('Actualizamos tus hábitos deportivos.');
+    await expect(saved).toHaveText(
+      /^Actualizamos tus hábitos deportivos\.\s*Secciones actualizadas:\s*Deportes\s*Lo que no cambiaste se conservó\.$/,
+    );
     await expect(page.getByTestId('sport-habits-updated-sections')).toHaveText('Deportes');
-    await expect(saved).toContainText('Lo que no cambiaste se conservó.');
     await expect(page.getByTestId('sport-habit-0')).toContainText('4 veces por semana');
     await expect(page.getByTestId('sport-habits-days')).toHaveText(/Lunes\s*Miércoles\s*Sábado/);
     await expect(page.getByTestId('sport-habits-goal')).toHaveText('Salud');
