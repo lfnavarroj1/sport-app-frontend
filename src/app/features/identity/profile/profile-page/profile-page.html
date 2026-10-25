@@ -1,711 +1,707 @@
 <section class="profile-page" data-testid="profile-page">
   <header class="profile-page__header">
     <h1>{{ 'profile.title' | translate }}</h1>
-    <p>{{ 'profile.intro' | translate }}</p>
+    <p>{{ (athleteSections ? 'profile.intro' : 'profile.introAccount') | translate }}</p>
   </header>
 
-  <mat-card
-    appearance="outlined"
-    class="profile-page__card profile-page__card--upcoming"
-    data-testid="profile-personal-upcoming"
-  >
+  <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu002">
     <mat-card-content>
-      <h2 class="profile-page__title">
-        {{ 'profile.personal.title' | translate }}
-        <span class="profile-page__badge">{{ 'profile.upcoming' | translate }}</span>
-      </h2>
-      <p class="profile-page__note">{{ 'profile.personal.upcoming' | translate }}</p>
+      <app-account-section />
     </mat-card-content>
   </mat-card>
 
-  @if (projectionStalled()) {
-    <div class="profile-page__pending" role="status" data-testid="profile-projection-pending">
-      <p>{{ 'profile.projection.pending' | translate }}</p>
-      <button
-        mat-stroked-button
-        type="button"
-        data-testid="profile-refresh"
-        [disabled]="refreshing()"
-        (click)="refreshNow()"
-      >
-        {{ 'profile.projection.refresh' | translate }}
-      </button>
-    </div>
-  }
+  @if (athleteSections) {
+    @if (projectionStalled()) {
+      <div class="profile-page__pending" role="status" data-testid="profile-projection-pending">
+        <p>{{ 'profile.projection.pending' | translate }}</p>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="profile-refresh"
+          [disabled]="refreshing()"
+          (click)="refreshNow()"
+        >
+          {{ 'profile.projection.refresh' | translate }}
+        </button>
+      </div>
+    }
 
-  <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu005">
-    <mat-card-content>
-      <h2 class="profile-page__title">{{ 'profile.hu005.title' | translate }}</h2>
-      <p class="profile-page__note">{{ 'profile.hu005.intro' | translate }}</p>
+    <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu005">
+      <mat-card-content>
+        <h2 class="profile-page__title">{{ 'profile.hu005.title' | translate }}</h2>
+        <p class="profile-page__note">{{ 'profile.hu005.intro' | translate }}</p>
 
-      <app-async-state [state]="state()" (retry)="load()">
-        <section class="profile-section" data-testid="demographic-section">
-          <h3 class="profile-section__title">{{ 'profile.demographic.title' | translate }}</h3>
-          @if (demographic.mode() === 'edit') {
-            @if (demographic.retryAttempt(); as attempt) {
-              <p class="profile-page__note" role="status" data-testid="demographic-retrying">
-                {{
-                  'profile.demographic.retrying' | translate: { attempt: attempt, max: maxRetries }
-                }}
-              </p>
-            }
-            @if (demographic.failure(); as error) {
-              <div
-                class="profile-page__error"
-                role="alert"
-                tabindex="-1"
-                data-testid="demographic-error"
-              >
-                <p>{{ failureMessage(error) | translate }}</p>
-                @if (retryable(error)) {
-                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
-                }
-                @if (error.correlationId) {
-                  <p class="profile-page__reference">
-                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
-                  </p>
-                }
-              </div>
-            }
-            <app-demographic-form
-              [initial]="demographic.displayed()"
-              [submitting]="demographic.submitting()"
-              [serverErrors]="demographic.violations()"
-              (submitted)="saveDemographic($event)"
-              (edited)="onEdited(demographic)"
-              (cancelled)="cancelEdit(demographic)"
-            />
-          } @else {
-            @if (demographic.saved(); as saved) {
-              <div
-                class="profile-page__success"
-                role="status"
-                tabindex="-1"
-                data-testid="demographic-saved"
-              >
-                <p>
+        <app-async-state [state]="state()" (retry)="load()">
+          <section class="profile-section" data-testid="demographic-section">
+            <h3 class="profile-section__title">{{ 'profile.demographic.title' | translate }}</h3>
+            @if (demographic.mode() === 'edit') {
+              @if (demographic.retryAttempt(); as attempt) {
+                <p class="profile-page__note" role="status" data-testid="demographic-retrying">
                   {{
-                    (saved.created
-                      ? 'profile.demographic.saved.created'
-                      : 'profile.demographic.saved.replaced'
-                    ) | translate
+                    'profile.demographic.retrying'
+                      | translate: { attempt: attempt, max: maxRetries }
                   }}
                 </p>
-                @if (saved.replayed) {
-                  <p data-testid="demographic-replayed">
-                    {{ 'profile.saved.replayed' | translate }}
-                  </p>
-                }
-              </div>
-            }
-            @if (demographic.conflict()) {
-              <p
-                class="profile-page__warning"
-                role="alert"
-                tabindex="-1"
-                data-testid="demographic-conflict"
-              >
-                {{ 'profile.demographic.conflict' | translate }}
-              </p>
-            }
-            @if (demographic.displayed(); as section) {
-              <dl class="profile-page__facts" data-testid="demographic-summary">
-                <dt>{{ 'profile.demographic.summary.birthDate' | translate }}</dt>
-                <dd>{{ birthDate(section.birthDate) }}</dd>
-                <dt>{{ 'profile.demographic.summary.gender' | translate }}</dt>
-                <dd>{{ 'profile.demographic.genders.' + section.gender | translate }}</dd>
-                <dt>{{ 'profile.demographic.summary.country' | translate }}</dt>
-                <dd>{{ country(section.countryCode) }}</dd>
-                <dt>{{ 'profile.demographic.summary.city' | translate }}</dt>
-                <dd>{{ section.city }}</dd>
-                <dt>{{ 'profile.demographic.summary.maritalStatus' | translate }}</dt>
-                <dd>
-                  {{
-                    (section.maritalStatus
-                      ? 'profile.demographic.maritalStatuses.' + section.maritalStatus
-                      : 'profile.demographic.notSpecified'
-                    ) | translate
-                  }}
-                </dd>
-                <dt>{{ 'profile.demographic.summary.occupation' | translate }}</dt>
-                <dd>
-                  {{ section.occupation ?? ('profile.demographic.notSpecified' | translate) }}
-                </dd>
-                <dt>{{ 'profile.demographic.summary.incomeRange' | translate }}</dt>
-                <dd>
-                  {{
-                    (section.incomeRange
-                      ? 'profile.demographic.incomeRanges.' + section.incomeRange
-                      : 'profile.demographic.notSpecified'
-                    ) | translate
-                  }}
-                </dd>
-                <dt>{{ 'profile.demographic.summary.updatedAt' | translate }}</dt>
-                <dd>{{ instant(section.updatedAt) }}</dd>
-              </dl>
-              <div class="profile-page__actions">
-                <button
-                  mat-stroked-button
-                  type="button"
-                  [disabled]="demographic.pending()"
-                  (click)="startEdit(demographic)"
+              }
+              @if (demographic.failure(); as error) {
+                <div
+                  class="profile-page__error"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="demographic-error"
                 >
-                  {{ 'profile.demographic.actions.edit' | translate }}
-                </button>
-              </div>
-            } @else {
-              <p class="profile-page__note" data-testid="demographic-empty">
-                {{ 'profile.demographic.empty' | translate }}
-              </p>
-              <div class="profile-page__actions">
-                <button
-                  mat-flat-button
-                  type="button"
-                  [disabled]="demographic.pending()"
-                  (click)="startEdit(demographic)"
-                >
-                  {{ 'profile.demographic.actions.register' | translate }}
-                </button>
-              </div>
-            }
-          }
-        </section>
-
-        <section class="profile-section" data-testid="physiological-section">
-          <h3 class="profile-section__title">{{ 'profile.physiological.title' | translate }}</h3>
-          @if (physiological.mode() === 'edit' && consentVersion !== null) {
-            @if (physiological.retryAttempt(); as attempt) {
-              <p class="profile-page__note" role="status" data-testid="physiological-retrying">
-                {{
-                  'profile.physiological.retrying'
-                    | translate: { attempt: attempt, max: maxRetries }
-                }}
-              </p>
-            }
-            @if (physiological.failure(); as error) {
-              <div
-                class="profile-page__error"
-                role="alert"
-                tabindex="-1"
-                data-testid="physiological-error"
-              >
-                <p>{{ failureMessage(error) | translate }}</p>
-                @if (retryable(error)) {
-                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
-                }
-                @if (error.correlationId) {
-                  <p class="profile-page__reference">
-                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
-                  </p>
-                }
-              </div>
-            }
-            <app-physiological-form
-              [initial]="physiological.displayed()"
-              [consentVersion]="consentVersion"
-              [submitting]="physiological.submitting()"
-              [serverErrors]="physiological.violations()"
-              (submitted)="savePhysiological($event)"
-              (edited)="onEdited(physiological)"
-              (cancelled)="cancelEdit(physiological)"
-            />
-          } @else {
-            @if (physiological.saved(); as saved) {
-              <div
-                class="profile-page__success"
-                role="status"
-                tabindex="-1"
-                data-testid="physiological-saved"
-              >
-                <p>
-                  {{
-                    (saved.created
-                      ? 'profile.physiological.saved.created'
-                      : 'profile.physiological.saved.replaced'
-                    ) | translate
-                  }}
-                </p>
-                @if (saved.replayed) {
-                  <p data-testid="physiological-replayed">
-                    {{ 'profile.saved.replayed' | translate }}
-                  </p>
-                }
-              </div>
-            }
-            @if (physiological.conflict()) {
-              <p
-                class="profile-page__warning"
-                role="alert"
-                tabindex="-1"
-                data-testid="physiological-conflict"
-              >
-                {{ 'profile.physiological.conflict' | translate }}
-              </p>
-            }
-            @if (consentVersion === null) {
-              <p class="profile-page__note" data-testid="physiological-unavailable">
-                {{ 'profile.physiological.unavailable' | translate }}
-              </p>
-            }
-            @if (physiological.displayed(); as section) {
-              <dl class="profile-page__facts" data-testid="physiological-summary">
-                <dt>{{ 'profile.physiological.summary.measuredAt' | translate }}</dt>
-                <dd>{{ instant(section.measuredAt) }}</dd>
-                <dt>{{ 'profile.physiological.summary.weight' | translate }}</dt>
-                <dd>
-                  {{
-                    'profile.physiological.values.weight'
-                      | translate: { value: decimal(section.weightKg) }
-                  }}
-                </dd>
-                <dt>{{ 'profile.physiological.summary.height' | translate }}</dt>
-                <dd>
-                  {{
-                    'profile.physiological.values.height' | translate: { value: section.heightCm }
-                  }}
-                </dd>
-                <dt>{{ 'profile.physiological.summary.bmi' | translate }}</dt>
-                <dd data-testid="physiological-bmi">{{ decimal(section.bmi) }}</dd>
-                <dt>{{ 'profile.physiological.summary.restingHeartRate' | translate }}</dt>
-                <dd>
-                  @if (section.restingHeartRateBpm !== null) {
-                    {{
-                      'profile.physiological.values.heartRate'
-                        | translate: { value: section.restingHeartRateBpm }
-                    }}
-                  } @else {
-                    {{ 'profile.physiological.summary.notProvided' | translate }}
+                  <p>{{ failureMessage(error) | translate }}</p>
+                  @if (retryable(error)) {
+                    <p>{{ 'profile.errors.retryHint' | translate }}</p>
                   }
-                </dd>
-                <dt>{{ 'profile.physiological.summary.bloodPressure' | translate }}</dt>
-                <dd>
-                  @if (section.bloodPressure; as pressure) {
-                    {{
-                      'profile.physiological.values.bloodPressure'
-                        | translate: { systolic: pressure.systolic, diastolic: pressure.diastolic }
-                    }}
-                  } @else {
-                    {{ 'profile.physiological.summary.notProvided' | translate }}
+                  @if (error.correlationId) {
+                    <p class="profile-page__reference">
+                      {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                    </p>
                   }
-                </dd>
-                <dt>{{ 'profile.physiological.summary.bodyTemperature' | translate }}</dt>
-                <dd>
-                  @if (section.bodyTemperatureC; as temperature) {
-                    {{
-                      'profile.physiological.values.temperature'
-                        | translate: { value: decimal(temperature) }
-                    }}
-                  } @else {
-                    {{ 'profile.physiological.summary.notProvided' | translate }}
-                  }
-                </dd>
-                <dt>{{ 'profile.physiological.summary.consent' | translate }}</dt>
-                <dd>
-                  {{
-                    'profile.physiological.values.consent'
-                      | translate
-                        : {
-                            version: section.consentVersion,
-                            date: instant(section.consentAcceptedAt),
-                          }
-                  }}
-                </dd>
-                <dt>{{ 'profile.physiological.summary.updatedAt' | translate }}</dt>
-                <dd>{{ instant(section.updatedAt) }}</dd>
-              </dl>
-              <p class="profile-page__note">{{ 'profile.physiological.bmiNote' | translate }}</p>
-              @if (consentVersion !== null) {
-                <div class="profile-page__actions">
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    [disabled]="physiological.pending()"
-                    (click)="startEdit(physiological)"
-                  >
-                    {{ 'profile.physiological.actions.edit' | translate }}
-                  </button>
                 </div>
               }
+              <app-demographic-form
+                [initial]="demographic.displayed()"
+                [submitting]="demographic.submitting()"
+                [serverErrors]="demographic.violations()"
+                (submitted)="saveDemographic($event)"
+                (edited)="onEdited(demographic)"
+                (cancelled)="cancelEdit(demographic)"
+              />
             } @else {
-              <p class="profile-page__note" data-testid="physiological-empty">
-                {{ 'profile.physiological.empty' | translate }}
-              </p>
-              @if (consentVersion !== null) {
-                <div class="profile-page__actions">
-                  <button
-                    mat-flat-button
-                    type="button"
-                    [disabled]="physiological.pending()"
-                    (click)="startEdit(physiological)"
-                  >
-                    {{ 'profile.physiological.actions.register' | translate }}
-                  </button>
+              @if (demographic.saved(); as saved) {
+                <div
+                  class="profile-page__success"
+                  role="status"
+                  tabindex="-1"
+                  data-testid="demographic-saved"
+                >
+                  <p>
+                    {{
+                      (saved.created
+                        ? 'profile.demographic.saved.created'
+                        : 'profile.demographic.saved.replaced'
+                      ) | translate
+                    }}
+                  </p>
+                  @if (saved.replayed) {
+                    <p data-testid="demographic-replayed">
+                      {{ 'profile.saved.replayed' | translate }}
+                    </p>
+                  }
                 </div>
               }
-            }
-          }
-        </section>
-      </app-async-state>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu006">
-    <mat-card-content>
-      <h2 class="profile-page__title">{{ 'profile.habits.title' | translate }}</h2>
-      <p class="profile-page__note">{{ 'profile.habits.intro' | translate }}</p>
-
-      <app-async-state [state]="state()" (retry)="load()">
-        <section class="profile-section" data-testid="sport-habits-section">
-          @if (sportHabits.mode() === 'edit') {
-            @if (sportHabits.retryAttempt(); as attempt) {
-              <p class="profile-page__note" role="status" data-testid="sport-habits-retrying">
-                {{ 'profile.habits.retrying' | translate: { attempt: attempt, max: maxRetries } }}
-              </p>
-            }
-            @if (sportHabits.failure(); as error) {
-              <div
-                class="profile-page__error"
-                role="alert"
-                tabindex="-1"
-                data-testid="sport-habits-error"
-              >
-                <p>{{ failureMessage(error) | translate }}</p>
-                @if (retryable(error)) {
-                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
-                }
-                @if (error.correlationId) {
-                  <p class="profile-page__reference">
-                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
-                  </p>
-                }
-              </div>
-            }
-            <app-sport-habits-form
-              [initial]="sportHabits.displayed()"
-              [submitting]="sportHabits.submitting()"
-              [serverErrors]="sportHabits.violations()"
-              (submitted)="saveSportHabits($event)"
-              (edited)="onEdited(sportHabits)"
-              (cancelled)="cancelEdit(sportHabits)"
-            />
-          } @else {
-            @if (sportHabits.saved(); as saved) {
-              <div
-                class="profile-page__success"
-                role="status"
-                tabindex="-1"
-                data-testid="sport-habits-saved"
-              >
-                <p>
-                  {{
-                    (saved.created
-                      ? 'profile.habits.saved.created'
-                      : 'profile.habits.saved.replaced'
-                    ) | translate
-                  }}
+              @if (demographic.conflict()) {
+                <p
+                  class="profile-page__warning"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="demographic-conflict"
+                >
+                  {{ 'profile.demographic.conflict' | translate }}
                 </p>
-                @if (saved.replayed) {
-                  <p data-testid="sport-habits-replayed">
-                    {{ 'profile.saved.replayed' | translate }}
-                  </p>
-                }
-              </div>
-            }
-            @if (sportHabits.conflict()) {
-              <p
-                class="profile-page__warning"
-                role="alert"
-                tabindex="-1"
-                data-testid="sport-habits-conflict"
-              >
-                {{ 'profile.habits.conflict' | translate }}
-              </p>
-            }
-            @if (sportHabits.displayed(); as habits) {
-              <div data-testid="sport-habits-summary">
-                <h3 class="profile-section__title">
-                  {{ 'profile.habits.summary.sports' | translate }}
-                </h3>
-                <ul class="profile-page__habits">
-                  @for (habit of habits.sports; track habit.sport; let i = $index) {
-                    <li [attr.data-testid]="'sport-habit-' + i">
-                      <strong>{{ 'training.sports.' + habit.sport | translate }}</strong>
-                      <span>
-                        {{
-                          (habit.frequencyPerWeek === 1
-                            ? 'profile.habits.summary.frequencyOne'
-                            : 'profile.habits.summary.frequencyOther'
-                          ) | translate: { count: habit.frequencyPerWeek }
-                        }}
-                      </span>
-                      <span>
-                        {{
-                          'profile.habits.summary.duration'
-                            | translate: { minutes: habit.sessionDurationMinutes }
-                        }}
-                      </span>
-                      <span>
-                        {{
-                          'profile.habits.summary.intensity'
-                            | translate
-                              : {
-                                  value:
-                                    ('profile.habits.intensities.' + habit.intensity | translate),
-                                }
-                        }}
-                      </span>
-                      <span>
-                        {{
-                          'profile.habits.summary.level'
-                            | translate
-                              : { value: ('profile.habits.levels.' + habit.level | translate) }
-                        }}
-                      </span>
-                      <span>
-                        @if (habit.yearsPracticing === null) {
-                          {{ 'profile.habits.summary.yearsNotSpecified' | translate }}
-                        } @else {
-                          {{
-                            (habit.yearsPracticing === 1
-                              ? 'profile.habits.summary.yearsOne'
-                              : 'profile.habits.summary.yearsOther'
-                            ) | translate: { count: habit.yearsPracticing }
-                          }}
-                        }
-                      </span>
-                    </li>
-                  }
-                </ul>
-                <dl class="profile-page__facts">
-                  <dt>{{ 'profile.habits.summary.days' | translate }}</dt>
-                  <dd data-testid="sport-habits-days">
-                    <ul class="profile-page__tags">
-                      @for (day of habits.days; track day) {
-                        <li>{{ 'profile.habits.days.' + day | translate }}</li>
-                      }
-                    </ul>
-                  </dd>
-                  <dt>{{ 'profile.habits.summary.timeSlots' | translate }}</dt>
-                  <dd data-testid="sport-habits-time-slots">
-                    <ul class="profile-page__tags">
-                      @for (slot of habits.timeSlots; track slot) {
-                        <li>{{ 'profile.habits.timeSlots.' + slot | translate }}</li>
-                      }
-                    </ul>
-                  </dd>
-                  <dt>{{ 'profile.habits.summary.primaryGoal' | translate }}</dt>
-                  <dd data-testid="sport-habits-goal">
+              }
+              @if (demographic.displayed(); as section) {
+                <dl class="profile-page__facts" data-testid="demographic-summary">
+                  <dt>{{ 'profile.demographic.summary.birthDate' | translate }}</dt>
+                  <dd>{{ birthDate(section.birthDate) }}</dd>
+                  <dt>{{ 'profile.demographic.summary.gender' | translate }}</dt>
+                  <dd>{{ 'profile.demographic.genders.' + section.gender | translate }}</dd>
+                  <dt>{{ 'profile.demographic.summary.country' | translate }}</dt>
+                  <dd>{{ country(section.countryCode) }}</dd>
+                  <dt>{{ 'profile.demographic.summary.city' | translate }}</dt>
+                  <dd>{{ section.city }}</dd>
+                  <dt>{{ 'profile.demographic.summary.maritalStatus' | translate }}</dt>
+                  <dd>
                     {{
-                      (habits.primaryGoal
-                        ? 'profile.habits.goals.' + habits.primaryGoal
-                        : 'profile.habits.notSpecified'
+                      (section.maritalStatus
+                        ? 'profile.demographic.maritalStatuses.' + section.maritalStatus
+                        : 'profile.demographic.notSpecified'
                       ) | translate
                     }}
                   </dd>
-                  <dt>{{ 'profile.habits.summary.updatedAt' | translate }}</dt>
-                  <dd>{{ instant(habits.updatedAt) }}</dd>
-                </dl>
-              </div>
-              <div class="profile-page__actions">
-                <button
-                  mat-stroked-button
-                  type="button"
-                  [disabled]="sportHabits.pending()"
-                  (click)="startEdit(sportHabits)"
-                >
-                  {{ 'profile.habits.actions.edit' | translate }}
-                </button>
-              </div>
-            } @else {
-              <p class="profile-page__note" data-testid="sport-habits-empty">
-                {{ 'profile.habits.empty' | translate }}
-              </p>
-              <div class="profile-page__actions">
-                <button
-                  mat-flat-button
-                  type="button"
-                  [disabled]="sportHabits.pending()"
-                  (click)="startEdit(sportHabits)"
-                >
-                  {{ 'profile.habits.actions.register' | translate }}
-                </button>
-              </div>
-            }
-          }
-        </section>
-      </app-async-state>
-    </mat-card-content>
-  </mat-card>
-  <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu009">
-    <mat-card-content>
-      <h2 class="profile-page__title">{{ 'profile.nutrition.title' | translate }}</h2>
-      <p class="profile-page__note">{{ 'profile.nutrition.intro' | translate }}</p>
-
-      <app-async-state [state]="state()" (retry)="load()">
-        <section class="profile-section" data-testid="nutrition-habits-section">
-          @if (nutritionHabits.mode() === 'edit' && consentVersion !== null) {
-            @if (nutritionHabits.retryAttempt(); as attempt) {
-              <p class="profile-page__note" role="status" data-testid="nutrition-habits-retrying">
-                {{
-                  'profile.nutrition.retrying' | translate: { attempt: attempt, max: maxRetries }
-                }}
-              </p>
-            }
-            @if (nutritionHabits.failure(); as error) {
-              <div
-                class="profile-page__error"
-                role="alert"
-                tabindex="-1"
-                data-testid="nutrition-habits-error"
-              >
-                <p>{{ failureMessage(error) | translate }}</p>
-                @if (retryable(error)) {
-                  <p>{{ 'profile.errors.retryHint' | translate }}</p>
-                }
-                @if (error.correlationId) {
-                  <p class="profile-page__reference">
-                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
-                  </p>
-                }
-              </div>
-            }
-            <app-nutrition-habits-form
-              [initial]="nutritionHabits.displayed()"
-              [consentVersion]="consentVersion"
-              [submitting]="nutritionHabits.submitting()"
-              [serverErrors]="nutritionHabits.violations()"
-              (submitted)="saveNutritionHabits($event)"
-              (edited)="onEdited(nutritionHabits)"
-              (cancelled)="cancelEdit(nutritionHabits)"
-            />
-          } @else {
-            @if (nutritionHabits.saved(); as saved) {
-              <div
-                class="profile-page__success"
-                role="status"
-                tabindex="-1"
-                data-testid="nutrition-habits-saved"
-              >
-                <p>
-                  {{
-                    (saved.created
-                      ? 'profile.nutrition.saved.created'
-                      : 'profile.nutrition.saved.replaced'
-                    ) | translate
-                  }}
-                </p>
-                @if (saved.replayed) {
-                  <p data-testid="nutrition-habits-replayed">
-                    {{ 'profile.saved.replayed' | translate }}
-                  </p>
-                }
-              </div>
-            }
-            @if (nutritionHabits.conflict()) {
-              <p
-                class="profile-page__warning"
-                role="alert"
-                tabindex="-1"
-                data-testid="nutrition-habits-conflict"
-              >
-                {{ 'profile.nutrition.conflict' | translate }}
-              </p>
-            }
-            @if (consentVersion === null) {
-              <p class="profile-page__note" data-testid="nutrition-habits-unavailable">
-                {{ 'profile.nutrition.unavailable' | translate }}
-              </p>
-            }
-            @if (nutritionHabits.displayed(); as habits) {
-              <dl class="profile-page__facts" data-testid="nutrition-habits-summary">
-                <dt>{{ 'profile.nutrition.fields.dietPattern' | translate }}</dt>
-                <dd data-testid="nutrition-habits-pattern">
-                  {{ 'profile.nutrition.patterns.' + habits.dietPattern | translate }}
-                </dd>
-                <dt>{{ 'profile.nutrition.fields.restrictions' | translate }}</dt>
-                <dd data-testid="nutrition-habits-restrictions">
-                  @if (habits.restrictions.length === 0) {
-                    {{ 'profile.nutrition.summary.none' | translate }}
-                  } @else {
-                    <ul class="profile-page__tags">
-                      @for (restriction of habits.restrictions; track restriction) {
-                        <li>{{ 'profile.nutrition.restrictions.' + restriction | translate }}</li>
-                      }
-                    </ul>
-                  }
-                </dd>
-                <dt>{{ 'profile.nutrition.fields.allergies' | translate }}</dt>
-                <dd data-testid="nutrition-habits-allergies">
-                  @if (habits.allergies.length === 0) {
-                    {{ 'profile.nutrition.summary.none' | translate }}
-                  } @else {
-                    <ul class="profile-page__tags">
-                      @for (allergy of habits.allergies; track allergy) {
-                        <li>{{ 'profile.nutrition.allergies.' + allergy | translate }}</li>
-                      }
-                    </ul>
-                  }
-                </dd>
-                <dt>{{ 'profile.nutrition.fields.mealsPerDay' | translate }}</dt>
-                <dd data-testid="nutrition-habits-meals">{{ habits.mealsPerDay }}</dd>
-                <dt>{{ 'profile.nutrition.fields.hydration' | translate }}</dt>
-                <dd data-testid="nutrition-habits-hydration">
-                  @if (habits.hydrationLitersPerDay === null) {
-                    {{ 'profile.nutrition.summary.notProvided' | translate }}
-                  } @else {
+                  <dt>{{ 'profile.demographic.summary.occupation' | translate }}</dt>
+                  <dd>
+                    {{ section.occupation ?? ('profile.demographic.notSpecified' | translate) }}
+                  </dd>
+                  <dt>{{ 'profile.demographic.summary.incomeRange' | translate }}</dt>
+                  <dd>
                     {{
-                      'profile.nutrition.summary.liters'
-                        | translate: { value: decimal(habits.hydrationLitersPerDay) }
+                      (section.incomeRange
+                        ? 'profile.demographic.incomeRanges.' + section.incomeRange
+                        : 'profile.demographic.notSpecified'
+                      ) | translate
                     }}
-                  }
-                </dd>
-                <dt>{{ 'profile.nutrition.fields.consent' | translate }}</dt>
-                <dd>
-                  {{
-                    'profile.physiological.values.consent'
-                      | translate
-                        : {
-                            version: habits.consentVersion,
-                            date: instant(habits.consentAcceptedAt),
-                          }
-                  }}
-                </dd>
-                <dt>{{ 'profile.nutrition.summary.updatedAt' | translate }}</dt>
-                <dd>{{ instant(habits.updatedAt) }}</dd>
-              </dl>
-              <p class="profile-page__note">{{ 'profile.nutrition.disclaimer' | translate }}</p>
-              @if (consentVersion !== null) {
+                  </dd>
+                  <dt>{{ 'profile.demographic.summary.updatedAt' | translate }}</dt>
+                  <dd>{{ instant(section.updatedAt) }}</dd>
+                </dl>
                 <div class="profile-page__actions">
                   <button
                     mat-stroked-button
                     type="button"
-                    [disabled]="nutritionHabits.pending()"
-                    (click)="startEdit(nutritionHabits)"
+                    [disabled]="demographic.pending()"
+                    (click)="startEdit(demographic)"
                   >
-                    {{ 'profile.nutrition.actions.edit' | translate }}
+                    {{ 'profile.demographic.actions.edit' | translate }}
                   </button>
                 </div>
-              }
-            } @else {
-              <p class="profile-page__note" data-testid="nutrition-habits-empty">
-                {{ 'profile.nutrition.empty' | translate }}
-              </p>
-              @if (consentVersion !== null) {
+              } @else {
+                <p class="profile-page__note" data-testid="demographic-empty">
+                  {{ 'profile.demographic.empty' | translate }}
+                </p>
                 <div class="profile-page__actions">
                   <button
                     mat-flat-button
                     type="button"
-                    [disabled]="nutritionHabits.pending()"
-                    (click)="startEdit(nutritionHabits)"
+                    [disabled]="demographic.pending()"
+                    (click)="startEdit(demographic)"
                   >
-                    {{ 'profile.nutrition.actions.register' | translate }}
+                    {{ 'profile.demographic.actions.register' | translate }}
                   </button>
                 </div>
               }
             }
-          }
-        </section>
-      </app-async-state>
-    </mat-card-content>
-  </mat-card>
+          </section>
+
+          <section class="profile-section" data-testid="physiological-section">
+            <h3 class="profile-section__title">{{ 'profile.physiological.title' | translate }}</h3>
+            @if (physiological.mode() === 'edit' && consentVersion !== null) {
+              @if (physiological.retryAttempt(); as attempt) {
+                <p class="profile-page__note" role="status" data-testid="physiological-retrying">
+                  {{
+                    'profile.physiological.retrying'
+                      | translate: { attempt: attempt, max: maxRetries }
+                  }}
+                </p>
+              }
+              @if (physiological.failure(); as error) {
+                <div
+                  class="profile-page__error"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="physiological-error"
+                >
+                  <p>{{ failureMessage(error) | translate }}</p>
+                  @if (retryable(error)) {
+                    <p>{{ 'profile.errors.retryHint' | translate }}</p>
+                  }
+                  @if (error.correlationId) {
+                    <p class="profile-page__reference">
+                      {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                    </p>
+                  }
+                </div>
+              }
+              <app-physiological-form
+                [initial]="physiological.displayed()"
+                [consentVersion]="consentVersion"
+                [submitting]="physiological.submitting()"
+                [serverErrors]="physiological.violations()"
+                (submitted)="savePhysiological($event)"
+                (edited)="onEdited(physiological)"
+                (cancelled)="cancelEdit(physiological)"
+              />
+            } @else {
+              @if (physiological.saved(); as saved) {
+                <div
+                  class="profile-page__success"
+                  role="status"
+                  tabindex="-1"
+                  data-testid="physiological-saved"
+                >
+                  <p>
+                    {{
+                      (saved.created
+                        ? 'profile.physiological.saved.created'
+                        : 'profile.physiological.saved.replaced'
+                      ) | translate
+                    }}
+                  </p>
+                  @if (saved.replayed) {
+                    <p data-testid="physiological-replayed">
+                      {{ 'profile.saved.replayed' | translate }}
+                    </p>
+                  }
+                </div>
+              }
+              @if (physiological.conflict()) {
+                <p
+                  class="profile-page__warning"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="physiological-conflict"
+                >
+                  {{ 'profile.physiological.conflict' | translate }}
+                </p>
+              }
+              @if (consentVersion === null) {
+                <p class="profile-page__note" data-testid="physiological-unavailable">
+                  {{ 'profile.physiological.unavailable' | translate }}
+                </p>
+              }
+              @if (physiological.displayed(); as section) {
+                <dl class="profile-page__facts" data-testid="physiological-summary">
+                  <dt>{{ 'profile.physiological.summary.measuredAt' | translate }}</dt>
+                  <dd>{{ instant(section.measuredAt) }}</dd>
+                  <dt>{{ 'profile.physiological.summary.weight' | translate }}</dt>
+                  <dd>
+                    {{
+                      'profile.physiological.values.weight'
+                        | translate: { value: decimal(section.weightKg) }
+                    }}
+                  </dd>
+                  <dt>{{ 'profile.physiological.summary.height' | translate }}</dt>
+                  <dd>
+                    {{
+                      'profile.physiological.values.height' | translate: { value: section.heightCm }
+                    }}
+                  </dd>
+                  <dt>{{ 'profile.physiological.summary.bmi' | translate }}</dt>
+                  <dd data-testid="physiological-bmi">{{ decimal(section.bmi) }}</dd>
+                  <dt>{{ 'profile.physiological.summary.restingHeartRate' | translate }}</dt>
+                  <dd>
+                    @if (section.restingHeartRateBpm !== null) {
+                      {{
+                        'profile.physiological.values.heartRate'
+                          | translate: { value: section.restingHeartRateBpm }
+                      }}
+                    } @else {
+                      {{ 'profile.physiological.summary.notProvided' | translate }}
+                    }
+                  </dd>
+                  <dt>{{ 'profile.physiological.summary.bloodPressure' | translate }}</dt>
+                  <dd>
+                    @if (section.bloodPressure; as pressure) {
+                      {{
+                        'profile.physiological.values.bloodPressure'
+                          | translate
+                            : { systolic: pressure.systolic, diastolic: pressure.diastolic }
+                      }}
+                    } @else {
+                      {{ 'profile.physiological.summary.notProvided' | translate }}
+                    }
+                  </dd>
+                  <dt>{{ 'profile.physiological.summary.bodyTemperature' | translate }}</dt>
+                  <dd>
+                    @if (section.bodyTemperatureC; as temperature) {
+                      {{
+                        'profile.physiological.values.temperature'
+                          | translate: { value: decimal(temperature) }
+                      }}
+                    } @else {
+                      {{ 'profile.physiological.summary.notProvided' | translate }}
+                    }
+                  </dd>
+                  <dt>{{ 'profile.physiological.summary.consent' | translate }}</dt>
+                  <dd>
+                    {{
+                      'profile.physiological.values.consent'
+                        | translate
+                          : {
+                              version: section.consentVersion,
+                              date: instant(section.consentAcceptedAt),
+                            }
+                    }}
+                  </dd>
+                  <dt>{{ 'profile.physiological.summary.updatedAt' | translate }}</dt>
+                  <dd>{{ instant(section.updatedAt) }}</dd>
+                </dl>
+                <p class="profile-page__note">{{ 'profile.physiological.bmiNote' | translate }}</p>
+                @if (consentVersion !== null) {
+                  <div class="profile-page__actions">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="physiological.pending()"
+                      (click)="startEdit(physiological)"
+                    >
+                      {{ 'profile.physiological.actions.edit' | translate }}
+                    </button>
+                  </div>
+                }
+              } @else {
+                <p class="profile-page__note" data-testid="physiological-empty">
+                  {{ 'profile.physiological.empty' | translate }}
+                </p>
+                @if (consentVersion !== null) {
+                  <div class="profile-page__actions">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="physiological.pending()"
+                      (click)="startEdit(physiological)"
+                    >
+                      {{ 'profile.physiological.actions.register' | translate }}
+                    </button>
+                  </div>
+                }
+              }
+            }
+          </section>
+        </app-async-state>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu006">
+      <mat-card-content>
+        <h2 class="profile-page__title">{{ 'profile.habits.title' | translate }}</h2>
+        <p class="profile-page__note">{{ 'profile.habits.intro' | translate }}</p>
+
+        <app-async-state [state]="state()" (retry)="load()">
+          <section class="profile-section" data-testid="sport-habits-section">
+            @if (sportHabits.mode() === 'edit') {
+              @if (sportHabits.retryAttempt(); as attempt) {
+                <p class="profile-page__note" role="status" data-testid="sport-habits-retrying">
+                  {{ 'profile.habits.retrying' | translate: { attempt: attempt, max: maxRetries } }}
+                </p>
+              }
+              @if (sportHabits.failure(); as error) {
+                <div
+                  class="profile-page__error"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="sport-habits-error"
+                >
+                  <p>{{ failureMessage(error) | translate }}</p>
+                  @if (retryable(error)) {
+                    <p>{{ 'profile.errors.retryHint' | translate }}</p>
+                  }
+                  @if (error.correlationId) {
+                    <p class="profile-page__reference">
+                      {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                    </p>
+                  }
+                </div>
+              }
+              <app-sport-habits-form
+                [initial]="sportHabits.displayed()"
+                [submitting]="sportHabits.submitting()"
+                [serverErrors]="sportHabits.violations()"
+                (submitted)="saveSportHabits($event)"
+                (edited)="onEdited(sportHabits)"
+                (cancelled)="cancelEdit(sportHabits)"
+              />
+            } @else {
+              @if (sportHabits.saved(); as saved) {
+                <div
+                  class="profile-page__success"
+                  role="status"
+                  tabindex="-1"
+                  data-testid="sport-habits-saved"
+                >
+                  <p>
+                    {{
+                      (saved.created
+                        ? 'profile.habits.saved.created'
+                        : 'profile.habits.saved.replaced'
+                      ) | translate
+                    }}
+                  </p>
+                  @if (saved.replayed) {
+                    <p data-testid="sport-habits-replayed">
+                      {{ 'profile.saved.replayed' | translate }}
+                    </p>
+                  }
+                </div>
+              }
+              @if (sportHabits.conflict()) {
+                <p
+                  class="profile-page__warning"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="sport-habits-conflict"
+                >
+                  {{ 'profile.habits.conflict' | translate }}
+                </p>
+              }
+              @if (sportHabits.displayed(); as habits) {
+                <div data-testid="sport-habits-summary">
+                  <h3 class="profile-section__title">
+                    {{ 'profile.habits.summary.sports' | translate }}
+                  </h3>
+                  <ul class="profile-page__habits">
+                    @for (habit of habits.sports; track habit.sport; let i = $index) {
+                      <li [attr.data-testid]="'sport-habit-' + i">
+                        <strong>{{ 'training.sports.' + habit.sport | translate }}</strong>
+                        <span>
+                          {{
+                            (habit.frequencyPerWeek === 1
+                              ? 'profile.habits.summary.frequencyOne'
+                              : 'profile.habits.summary.frequencyOther'
+                            ) | translate: { count: habit.frequencyPerWeek }
+                          }}
+                        </span>
+                        <span>
+                          {{
+                            'profile.habits.summary.duration'
+                              | translate: { minutes: habit.sessionDurationMinutes }
+                          }}
+                        </span>
+                        <span>
+                          {{
+                            'profile.habits.summary.intensity'
+                              | translate
+                                : {
+                                    value:
+                                      ('profile.habits.intensities.' + habit.intensity | translate),
+                                  }
+                          }}
+                        </span>
+                        <span>
+                          {{
+                            'profile.habits.summary.level'
+                              | translate
+                                : { value: ('profile.habits.levels.' + habit.level | translate) }
+                          }}
+                        </span>
+                        <span>
+                          @if (habit.yearsPracticing === null) {
+                            {{ 'profile.habits.summary.yearsNotSpecified' | translate }}
+                          } @else {
+                            {{
+                              (habit.yearsPracticing === 1
+                                ? 'profile.habits.summary.yearsOne'
+                                : 'profile.habits.summary.yearsOther'
+                              ) | translate: { count: habit.yearsPracticing }
+                            }}
+                          }
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                  <dl class="profile-page__facts">
+                    <dt>{{ 'profile.habits.summary.days' | translate }}</dt>
+                    <dd data-testid="sport-habits-days">
+                      <ul class="profile-page__tags">
+                        @for (day of habits.days; track day) {
+                          <li>{{ 'profile.habits.days.' + day | translate }}</li>
+                        }
+                      </ul>
+                    </dd>
+                    <dt>{{ 'profile.habits.summary.timeSlots' | translate }}</dt>
+                    <dd data-testid="sport-habits-time-slots">
+                      <ul class="profile-page__tags">
+                        @for (slot of habits.timeSlots; track slot) {
+                          <li>{{ 'profile.habits.timeSlots.' + slot | translate }}</li>
+                        }
+                      </ul>
+                    </dd>
+                    <dt>{{ 'profile.habits.summary.primaryGoal' | translate }}</dt>
+                    <dd data-testid="sport-habits-goal">
+                      {{
+                        (habits.primaryGoal
+                          ? 'profile.habits.goals.' + habits.primaryGoal
+                          : 'profile.habits.notSpecified'
+                        ) | translate
+                      }}
+                    </dd>
+                    <dt>{{ 'profile.habits.summary.updatedAt' | translate }}</dt>
+                    <dd>{{ instant(habits.updatedAt) }}</dd>
+                  </dl>
+                </div>
+                <div class="profile-page__actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="sportHabits.pending()"
+                    (click)="startEdit(sportHabits)"
+                  >
+                    {{ 'profile.habits.actions.edit' | translate }}
+                  </button>
+                </div>
+              } @else {
+                <p class="profile-page__note" data-testid="sport-habits-empty">
+                  {{ 'profile.habits.empty' | translate }}
+                </p>
+                <div class="profile-page__actions">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="sportHabits.pending()"
+                    (click)="startEdit(sportHabits)"
+                  >
+                    {{ 'profile.habits.actions.register' | translate }}
+                  </button>
+                </div>
+              }
+            }
+          </section>
+        </app-async-state>
+      </mat-card-content>
+    </mat-card>
+    <mat-card appearance="outlined" class="profile-page__card" data-testid="profile-hu009">
+      <mat-card-content>
+        <h2 class="profile-page__title">{{ 'profile.nutrition.title' | translate }}</h2>
+        <p class="profile-page__note">{{ 'profile.nutrition.intro' | translate }}</p>
+
+        <app-async-state [state]="state()" (retry)="load()">
+          <section class="profile-section" data-testid="nutrition-habits-section">
+            @if (nutritionHabits.mode() === 'edit' && consentVersion !== null) {
+              @if (nutritionHabits.retryAttempt(); as attempt) {
+                <p class="profile-page__note" role="status" data-testid="nutrition-habits-retrying">
+                  {{
+                    'profile.nutrition.retrying' | translate: { attempt: attempt, max: maxRetries }
+                  }}
+                </p>
+              }
+              @if (nutritionHabits.failure(); as error) {
+                <div
+                  class="profile-page__error"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="nutrition-habits-error"
+                >
+                  <p>{{ failureMessage(error) | translate }}</p>
+                  @if (retryable(error)) {
+                    <p>{{ 'profile.errors.retryHint' | translate }}</p>
+                  }
+                  @if (error.correlationId) {
+                    <p class="profile-page__reference">
+                      {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                    </p>
+                  }
+                </div>
+              }
+              <app-nutrition-habits-form
+                [initial]="nutritionHabits.displayed()"
+                [consentVersion]="consentVersion"
+                [submitting]="nutritionHabits.submitting()"
+                [serverErrors]="nutritionHabits.violations()"
+                (submitted)="saveNutritionHabits($event)"
+                (edited)="onEdited(nutritionHabits)"
+                (cancelled)="cancelEdit(nutritionHabits)"
+              />
+            } @else {
+              @if (nutritionHabits.saved(); as saved) {
+                <div
+                  class="profile-page__success"
+                  role="status"
+                  tabindex="-1"
+                  data-testid="nutrition-habits-saved"
+                >
+                  <p>
+                    {{
+                      (saved.created
+                        ? 'profile.nutrition.saved.created'
+                        : 'profile.nutrition.saved.replaced'
+                      ) | translate
+                    }}
+                  </p>
+                  @if (saved.replayed) {
+                    <p data-testid="nutrition-habits-replayed">
+                      {{ 'profile.saved.replayed' | translate }}
+                    </p>
+                  }
+                </div>
+              }
+              @if (nutritionHabits.conflict()) {
+                <p
+                  class="profile-page__warning"
+                  role="alert"
+                  tabindex="-1"
+                  data-testid="nutrition-habits-conflict"
+                >
+                  {{ 'profile.nutrition.conflict' | translate }}
+                </p>
+              }
+              @if (consentVersion === null) {
+                <p class="profile-page__note" data-testid="nutrition-habits-unavailable">
+                  {{ 'profile.nutrition.unavailable' | translate }}
+                </p>
+              }
+              @if (nutritionHabits.displayed(); as habits) {
+                <dl class="profile-page__facts" data-testid="nutrition-habits-summary">
+                  <dt>{{ 'profile.nutrition.fields.dietPattern' | translate }}</dt>
+                  <dd data-testid="nutrition-habits-pattern">
+                    {{ 'profile.nutrition.patterns.' + habits.dietPattern | translate }}
+                  </dd>
+                  <dt>{{ 'profile.nutrition.fields.restrictions' | translate }}</dt>
+                  <dd data-testid="nutrition-habits-restrictions">
+                    @if (habits.restrictions.length === 0) {
+                      {{ 'profile.nutrition.summary.none' | translate }}
+                    } @else {
+                      <ul class="profile-page__tags">
+                        @for (restriction of habits.restrictions; track restriction) {
+                          <li>{{ 'profile.nutrition.restrictions.' + restriction | translate }}</li>
+                        }
+                      </ul>
+                    }
+                  </dd>
+                  <dt>{{ 'profile.nutrition.fields.allergies' | translate }}</dt>
+                  <dd data-testid="nutrition-habits-allergies">
+                    @if (habits.allergies.length === 0) {
+                      {{ 'profile.nutrition.summary.none' | translate }}
+                    } @else {
+                      <ul class="profile-page__tags">
+                        @for (allergy of habits.allergies; track allergy) {
+                          <li>{{ 'profile.nutrition.allergies.' + allergy | translate }}</li>
+                        }
+                      </ul>
+                    }
+                  </dd>
+                  <dt>{{ 'profile.nutrition.fields.mealsPerDay' | translate }}</dt>
+                  <dd data-testid="nutrition-habits-meals">{{ habits.mealsPerDay }}</dd>
+                  <dt>{{ 'profile.nutrition.fields.hydration' | translate }}</dt>
+                  <dd data-testid="nutrition-habits-hydration">
+                    @if (habits.hydrationLitersPerDay === null) {
+                      {{ 'profile.nutrition.summary.notProvided' | translate }}
+                    } @else {
+                      {{
+                        'profile.nutrition.summary.liters'
+                          | translate: { value: decimal(habits.hydrationLitersPerDay) }
+                      }}
+                    }
+                  </dd>
+                  <dt>{{ 'profile.nutrition.fields.consent' | translate }}</dt>
+                  <dd>
+                    {{
+                      'profile.physiological.values.consent'
+                        | translate
+                          : {
+                              version: habits.consentVersion,
+                              date: instant(habits.consentAcceptedAt),
+                            }
+                    }}
+                  </dd>
+                  <dt>{{ 'profile.nutrition.summary.updatedAt' | translate }}</dt>
+                  <dd>{{ instant(habits.updatedAt) }}</dd>
+                </dl>
+                <p class="profile-page__note">{{ 'profile.nutrition.disclaimer' | translate }}</p>
+                @if (consentVersion !== null) {
+                  <div class="profile-page__actions">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="nutritionHabits.pending()"
+                      (click)="startEdit(nutritionHabits)"
+                    >
+                      {{ 'profile.nutrition.actions.edit' | translate }}
+                    </button>
+                  </div>
+                }
+              } @else {
+                <p class="profile-page__note" data-testid="nutrition-habits-empty">
+                  {{ 'profile.nutrition.empty' | translate }}
+                </p>
+                @if (consentVersion !== null) {
+                  <div class="profile-page__actions">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="nutritionHabits.pending()"
+                      (click)="startEdit(nutritionHabits)"
+                    >
+                      {{ 'profile.nutrition.actions.register' | translate }}
+                    </button>
+                  </div>
+                }
+              }
+            }
+          </section>
+        </app-async-state>
+      </mat-card-content>
+    </mat-card>
+  }
 </section>

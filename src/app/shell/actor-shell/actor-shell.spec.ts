@@ -99,9 +99,9 @@ describe('ActorShell (ADR-025, HU003)', () => {
     expect(item(element, 'event-create')?.textContent).toContain('Crear evento');
     expect(item(element, 'service-create')).toBeNull();
     expect(item(element, 'plan')).toBeNull();
-    // Sin ruta de perfil hasta HU002: «Mi perfil» sigue como «Próximamente».
-    expect(item(element, 'profile')?.tagName).toBe('DIV');
-    expect(item(element, 'profile')?.textContent).toContain('Próximamente');
+    // HU002: «Mi perfil» del organizador navega a sus datos personales.
+    expect(item(element, 'profile')?.getAttribute('href')).toBe('/organizador/perfil');
+    expect(item(element, 'profile')?.textContent).not.toContain('Próximamente');
   });
 
   it('«Inicio» es un enlace al inicio propio', async () => {

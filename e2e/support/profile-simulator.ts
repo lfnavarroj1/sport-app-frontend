@@ -15,6 +15,7 @@ import {
   SPORT_HABITS_RESPONSES,
 } from '../../src/testing/bff-web/profile.fixtures';
 import { SimulatedResponse } from '../../src/testing/bff-web/register-user.fixtures';
+import { simulateAccount } from './account-simulator';
 
 export interface ProfileSimulation {
   /** Solicitudes recibidas en los cuatro `PUT`, en orden de llegada. */
@@ -78,7 +79,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DECIMAL = /^(\d{1,3})(?:\.(\d))?$/;
 
 /**
- * Reemplaza las cinco operaciones del perfil de HU005, HU006 y HU009 con el
+ * Reemplaza las cinco operaciones del perfil de HU005, HU006 y HU009 (y, con
+ * `simulateAccount`, la cuenta de HU002) con el
  * simulador del contrato bff-web 0.21.0, ADR-034 y ADR-035. Con el contexto como `target`, todas
  * sus pestañas comparten el mismo perfil (conflictos de versión entre pestañas).
  *
@@ -100,6 +102,9 @@ const DECIMAL = /^(\d{1,3})(?:\.(\d))?$/;
  * fuerzan con `next`.
  */
 export async function simulateProfile(target: Page | BrowserContext): Promise<ProfileSimulation> {
+  // HU002: «Mi perfil» empieza con los datos personales; una prueba que los
+  // necesite registra después su propio `simulateAccount`, que tiene prioridad.
+  await simulateAccount(target);
   const simulation: ProfileSimulation = {
     requests: [],
     reads: [],

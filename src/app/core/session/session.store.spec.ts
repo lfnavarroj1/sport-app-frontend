@@ -79,6 +79,38 @@ describe('SessionStore sin renovación (HU003)', () => {
     expect(Storage.prototype.setItem).not.toHaveBeenCalled();
   });
 
+  describe('updateUser (HU002)', () => {
+    it('muestra el nombre y el correo confirmados sin cambiar el token ni el vencimiento', () => {
+      store.start(sessionFor(15 * 60_000));
+
+      store.updateUser({ fullName: 'Persona Renombrada', email: 'persona.nueva@example.com' });
+
+      expect(store.user()).toEqual({
+        ...USER,
+        fullName: 'Persona Renombrada',
+        email: 'persona.nueva@example.com',
+      });
+      expect(store.accessToken()).toBe('token-sintetico');
+      jasmine.clock().tick(15 * 60_000 - 1);
+      expect(store.isAuthenticated()).toBeTrue();
+      jasmine.clock().tick(1);
+      expect(store.isAuthenticated()).toBeFalse();
+      expect(store.lastEndReason()).toBe('expired');
+    });
+
+    it('sin sesión no hace nada y los cambios no pasan a la siguiente sesión', () => {
+      store.updateUser({ fullName: 'Persona Renombrada', email: 'persona.nueva@example.com' });
+      expect(store.user()).toBeNull();
+
+      store.start(sessionFor(60_000));
+      store.updateUser({ fullName: 'Persona Renombrada', email: 'persona.nueva@example.com' });
+      store.end();
+      store.start(sessionFor(60_000));
+
+      expect(store.user()).toEqual(USER);
+    });
+  });
+
   describe('requireSession', () => {
     function runGuard(): Promise<boolean | UrlTree> {
       return TestBed.runInInjectionContext(
@@ -230,6 +262,23 @@ describe('SessionStore con la cookie del BFF (HU003)', () => {
 
       expect(refresher.calls).toBe(2);
       expect(store.accessToken()).toBe('token-3');
+    });
+
+    it('HU002: tras editar la cuenta la renovación continúa y adopta el usuario del BFF', async () => {
+      const updated = {
+        ...USER,
+        fullName: 'Persona Renombrada',
+        email: 'persona.nueva@example.com',
+      };
+      refresher.outcomes.push(renewed('token-renovado', updated));
+      store.updateUser({ fullName: updated.fullName, email: updated.email });
+
+      jasmine.clock().tick(FIFTEEN_MINUTES - RENEWAL_LEAD_MS);
+      await flushPromises();
+
+      expect(refresher.calls).toBe(1);
+      expect(store.accessToken()).toBe('token-renovado');
+      expect(store.user()).toEqual(updated);
     });
 
     it('si el BFF rechaza la cookie, la sesión termina e informa el vencimiento', async () => {

@@ -20,6 +20,7 @@ import { PROFILE_ERROR_CODES } from '../../../../core/api/bff-web/profile.api';
 import { APP_CONFIG } from '../../../../core/config/app-config';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
+import { AccountSection } from '../account-form/account-section';
 import { DemographicForm } from '../demographic-form/demographic-form';
 import { NutritionHabitsForm } from '../nutrition-habits-form/nutrition-habits-form';
 import { PhysiologicalForm } from '../physiological-form/physiological-form';
@@ -53,6 +54,16 @@ export const PROFILE_PROJECTION_RETRY_DELAYS_MS = new InjectionToken<readonly nu
   'PROFILE_PROJECTION_RETRY_DELAYS_MS',
   { factory: () => [1_000, 2_000, 4_000] },
 );
+
+/**
+ * Secciones de «Mi perfil»: el deportista ve sus datos personales (HU002) y su
+ * perfil deportivo (HU005, HU006 y HU009); el organizador y el profesional, solo
+ * sus datos personales. Lo fija la ruta de cada actor.
+ */
+export type ProfileScope = 'athlete' | 'account';
+export const PROFILE_SCOPE = new InjectionToken<ProfileScope>('PROFILE_SCOPE', {
+  factory: () => 'athlete',
+});
 
 /** Mensaje de la sección tras el último comando. */
 type SectionMessage =
@@ -103,7 +114,9 @@ class SectionState<T extends { readonly version: number }> {
 }
 
 /**
- * Mi perfil (HU005, HU006 y HU009) en `/deportista/perfil`. El deportista registra o
+ * Mi perfil. Para los tres actores (`/deportista/perfil`, `/organizador/perfil` y
+ * `/profesional/perfil`) empieza con «Datos personales» (HU002, `<app-account-section>`).
+ * En `/deportista/perfil` sigue el perfil deportivo (HU005, HU006 y HU009): el deportista registra o
  * reemplaza sus datos demográficos y fisiológicos y sus hábitos deportivos y
  * alimenticios, y ve
  * los valores que confirmó el backend, incluido el IMC estimado que este calcula
@@ -120,6 +133,7 @@ class SectionState<T extends { readonly version: number }> {
 @Component({
   selector: 'app-profile-page',
   imports: [
+    AccountSection,
     AsyncState,
     DemographicForm,
     MatButtonModule,
@@ -146,6 +160,8 @@ export class ProfilePage {
    */
   protected readonly consentVersion = inject(APP_CONFIG).healthDataConsentVersion;
   protected readonly maxRetries = MAX_AUTOMATIC_RETRIES;
+  /** El organizador y el profesional no tienen perfil deportivo: no se consulta. */
+  protected readonly athleteSections = inject(PROFILE_SCOPE) === 'athlete';
 
   protected readonly state = signal<ViewState<AthleteProfile>>(viewState.loading());
   protected readonly demographic = new SectionState<DemographicProfile>();
@@ -167,7 +183,9 @@ export class ProfilePage {
       this.destroyed = true;
       this.clearRefreshTimer();
     });
-    void this.load();
+    if (this.athleteSections) {
+      void this.load();
+    }
   }
 
   /** Carga inicial; también es el reintento de `<app-async-state>`. */
