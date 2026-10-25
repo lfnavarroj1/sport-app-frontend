@@ -193,7 +193,8 @@ test.describe('HU006 Hábitos deportivos (simulador del contrato) @simulado', ()
     await button(page, 'Editar hábitos deportivos').click();
     await row(page, 0).getByLabel('Veces por semana').fill('5');
     await button(page, 'Guardar hábitos deportivos').click();
-    await expect(page.getByTestId('sport-habits-saved')).toHaveText(
+    // Desde HU008 la edición envía solo los deportes (PATCH); la confirmación los lista.
+    await expect(page.getByTestId('sport-habits-saved')).toContainText(
       'Actualizamos tus hábitos deportivos.',
     );
 

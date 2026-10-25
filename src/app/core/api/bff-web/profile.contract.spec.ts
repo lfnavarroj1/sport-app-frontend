@@ -467,7 +467,8 @@ describe('Contrato bff-web: actualización de hábitos deportivos (HU008, ADR-03
    * `anyOf` antes que las propiedades, así que las secciones se comprueban aparte.
    */
   const properties = (): Schema => {
-    const { anyOf: _sections, ...rest } = request();
+    const rest: Record<string, unknown> = { ...request() };
+    delete rest['anyOf'];
     return rest as Schema;
   };
 
