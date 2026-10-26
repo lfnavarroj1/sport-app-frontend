@@ -1,0 +1,330 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.nutrition.routines.title' | translate }}</h1>
+    <p>{{ 'training.nutrition.routines.intro' | translate }}</p>
+  </header>
+
+  @if (published(); as result) {
+    <div class="routines__success" role="status" tabindex="-1" data-testid="routine-published">
+      <p>
+        {{
+          'training.nutrition.routines.published.message'
+            | translate: { title: result.routine.title }
+        }}
+      </p>
+      @if (result.replayed) {
+        <p data-testid="routine-published-replayed">
+          {{ 'training.nutrition.routines.published.replayed' | translate }}
+        </p>
+      }
+    </div>
+  }
+
+  @if (composing()) {
+    <mat-card appearance="outlined" class="training-page__card routines__card">
+      <mat-card-content>
+        <h2 class="training-page__step">
+          {{ 'training.nutrition.routines.form.title' | translate }}
+        </h2>
+        @if (retryAttempt(); as attempt) {
+          <p class="routines__note" role="status" data-testid="routine-retrying">
+            {{
+              'training.nutrition.routines.retrying'
+                | translate: { attempt: attempt, max: maxRetries }
+            }}
+          </p>
+        }
+        @if (publishFailure(); as error) {
+          <div
+            class="training-page__error"
+            role="alert"
+            tabindex="-1"
+            data-testid="routine-publish-error"
+          >
+            <p>{{ publishFailureMessage(error) | translate }}</p>
+            @if (retryable(error)) {
+              <p>{{ 'training.nutrition.routines.errors.retryHint' | translate }}</p>
+            }
+            @if (error.correlationId) {
+              <p class="training-page__reference">
+                {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+              </p>
+            }
+          </div>
+        }
+        <div data-testid="routine-catalog">
+          <app-async-state
+            [state]="catalogState()"
+            emptyMessageKey="training.nutrition.routines.catalog.empty"
+            (retry)="loadCatalog()"
+          >
+            @if (catalog(); as foods) {
+              <app-routine-form
+                [catalog]="foods"
+                [submitting]="submitting()"
+                [serverErrors]="violations()"
+                (submitted)="publish($event)"
+                (edited)="onEdited()"
+                (cancelled)="cancelCompose()"
+              />
+            }
+          </app-async-state>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="training-page__actions routines__compose">
+      <button mat-flat-button type="button" (click)="compose()">
+        {{ 'training.nutrition.routines.actions.new' | translate }}
+      </button>
+    </div>
+  }
+
+  <mat-card appearance="outlined" class="training-page__card routines__card">
+    <mat-card-content>
+      <h2 class="training-page__step">
+        {{ 'training.nutrition.routines.list.title' | translate }}
+      </h2>
+      <app-async-state
+        [state]="state()"
+        emptyMessageKey="training.nutrition.routines.list.empty"
+        (retry)="load()"
+      >
+        @if (list(); as data) {
+          <ul class="routines__items" data-testid="routines-list">
+            @for (routine of data.routines; track routine.id) {
+              <li class="routines__item" [attr.data-routine]="routine.id">
+                <div class="routines__heading">
+                  <h3>{{ routine.title }}</h3>
+                  <span
+                    class="routines__status"
+                    [class.routines__status--retired]="routine.status === 'RETIRED'"
+                    data-testid="routine-status"
+                  >
+                    {{ 'training.nutrition.routines.status.' + routine.status | translate }}
+                  </span>
+                </div>
+                <p class="routines__description">{{ routine.description }}</p>
+                <dl class="routines__facts">
+                  <dt>{{ 'training.nutrition.routines.fields.goal' | translate }}</dt>
+                  <dd>{{ 'training.templates.goals.' + routine.goal | translate }}</dd>
+                  <dt>{{ 'training.nutrition.routines.fields.sport' | translate }}</dt>
+                  <dd>
+                    {{
+                      (routine.sport === null
+                        ? 'training.nutrition.routines.values.noSport'
+                        : 'training.sports.' + routine.sport
+                      ) | translate
+                    }}
+                  </dd>
+                  <dt>{{ 'training.nutrition.routines.fields.dietaryPattern' | translate }}</dt>
+                  <dd>{{ 'profile.nutrition.patterns.' + routine.dietaryPattern | translate }}</dd>
+                  <dt>{{ 'training.nutrition.routines.fields.containsAllergens' | translate }}</dt>
+                  <dd data-testid="routine-allergens-list">
+                    @if (routine.containsAllergens.length === 0) {
+                      {{ 'training.nutrition.routines.values.noAllergens' | translate }}
+                    } @else {
+                      @for (
+                        allergen of routine.containsAllergens;
+                        track allergen;
+                        let last = $last
+                      ) {
+                        {{ 'profile.nutrition.allergies.' + allergen | translate
+                        }}{{ last ? '' : ', ' }}
+                      }
+                    }
+                  </dd>
+                  <dt>{{ 'training.nutrition.routines.fields.durationDays' | translate }}</dt>
+                  <dd data-testid="routine-days">
+                    {{
+                      'training.nutrition.routines.values.days'
+                        | translate: { days: (routine.durationDays | number) }
+                    }}
+                  </dd>
+                  <dt>{{ 'training.nutrition.routines.fields.dailyMeals' | translate }}</dt>
+                  <dd data-testid="routine-meals-list">
+                    <p class="routines__summary">
+                      {{
+                        'training.nutrition.routines.values.mealsSummary'
+                          | translate
+                            : {
+                                meals: (routine.dailyMeals.length | number),
+                                foods: (itemsCount(routine.dailyMeals) | number),
+                              }
+                      }}
+                    </p>
+                    <ol class="routines__meals">
+                      @for (meal of routine.dailyMeals; track $index) {
+                        <li>
+                          <span class="routines__meal-name">{{
+                            'training.nutrition.mealTypes.' + meal.meal | translate
+                          }}</span
+                          >:
+                          @for (food of meal.items; track $index; let last = $last) {
+                            @let label = foodLabel(food.foodCode);
+                            {{
+                              'training.nutrition.routines.values.food'
+                                | translate
+                                  : {
+                                      food: label ? (label | translate) : food.foodCode,
+                                      portions: (food.portions | number),
+                                    }
+                            }}{{ last ? '' : ', ' }}
+                          }
+                        </li>
+                      }
+                    </ol>
+                  </dd>
+                  <dt>{{ 'training.nutrition.routines.list.publishedAt' | translate }}</dt>
+                  <dd>{{ routine.publishedAt | date: 'medium' }}</dd>
+                  @if (routine.retiredAt) {
+                    <dt>{{ 'training.nutrition.routines.list.retiredAt' | translate }}</dt>
+                    <dd data-testid="routine-retired-at">
+                      {{ routine.retiredAt | date: 'medium' }}
+                    </dd>
+                  }
+                  <dt>{{ 'training.nutrition.routines.list.version' | translate }}</dt>
+                  <dd>{{ routine.version | number }}</dd>
+                </dl>
+
+                @if (retireMessage(routine.id); as message) {
+                  @switch (message.kind) {
+                    @case ('retired') {
+                      <p
+                        class="routines__note"
+                        role="status"
+                        tabindex="-1"
+                        [attr.data-testid]="'routine-retire-message-' + routine.id"
+                      >
+                        {{ 'training.nutrition.routines.retired.message' | translate }}
+                      </p>
+                    }
+                    @case ('conflict') {
+                      <div
+                        class="training-page__error"
+                        role="alert"
+                        tabindex="-1"
+                        [attr.data-testid]="'routine-retire-message-' + routine.id"
+                      >
+                        <p>
+                          {{ 'training.nutrition.routines.errors.versionConflict' | translate }}
+                        </p>
+                        <button mat-stroked-button type="button" (click)="load()">
+                          {{ 'training.nutrition.routines.actions.refresh' | translate }}
+                        </button>
+                      </div>
+                    }
+                    @case ('failed') {
+                      @let error = retireError(message);
+                      <div
+                        class="training-page__error"
+                        role="alert"
+                        tabindex="-1"
+                        [attr.data-testid]="'routine-retire-message-' + routine.id"
+                      >
+                        <p>{{ retireFailureMessage(error!) | translate }}</p>
+                        @if (error!.correlationId) {
+                          <p class="training-page__reference">
+                            {{
+                              'common.errors.reference' | translate: { id: error!.correlationId }
+                            }}
+                          </p>
+                        }
+                      </div>
+                    }
+                  }
+                }
+
+                @if (routine.status === 'PUBLISHED') {
+                  @if (confirming() === routine.id) {
+                    <div
+                      class="routines__confirm"
+                      role="group"
+                      [attr.aria-labelledby]="'routine-retire-title-' + routine.id"
+                      tabindex="-1"
+                      [attr.data-testid]="'routine-retire-confirm-' + routine.id"
+                    >
+                      <p [id]="'routine-retire-title-' + routine.id">
+                        {{
+                          'training.nutrition.routines.retire.confirm'
+                            | translate: { title: routine.title }
+                        }}
+                      </p>
+                      <div class="training-page__actions">
+                        <button
+                          mat-flat-button
+                          type="button"
+                          [disabled]="retiring() !== null"
+                          (click)="retire(routine)"
+                        >
+                          {{
+                            (retiring() === routine.id
+                              ? 'training.nutrition.routines.actions.retiring'
+                              : 'training.nutrition.routines.actions.confirmRetire'
+                            ) | translate
+                          }}
+                        </button>
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          [disabled]="retiring() !== null"
+                          (click)="cancelRetire()"
+                        >
+                          {{ 'training.nutrition.routines.actions.cancel' | translate }}
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="training-page__actions">
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [attr.aria-label]="
+                          'training.nutrition.routines.actions.retireNamed'
+                            | translate: { title: routine.title }
+                        "
+                        (click)="askRetire(routine)"
+                      >
+                        {{ 'training.nutrition.routines.actions.retire' | translate }}
+                      </button>
+                    </div>
+                  }
+                }
+              </li>
+            }
+          </ul>
+
+          @if (moreError(); as error) {
+            <div class="training-page__error" role="alert" data-testid="routines-more-error">
+              <p>{{ 'training.nutrition.routines.list.moreError' | translate }}</p>
+              @if (error.correlationId) {
+                <p class="training-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (data.nextCursor !== null) {
+            <div class="training-page__actions">
+              <button
+                mat-stroked-button
+                type="button"
+                data-testid="routines-load-more"
+                [disabled]="loadingMore()"
+                (click)="loadMore()"
+              >
+                {{
+                  (loadingMore()
+                    ? 'training.nutrition.routines.actions.loadingMore'
+                    : 'training.nutrition.routines.actions.loadMore'
+                  ) | translate
+                }}
+              </button>
+            </div>
+          }
+        }
+      </app-async-state>
+      <p class="routines__note">{{ 'training.nutrition.routines.list.note' | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+</section>
