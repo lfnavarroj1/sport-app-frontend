@@ -253,6 +253,14 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU030: el profesional publica rutinas de alimentación y retira las propias (ADR-041).
+      path: 'alimentacion/plantillas',
+      loadChildren: () =>
+        import('./features/training/nutrition/routines/nutrition-routines.routes').then(
+          (module) => module.NUTRITION_ROUTINES_ROUTES,
+        ),
+    },
+    {
       // HU013: consumos de alimentos de un deportista que autorizó al profesional (ADR-037).
       path: 'historial/alimentacion',
       loadChildren: () =>

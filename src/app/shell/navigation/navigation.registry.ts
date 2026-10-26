@@ -437,6 +437,16 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'nutrition.plan.author',
         'HU014',
       ),
+      // HU030: el profesional publica rutinas de alimentación para sugerirlas en el móvil (ADR-041).
+      permissionOption(
+        'nutrition-routines',
+        'nutrition',
+        165,
+        'restaurant_menu',
+        '/profesional/alimentacion/plantillas',
+        'nutrition.plan.author',
+        'HU030',
+      ),
       permissionOption(
         'integrated-calendar',
         'calendar',

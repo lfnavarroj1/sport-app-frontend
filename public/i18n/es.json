@@ -1153,6 +1153,125 @@
         "UNIT": "und.",
         "CUP": "taza(s)",
         "TBSP": "cda."
+      },
+      "routines": {
+        "title": "Rutinas de alimentación",
+        "intro": "Publica rutinas de alimentación para que los deportistas las reciban como sugerencia en la app móvil según sus restricciones, alergias y objetivo. Una rutina no se asigna a nadie: para asignar un plan a un deportista usa «Crear planes de alimentación».",
+        "form": {
+          "title": "Publicar una rutina"
+        },
+        "sections": {
+          "routine": "Datos de la rutina"
+        },
+        "fields": {
+          "title": "Título",
+          "description": "Descripción",
+          "goal": "Objetivo",
+          "sport": "Deporte",
+          "dietaryPattern": "Patrón alimentario",
+          "containsAllergens": "Alérgenos que contiene",
+          "durationDays": "Vigencia (días)",
+          "dailyMeals": "Comidas del día tipo",
+          "meal": "Tipo de comida",
+          "food": "Alimento {{n}}",
+          "portions": "Porciones del alimento {{n}}"
+        },
+        "mealN": "Comida {{n}}",
+        "itemN": "Comida {{meal}}, alimento {{n}}",
+        "hints": {
+          "title": "Entre {{min}} y {{max}} caracteres.",
+          "description": "Hasta {{max}} caracteres.",
+          "sport": "Opcional: elige un deporte solo si la rutina es para él.",
+          "durationDays": "Un número entero de {{min}} a {{max}}.",
+          "containsAllergens": "Marca los alérgenos que contiene la rutina. Al publicar, SportApp agrega además los alérgenos de los alimentos elegidos; la lista confirmada aparece en tus rutinas.",
+          "dailyMeals": "Entre {{min}} y {{max}} comidas, en el orden en que se consumen durante el día.",
+          "items": "Entre {{min}} y {{max}} alimentos del catálogo.",
+          "portions": "De {{min}} a {{max}}."
+        },
+        "disclaimer": "La rutina es una orientación general y no reemplaza una valoración médica o nutricional. No incluye cálculo de calorías, compra ni envío de alimentos.",
+        "status": {
+          "PUBLISHED": "Publicada",
+          "RETIRED": "Retirada"
+        },
+        "validation": {
+          "integer": "Usa un número entero."
+        },
+        "issues": {
+          "item": "{{field}}: {{rule}}",
+          "unknown": "El valor no es válido.",
+          "required": "Este dato es obligatorio.",
+          "invalid_length": "La longitud no es válida.",
+          "out_of_range": "El valor está fuera del rango permitido.",
+          "unknown_value": "El valor no existe en el catálogo.",
+          "not_integer": "Debe ser un número entero.",
+          "duplicate_value": "Hay valores repetidos.",
+          "conflicts_with_restriction": "El alimento no es compatible con el patrón alimentario de la rutina.",
+          "field_not_allowed": "Este dato no se puede enviar."
+        },
+        "violationFields": {
+          "meal": "Comida {{n}}",
+          "mealItems": "Comida {{n}} (alimentos)",
+          "item": "Comida {{meal}}, alimento {{n}}",
+          "itemFoodCode": "Comida {{meal}}, alimento {{n}}",
+          "itemPortions": "Comida {{meal}}, alimento {{n}} (porciones)",
+          "request": "Solicitud"
+        },
+        "values": {
+          "noSport": "Sin deporte específico",
+          "noAllergens": "Ninguno declarado",
+          "days": "{{days}} días",
+          "mealsSummary": "{{meals}} comidas · {{foods}} alimentos",
+          "food": "{{food}} ×{{portions}}"
+        },
+        "catalog": {
+          "empty": "El catálogo de alimentos no tiene alimentos disponibles. Inténtalo más tarde."
+        },
+        "list": {
+          "title": "Tus rutinas",
+          "empty": "Aún no has publicado rutinas.",
+          "publishedAt": "Publicada",
+          "retiredAt": "Retirada",
+          "version": "Versión",
+          "moreError": "No pudimos cargar más rutinas. Inténtalo de nuevo.",
+          "note": "Una rutina retirada deja de sugerirse, pero se conserva en tu lista. Los deportistas solo reciben rutinas compatibles con sus restricciones y alergias."
+        },
+        "published": {
+          "message": "Publicamos la rutina «{{title}}».",
+          "replayed": "Esta confirmación corresponde a un envío anterior: no se publicó otra rutina."
+        },
+        "retire": {
+          "confirm": "¿Retirar «{{title}}»? Dejará de sugerirse a los deportistas; seguirá en tu lista como retirada."
+        },
+        "retired": {
+          "message": "Retiramos la rutina. Ya no se sugerirá a los deportistas."
+        },
+        "retrying": "Reintentando publicar la rutina ({{attempt}} de {{max}})…",
+        "errors": {
+          "rulesTitle": "Revisa estos datos:",
+          "idempotencyKeyReused": "No pudimos confirmar la publicación. Revisa los datos y vuelve a publicar.",
+          "retryHint": "Puedes volver a intentarlo: no se publicará una rutina duplicada.",
+          "versionConflict": "La rutina cambió desde que la cargaste y no se retiró. Actualiza la lista y vuelve a intentarlo.",
+          "templateNotFound": "La rutina no existe o no es tuya."
+        },
+        "actions": {
+          "new": "Publicar una rutina",
+          "publish": "Publicar rutina",
+          "publishing": "Publicando…",
+          "cancel": "Cancelar",
+          "addMeal": "Agregar comida",
+          "removeMeal": "Quitar comida",
+          "removeMealN": "Quitar la comida {{n}}",
+          "addItem": "Agregar alimento",
+          "addItemTo": "Agregar un alimento a la comida {{n}}",
+          "removeItemN": "Quitar el alimento {{n}} de la comida {{meal}}",
+          "retire": "Retirar",
+          "retireNamed": "Retirar la rutina «{{title}}»",
+          "confirmRetire": "Sí, retirar",
+          "retiring": "Retirando…",
+          "refresh": "Actualizar lista",
+          "loadMore": "Cargar más",
+          "loadingMore": "Cargando…"
+        }
       }
     },
     "routes": {
@@ -1422,6 +1541,7 @@
       "health-history": "Historial de molestias o lesiones",
       "nutrition-history": "Historial de alimentación",
       "nutrition-plans": "Crear planes de alimentación",
+      "nutrition-routines": "Rutinas de alimentación",
       "athlete-training-plans": "Planes de entrenamiento",
       "athlete-training-history": "Mi historial de entrenamiento",
       "athlete-health": "Mi salud",
