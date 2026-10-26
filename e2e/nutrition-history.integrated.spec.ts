@@ -222,10 +222,22 @@ async function shownIntakes(page: Page): Promise<(string | null)[]> {
   );
 }
 
-/** La proyección es eventual: recarga hasta ver los consumos producidos. */
-async function waitForProjectedIntakes(page: Page, path: RegExp, count: number): Promise<void> {
+/**
+ * La proyección es eventual: abre `url` y recarga hasta ver los consumos
+ * producidos. Cada navegación espera la consulta del documento nuevo, que solo
+ * sale con la sesión ya renovada: una recarga nunca interrumpe una renovación en
+ * curso (perdería la cookie rotada).
+ */
+async function waitForProjectedIntakes(
+  page: Page,
+  url: string,
+  path: RegExp,
+  count: number,
+): Promise<void> {
+  let first = true;
   await expect(async () => {
-    const response = await navigateFor(page, 'GET', path);
+    const response = await navigateFor(page, 'GET', path, first ? url : undefined);
+    first = false;
     await expectStatus(response, 200, 'GET historial de alimentación');
     await expect(entries(page)).toHaveCount(count, { timeout: 2_000 });
   }, 'los consumos de HU043 debían quedar proyectados (outbox → Pub/Sub → proyector)').toPass({
@@ -278,8 +290,7 @@ test.describe('HU013 Ver historial de alimentación contra el BFF web @integrado
     const seededIds = seeded.map((intake) => intake.intakeId);
 
     // CA1: el deportista ve sus consumos, más reciente primero, con nombres del catálogo.
-    await athlete.goto('/deportista/alimentacion');
-    await waitForProjectedIntakes(athlete, OWN_INTAKES, seeded.length);
+    await waitForProjectedIntakes(athlete, '/deportista/alimentacion', OWN_INTAKES, seeded.length);
     expect(await shownIntakes(athlete)).toEqual(seededIds);
     const list = athlete.getByTestId('food-intakes-list');
     await expect(list).toContainText('Agua');
