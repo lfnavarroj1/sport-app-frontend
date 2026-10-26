@@ -4,6 +4,12 @@
     <p>{{ 'training.nutrition.athlete.intro' | translate }}</p>
   </header>
 
+  @if (nothingYet()) {
+    <div class="nutrition-page__notice" role="status" data-testid="athlete-nutrition-nothing-yet">
+      <p>{{ 'training.nutrition.athlete.nothingYet' | translate }}</p>
+    </div>
+  }
+
   <mat-card appearance="outlined" class="training-page__card">
     <mat-card-content>
       <section aria-labelledby="nutrition-plans-title" data-testid="athlete-nutrition-plans">
@@ -93,6 +99,16 @@
           }
         </app-async-state>
       </section>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <app-food-intake-history
+        [scope]="ownIntakes"
+        [catalog]="catalog()"
+        (unfilteredEmpty)="intakesEmpty.set($event)"
+      />
     </mat-card-content>
   </mat-card>
 </section>

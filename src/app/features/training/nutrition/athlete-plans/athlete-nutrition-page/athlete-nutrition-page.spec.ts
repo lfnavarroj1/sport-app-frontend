@@ -1,7 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import {
+  FakeFoodIntakesGateway,
+  TEST_INTAKES_EMPTY,
+} from '../../../../../../testing/fake-food-intakes.gateway';
 import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
+import { FoodIntakesGateway } from '../../intake-history/food-intakes.gateway';
 import { NutritionPlan } from '../../nutrition-plan.model';
 import { NutritionGateway } from '../../nutrition.gateway';
 import { FakeNutritionGateway, TEST_PLAN } from '../../../../../../testing/fake-nutrition.gateway';
@@ -17,12 +22,17 @@ const OLDER: NutritionPlan = {
 describe('AthleteNutritionPage (HU014)', () => {
   let fixture: ComponentFixture<AthleteNutritionPage>;
   let gateway: FakeNutritionGateway;
+  let intakes: FakeFoodIntakesGateway;
   let element: HTMLElement;
 
   async function create(): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [AthleteNutritionPage],
-      providers: [provideTranslateTesting(), { provide: NutritionGateway, useValue: gateway }],
+      providers: [
+        provideTranslateTesting(),
+        { provide: NutritionGateway, useValue: gateway },
+        { provide: FoodIntakesGateway, useValue: intakes },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(AthleteNutritionPage);
     await fixture.whenStable();
@@ -45,6 +55,7 @@ describe('AthleteNutritionPage (HU014)', () => {
 
   beforeEach(() => {
     gateway = new FakeNutritionGateway();
+    intakes = new FakeFoodIntakesGateway();
   });
 
   it('muestra la sección «Planes de alimentación» con el estado confirmado (CA5)', async () => {
@@ -130,5 +141,47 @@ describe('AthleteNutritionPage (HU014)', () => {
     expect(header.getAttribute('role')).toBe('button');
     expect(header.getAttribute('aria-expanded')).toBe('true');
     expect(header.getAttribute('tabindex')).toBe('0');
+  });
+
+  describe('con la sección «Mis consumos» (HU013)', () => {
+    it('muestra los consumos propios con los nombres del catálogo', async () => {
+      await create();
+
+      expect(intakes.loadPage).toHaveBeenCalledOnceWith(
+        { kind: 'own' },
+        { from: null, to: null, mealType: null },
+        null,
+      );
+      expect(testId('food-intakes')?.querySelector('h2')?.textContent).toContain('Mis consumos');
+      expect(testId('food-intakes-list')?.textContent).toContain('Huevo');
+      expect(testId('athlete-nutrition-nothing-yet')).toBeNull();
+    });
+
+    it('sin consumos ni planes muestra un aviso explícito (CA5)', async () => {
+      gateway.loadMyPlans.and.resolveTo({ plans: [], nextCursor: null });
+      intakes.loadPage.and.resolveTo(TEST_INTAKES_EMPTY);
+      await create();
+
+      expect(testId('athlete-nutrition-nothing-yet')?.textContent).toContain(
+        'Aún no tienes consumos registrados ni planes de alimentación',
+      );
+      expect(testId('food-intakes')?.textContent).toContain('Aún no tienes consumos registrados');
+    });
+
+    it('con planes pero sin consumos no muestra el aviso de CA5', async () => {
+      intakes.loadPage.and.resolveTo(TEST_INTAKES_EMPTY);
+      await create();
+
+      expect(testId('athlete-nutrition-nothing-yet')).toBeNull();
+      expect(titles()).toEqual([TEST_PLAN.title]);
+    });
+
+    it('si falla la consulta de planes no afirma que no hay nada', async () => {
+      gateway.loadMyPlans.and.rejectWith(new HttpErrorResponse({ status: 503 }));
+      intakes.loadPage.and.resolveTo(TEST_INTAKES_EMPTY);
+      await create();
+
+      expect(testId('athlete-nutrition-nothing-yet')).toBeNull();
+    });
   });
 });

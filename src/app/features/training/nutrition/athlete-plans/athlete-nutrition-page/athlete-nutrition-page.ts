@@ -5,6 +5,7 @@ import {
   ElementRef,
   Injector,
   afterNextRender,
+  computed,
   inject,
   signal,
   viewChild,
@@ -17,6 +18,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ApiError, toApiError } from '../../../../../core/api/api-error';
 import { AsyncState } from '../../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../../shared/ui/view-state';
+import { FoodIntakeHistory } from '../../intake-history/food-intake-history/food-intake-history';
+import { IntakeScope } from '../../intake-history/food-intakes.model';
 import { FoodCatalog, NutritionPlan } from '../../nutrition-plan.model';
 import { NutritionPlanSummary } from '../../nutrition-plan-summary/nutrition-plan-summary';
 import { NutritionGateway } from '../../nutrition.gateway';
@@ -31,14 +34,16 @@ interface LoadedPlans {
  * de alimentación» de HU014 (CA5): los planes asignados una vez proyectados, en
  * el orden del backend (`created_at` y `plan_id` descendentes), con paginación
  * por cursor. Muestra el estado confirmado y el menú del profesional, sin
- * calorías, nutrientes ni juicios (ADR-037). Los consumos de HU013 serán otra
- * sección de esta misma pantalla.
+ * calorías, nutrientes ni juicios (ADR-037). HU013 agrega la sección «Mis
+ * consumos» (`FoodIntakeHistory`) y, si no hay consumos ni planes, un aviso
+ * explícito (CA5).
  */
 @Component({
   selector: 'app-athlete-nutrition-page',
   imports: [
     AsyncState,
     DatePipe,
+    FoodIntakeHistory,
     MatButtonModule,
     MatCardModule,
     MatExpansionModule,
@@ -60,6 +65,14 @@ export class AthleteNutritionPage {
   protected readonly moreError = signal<ApiError | null>(null);
   /** Nombres de los alimentos; si el catálogo falla se muestran los códigos. */
   protected readonly catalog = signal<FoodCatalog | null>(null);
+
+  protected readonly ownIntakes: IntakeScope = { kind: 'own' };
+  /** `true` si la primera página de consumos sin filtros llegó vacía (HU013). */
+  protected readonly intakesEmpty = signal<boolean | null>(null);
+  /** CA5 de HU013: no hay consumos ni planes de alimentación. */
+  protected readonly nothingYet = computed(
+    () => this.intakesEmpty() === true && this.state().status === 'empty',
+  );
 
   /** Evita que una respuesta de una carga anterior pise la vigente. */
   private generation = 0;

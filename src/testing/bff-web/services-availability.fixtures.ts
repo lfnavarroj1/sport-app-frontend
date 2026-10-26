@@ -18,6 +18,11 @@ type Category = (typeof CATEGORIES)[number] | 'SPORTS_MEDICINE';
 const MODALITIES = ['IN_PERSON', 'VIRTUAL', 'HYBRID'] as const;
 const UNITS = ['SESSION', 'HOUR', 'SERVICE', 'DAY'] as const;
 
+/** Identificador sintético y estable del intervalo `slot` del servicio `index`. */
+function availabilityId(index: number, slot: number): string {
+  return `3e5a7c9b-1d3f-4e5a-8c9b-${String(index * 10 + slot).padStart(12, '0')}`;
+}
+
 /**
  * Servicio publicado sintético `index`, con dos intervalos futuros en UTC. Los
  * nombres siguen el orden del keyset (`name`, `service_id`).
@@ -39,12 +44,14 @@ export function catalogService(index: number, category: Category = CATEGORIES[in
     },
     availability: [
       {
+        availability_id: availabilityId(index, 0),
         starts_at: utc(start),
         ends_at: utc(start + 3_600_000),
         time_zone: 'America/Bogota',
         capacity: 5,
       },
       {
+        availability_id: availabilityId(index, 1),
         starts_at: utc(start + 2 * 86_400_000),
         ends_at: utc(start + 2 * 86_400_000 + 5_400_000),
         time_zone: 'America/Bogota',

@@ -1,0 +1,160 @@
+<section aria-labelledby="food-intakes-title" data-testid="food-intakes">
+  <h2 id="food-intakes-title" class="nutrition-page__section-title">
+    {{ 'training.nutrition.intakes.title.' + scope().kind | translate }}
+  </h2>
+
+  <form
+    class="intakes__filters"
+    [formGroup]="form"
+    (ngSubmit)="applyFilters()"
+    novalidate
+    [attr.aria-label]="'training.nutrition.intakes.filters.label' | translate"
+  >
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'training.nutrition.intakes.filters.from' | translate }}</mat-label>
+      <input matInput type="date" formControlName="from" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'training.nutrition.intakes.filters.to' | translate }}</mat-label>
+      <input
+        matInput
+        type="date"
+        formControlName="to"
+        [attr.aria-invalid]="issue() === 'toBeforeFrom'"
+        [attr.aria-describedby]="issue() === 'toBeforeFrom' ? 'food-intakes-period-error' : null"
+      />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'training.nutrition.intakes.filters.mealType' | translate }}</mat-label>
+      <mat-select formControlName="mealType">
+        <mat-option [value]="null">{{
+          'training.nutrition.intakes.filters.allMeals' | translate
+        }}</mat-option>
+        @for (mealType of mealTypes; track mealType) {
+          <mat-option [value]="mealType">{{
+            'training.nutrition.mealTypes.' + mealType | translate
+          }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="intakes__filter-actions">
+      <button mat-flat-button type="submit">
+        {{ 'training.nutrition.intakes.filters.apply' | translate }}
+      </button>
+      <button mat-stroked-button type="button" (click)="clearFilters()">
+        {{ 'training.nutrition.intakes.filters.clear' | translate }}
+      </button>
+    </div>
+    @if (issue() === 'toBeforeFrom') {
+      <p
+        id="food-intakes-period-error"
+        class="intakes__field-error"
+        role="alert"
+        data-testid="food-intakes-period-error"
+      >
+        {{ 'training.nutrition.intakes.errors.toBeforeFrom' | translate }}
+      </p>
+    }
+    <p class="intakes__hint">{{ 'training.nutrition.intakes.filters.hint' | translate }}</p>
+  </form>
+
+  @if (notAuthorized()) {
+    <div class="training-page__error" role="alert" data-testid="food-intakes-not-authorized">
+      <p>{{ 'training.nutrition.intakes.errors.athleteNotAuthorized' | translate }}</p>
+    </div>
+  } @else {
+    <app-async-state [state]="state()" [emptyMessageKey]="emptyKey()" (retry)="loadFirst()">
+      <div #list class="intakes__days" data-testid="food-intakes-list">
+        @for (day of days(); track day.day) {
+          <section class="intakes__day" [attr.data-day]="day.day">
+            <h3 class="intakes__day-title">{{ day.anchor | date: 'fullDate' }}</h3>
+            @for (meal of day.meals; track meal.mealType) {
+              <div class="intakes__meal" [attr.data-meal-type]="meal.mealType">
+                <h4 class="intakes__meal-title">
+                  {{ 'training.nutrition.mealTypes.' + meal.mealType | translate }}
+                </h4>
+                <ul class="intakes__entries">
+                  @for (intake of meal.intakes; track intake.id) {
+                    <li class="intakes__entry" tabindex="-1" [attr.data-intake]="intake.id">
+                      <span class="intakes__time">
+                        {{
+                          'training.nutrition.intakes.consumedAt'
+                            | translate: { time: (intake.consumedAt | date: 'shortTime') }
+                        }}
+                      </span>
+                      <ul class="intakes__items">
+                        @for (item of intake.items; track $index) {
+                          <li>
+                            <span class="intakes__food">
+                              @if (foodKey(item.foodCode); as key) {
+                                {{ key | translate }}
+                              } @else {
+                                {{ item.foodCode }}
+                              }
+                            </span>
+                            <span class="intakes__amount">
+                              {{
+                                'training.nutrition.summary.amount'
+                                  | translate
+                                    : {
+                                        value: item.quantity | number: '1.0-1',
+                                        unit:
+                                          ('training.nutrition.unitsShort.' + item.unit
+                                          | translate),
+                                      }
+                              }}
+                            </span>
+                          </li>
+                        }
+                      </ul>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        }
+      </div>
+
+      <p class="nutrition-page__count" role="status" data-testid="food-intakes-count">
+        {{
+          (nextCursor()
+            ? 'training.nutrition.intakes.countMore'
+            : 'training.nutrition.intakes.countAll'
+          ) | translate: { count: intakes().length }
+        }}
+      </p>
+
+      @if (moreError(); as error) {
+        <div class="training-page__error" role="alert" data-testid="food-intakes-more-error">
+          @if (issue() === 'invalidCursor') {
+            <p>{{ 'training.nutrition.intakes.errors.invalidCursor' | translate }}</p>
+          } @else {
+            <p>{{ 'common.errors.' + error.kind | translate }}</p>
+          }
+          @if (error.correlationId) {
+            <p class="training-page__reference">
+              {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+            </p>
+          }
+        </div>
+      }
+      @if (issue() === 'invalidCursor') {
+        <button mat-stroked-button type="button" (click)="loadFirst()">
+          {{ 'training.nutrition.intakes.actions.reload' | translate }}
+        </button>
+      } @else if (nextCursor()) {
+        <button mat-stroked-button type="button" [disabled]="loadingMore()" (click)="loadMore()">
+          {{
+            (loadingMore()
+              ? 'common.state.loading'
+              : moreError()
+                ? 'common.state.retry'
+                : 'training.nutrition.intakes.actions.loadMore'
+            ) | translate
+          }}
+        </button>
+      }
+    </app-async-state>
+  }
+</section>

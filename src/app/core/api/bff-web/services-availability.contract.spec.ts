@@ -84,7 +84,7 @@ describe('Contrato bff-web: GET /v1/services/availability (HU020, ADR-038)', () 
     expect(Object.keys(service).sort()).toEqual([...schemas['CatalogService'].required].sort());
     expect(Object.keys(service.price).sort()).toEqual([...schemas['ServicePrice'].required].sort());
     expect(Object.keys(service.availability[0]).sort()).toEqual(
-      [...schemas['AvailabilityInterval'].required].sort(),
+      [...schemas['CatalogInterval'].required].sort(),
     );
   });
 
