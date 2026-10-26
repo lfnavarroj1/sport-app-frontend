@@ -50,6 +50,13 @@ async function loginAs(
 
 const entries = (page: Page) => page.getByTestId('food-intakes-list').locator('[data-intake]');
 
+/**
+ * Campo «Tipo de comida». Con el selector vacío, su etiqueta cubre el centro del
+ * control; el usuario hace clic en el campo y el `mat-form-field` abre la lista.
+ */
+const mealTypeField = (page: Page) =>
+  page.locator('mat-form-field').filter({ hasText: 'Tipo de comida' });
+
 test.describe('HU013 Ver historial de alimentación (simulador del contrato) @simulado', () => {
   test('CA5: sin consumos ni planes, «Mi alimentación» lo indica de forma explícita', async ({
     page,
@@ -110,7 +117,7 @@ test.describe('HU013 Ver historial de alimentación (simulador del contrato) @si
 
     await page.getByLabel('Desde').fill('2026-10-23');
     await page.getByLabel('Hasta').fill('2026-10-24');
-    await page.getByRole('combobox', { name: 'Tipo de comida' }).click();
+    await mealTypeField(page).click();
     await page.getByRole('option', { name: 'Desayuno', exact: true }).click();
     await page.getByRole('button', { name: 'Aplicar filtros' }).click();
 
@@ -120,7 +127,7 @@ test.describe('HU013 Ver historial de alimentación (simulador del contrato) @si
     expect(query.get('to')).toBe('2026-10-24');
     expect(query.get('meal_type')).toBe('BREAKFAST');
 
-    await page.getByRole('combobox', { name: 'Tipo de comida' }).click();
+    await mealTypeField(page).click();
     await page.getByRole('option', { name: 'Refrigerio', exact: true }).click();
     await page.getByRole('button', { name: 'Aplicar filtros' }).click();
     await expect(page.getByTestId('food-intakes').getByTestId('state-empty')).toHaveText(

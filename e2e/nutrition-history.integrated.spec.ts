@@ -209,6 +209,13 @@ async function seedIntakes(email: string): Promise<SeededIntake[]> {
 
 const entries = (page: Page) => page.getByTestId('food-intakes-list').locator('[data-intake]');
 
+/**
+ * Campo «Tipo de comida». Con el selector vacío, su etiqueta cubre el centro del
+ * control; el usuario hace clic en el campo y el `mat-form-field` abre la lista.
+ */
+const mealTypeField = (page: Page) =>
+  page.locator('mat-form-field').filter({ hasText: 'Tipo de comida' });
+
 async function shownIntakes(page: Page): Promise<(string | null)[]> {
   return entries(page).evaluateAll((items) =>
     items.map((item) => item.getAttribute('data-intake')),
@@ -281,7 +288,7 @@ test.describe('HU013 Ver historial de alimentación contra el BFF web @integrado
     await expect(athlete.locator('main')).not.toContainText(/calor|kcal/i);
 
     // CA1: filtro por tipo de comida, consultado al BFF.
-    await athlete.getByRole('combobox', { name: 'Tipo de comida' }).click();
+    await mealTypeField(athlete).click();
     await athlete.getByRole('option', { name: 'Almuerzo', exact: true }).click();
     const filtered = waitForOperation(athlete, 'GET', OWN_INTAKES);
     await athlete.getByRole('button', { name: 'Aplicar filtros' }).click();
