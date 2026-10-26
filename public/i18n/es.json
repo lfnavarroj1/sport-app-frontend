@@ -855,6 +855,105 @@
         "goToPlans": "Ir a planes de entrenamiento"
       }
     },
+    "health": {
+      "title": {
+        "own": "Mi salud",
+        "athlete": "Historial de salud del deportista"
+      },
+      "intro": {
+        "own": "Consulta tus reportes de molestias, incapacidades o lesiones, del más reciente al más antiguo.",
+        "athlete": "Reportes de molestias, incapacidades o lesiones de un deportista que te autorizó, del más reciente al más antiguo."
+      },
+      "notice": {
+        "title": "Información de salud sensible",
+        "own": "Solo tú y los profesionales que autorizaste pueden consultar estos reportes.",
+        "athlete": "Puedes consultarla solo mientras el deportista mantenga tu autorización. No la compartas ni la copies fuera de SportApp.",
+        "noDiagnosis": "Los reportes muestran lo que registró el deportista y no constituyen un diagnóstico médico. Ante cualquier duda, consulta a un profesional de la salud."
+      },
+      "filters": {
+        "label": "Filtros del historial de salud",
+        "from": "Ocurridos desde",
+        "to": "Ocurridos hasta",
+        "type": "Tipo",
+        "allTypes": "Todos los tipos",
+        "severity": "Severidad",
+        "allSeverities": "Todas las severidades",
+        "apply": "Aplicar filtros",
+        "clear": "Limpiar",
+        "hint": "Las fechas filtran por el día en que ocurrió el reporte, en hora UTC, e incluyen ambos extremos."
+      },
+      "errors": {
+        "athleteNotAuthorized": "No puedes consultar este historial: el deportista no te ha autorizado o revocó la autorización.",
+        "permissionRequired": "Tu cuenta no tiene permiso para consultar historiales de salud.",
+        "invalidFilters": "El periodo o los filtros no son válidos. Revísalos e inténtalo de nuevo."
+      },
+      "empty": {
+        "own": "Aún no tienes reportes de molestias, incapacidades o lesiones.",
+        "athlete": "Este deportista aún no tiene reportes de molestias, incapacidades o lesiones.",
+        "filtered": "No hay reportes con estos filtros."
+      },
+      "tableLabel": "Reportes de molestias, incapacidades o lesiones",
+      "columns": {
+        "occurredAt": "Ocurrió",
+        "type": "Tipo",
+        "bodyArea": "Zona del cuerpo",
+        "severity": "Severidad",
+        "recovery": "Recuperación esperada",
+        "status": "Estado",
+        "session": "Entrenamiento"
+      },
+      "types": {
+        "DISCOMFORT": "Molestia",
+        "INJURY": "Lesión",
+        "INCAPACITY": "Incapacidad"
+      },
+      "severities": {
+        "LOW": "Baja",
+        "MODERATE": "Moderada",
+        "HIGH": "Alta"
+      },
+      "bodyAreas": {
+        "HEAD": "Cabeza",
+        "NECK": "Cuello",
+        "SHOULDER": "Hombro",
+        "ARM": "Brazo",
+        "ELBOW": "Codo",
+        "WRIST_HAND": "Muñeca o mano",
+        "CHEST": "Pecho",
+        "BACK": "Espalda",
+        "HIP": "Cadera",
+        "THIGH": "Muslo",
+        "KNEE": "Rodilla",
+        "LOWER_LEG": "Pierna",
+        "ANKLE_FOOT": "Tobillo o pie",
+        "OTHER": "Otra zona"
+      },
+      "statuses": {
+        "OPEN": "Abierto"
+      },
+      "recovery": {
+        "none": "Sin estimación",
+        "one": "1 día",
+        "days": "{{days}} días"
+      },
+      "session": {
+        "yes": "Asociado a un entrenamiento",
+        "no": "Sin entrenamiento asociado"
+      },
+      "actions": {
+        "loadMore": "Cargar más"
+      },
+      "countMore": "Reportes mostrados: {{count}}. Hay más disponibles.",
+      "countAll": "Reportes mostrados: {{count}}.",
+      "athletes": {
+        "title": "Historial de molestias o lesiones",
+        "intro": "Elige un deportista que te autorizó para consultar sus reportes de molestias, incapacidades o lesiones.",
+        "listLabel": "Deportistas que te autorizaron",
+        "empty": "Aún ningún deportista te ha autorizado. Cuando un deportista te autorice desde su cuenta, aparecerá aquí.",
+        "permissionDenied": "Tu cuenta no tiene permiso para consultar la lista de deportistas que te autorizaron.",
+        "chooseAnother": "Elegir otro deportista"
+      }
+    },
     "nutrition": {
       "editor": {
         "title": "Crear plan de alimentación",
@@ -1325,6 +1424,7 @@
       "nutrition-plans": "Crear planes de alimentación",
       "athlete-training-plans": "Planes de entrenamiento",
       "athlete-training-history": "Mi historial de entrenamiento",
+      "athlete-health": "Mi salud",
       "athlete-nutrition": "Mi alimentación",
       "athlete-services": "Servicios",
       "sport-calendar": "Calendario deportivo",

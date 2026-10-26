@@ -202,6 +202,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         hu: 'HU011',
         available: true,
       },
+      // HU012: «Mi salud», historial propio de molestias, incapacidades o lesiones;
+      // opción base del deportista, sin capacidad de plan (ADR-037).
+      {
+        id: 'athlete-health',
+        group: 'health',
+        order: 50,
+        icon: 'healing',
+        route: '/deportista/salud',
+        permission: null,
+        capability: null,
+        hu: 'HU012',
+        available: true,
+      },
       // HU020: catálogo de servicios y su disponibilidad; opción base del deportista,
       // sin capacidad de plan (ADR-038). Medicina deportiva la filtra el BFF.
       {
@@ -394,7 +407,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'training.history.view_assigned',
         'HU011',
       ),
-      upcoming(
+      // HU012: reportes de salud de los deportistas que autorizaron al profesional (ADR-037).
+      permissionOption(
         'health-history',
         'health',
         140,
