@@ -49,6 +49,15 @@ const itemsSchema = (
   oneOf: { $ref: string }[];
 };
 
+/**
+ * Fuentes que el contrato publica y la web aún no consume, con los estados de sus
+ * elementos: `OWN_APPOINTMENT` (0.32.0, citas propias del profesional) no tiene HU
+ * web. La interfaz muestra de forma genérica una fuente desconocida; una nueva que no esté
+ * aquí ni en `INTEGRATED_CALENDAR_SOURCES` hace fallar la prueba.
+ */
+const NOT_CONSUMED_SOURCES: readonly string[] = ['OWN_APPOINTMENT'];
+const NOT_CONSUMED_ITEM_STATUSES: readonly string[] = ['BOOKED'];
+
 /** Esquema del elemento según su `source` (el validador de pruebas no evalúa `oneOf`). */
 function itemSchema(source: string): Record<string, unknown> {
   return { $ref: itemsSchema.discriminator.mapping[source] };
@@ -87,21 +96,37 @@ describe('Contrato bff-web: operación de HU018', () => {
   });
 
   it('las fuentes, sus estados y los estados de los elementos son los del contrato', () => {
-    const statuses = itemsSchema.oneOf.flatMap(({ $ref }) => {
-      const status = property($ref.replace('#/components/schemas/', ''), 'status');
-      return (status['enum'] as string[] | undefined) ?? [status['const'] as string];
-    });
+    const consumed = new Set<string>(INTEGRATED_CALENDAR_SOURCES);
+    const statusesOf = (sources: readonly string[]) =>
+      sources.flatMap((source) => {
+        const schema = itemsSchema.discriminator.mapping[source].replace(
+          '#/components/schemas/',
+          '',
+        );
+        const status = property(schema, 'status');
+        return (status['enum'] as string[] | undefined) ?? [status['const'] as string];
+      });
 
-    expect<string[]>([...INTEGRATED_CALENDAR_SOURCES]).toEqual(
+    // Cada fuente del contrato es consumida o está declarada como no consumida.
+    expect(NOT_CONSUMED_SOURCES.filter((source) => consumed.has(source))).toEqual([]);
+    expect<string[]>([...INTEGRATED_CALENDAR_SOURCES, ...NOT_CONSUMED_SOURCES]).toEqual(
       property('IntegratedSource', 'name')['enum'] as string[],
     );
     expect<string[]>([...INTEGRATED_SOURCE_STATUSES]).toEqual(
       property('IntegratedSource', 'status')['enum'] as string[],
     );
-    expect<string[]>([...INTEGRATED_CALENDAR_SOURCES].sort()).toEqual(
+    expect<string[]>([...INTEGRATED_CALENDAR_SOURCES, ...NOT_CONSUMED_SOURCES].sort()).toEqual(
       Object.keys(itemsSchema.discriminator.mapping).sort(),
     );
-    expect<string[]>([...INTEGRATED_ITEM_STATUSES].sort()).toEqual([...new Set(statuses)].sort());
+    expect(itemsSchema.oneOf.map(({ $ref }) => $ref).sort()).toEqual(
+      Object.values(itemsSchema.discriminator.mapping).sort(),
+    );
+    expect<string[]>([...INTEGRATED_ITEM_STATUSES].sort()).toEqual(
+      [...new Set(statusesOf([...INTEGRATED_CALENDAR_SOURCES]))].sort(),
+    );
+    expect<string[]>([...new Set(statusesOf(NOT_CONSUMED_SOURCES))].sort()).toEqual([
+      ...NOT_CONSUMED_ITEM_STATUSES,
+    ]);
   });
 
   it('los modelos de transporte tienen exactamente las propiedades obligatorias del contrato', () => {

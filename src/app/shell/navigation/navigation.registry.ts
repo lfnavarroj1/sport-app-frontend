@@ -229,7 +229,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         available: true,
       },
       // «Mi alimentación»: opción base del deportista, sin capacidad de plan (ADR-037).
-      // HU014 aporta la sección «Planes de alimentación»; los consumos serán HU013.
+      // HU014 aporta la sección «Planes de alimentación» y HU013 la de consumos.
       {
         id: 'athlete-nutrition',
         group: 'nutrition',
@@ -417,7 +417,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'health.history.view_assigned',
         'HU012',
       ),
-      upcoming(
+      // HU013: consumos de los deportistas que autorizaron al profesional (ADR-037).
+      permissionOption(
         'nutrition-history',
         'nutrition',
         150,

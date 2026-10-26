@@ -1,0 +1,17 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.nutrition.professional.history.title' | translate }}</h1>
+    <p>{{ 'training.nutrition.professional.history.intro' | translate }}</p>
+    <p>
+      <a routerLink="/profesional/historial/alimentacion">{{
+        'training.nutrition.professional.history.backToAthletes' | translate
+      }}</a>
+    </p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <app-food-intake-history [scope]="scope" [catalog]="catalog()" />
+    </mat-card-content>
+  </mat-card>
+</section>

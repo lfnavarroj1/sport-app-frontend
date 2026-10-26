@@ -100,7 +100,7 @@ export const routes: Routes = [
         ),
     },
     {
-      // HU014: sección «Planes de alimentación» de «Mi alimentación» (ADR-037).
+      // «Mi alimentación» (ADR-037): planes de HU014 y consumos de HU013.
       path: 'alimentacion',
       loadChildren: () =>
         import('./features/training/nutrition/nutrition.routes').then(
@@ -250,6 +250,14 @@ export const routes: Routes = [
       loadChildren: () =>
         import('./features/training/nutrition/nutrition.routes').then(
           (module) => module.NUTRITION_PLAN_AUTHORING_ROUTES,
+        ),
+    },
+    {
+      // HU013: consumos de alimentos de un deportista que autorizó al profesional (ADR-037).
+      path: 'historial/alimentacion',
+      loadChildren: () =>
+        import('./features/training/nutrition/nutrition.routes').then(
+          (module) => module.PROFESSIONAL_NUTRITION_HISTORY_ROUTES,
         ),
     },
     {

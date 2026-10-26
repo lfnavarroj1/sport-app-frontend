@@ -90,6 +90,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
       ['training-templates', '/profesional/entrenamientos/plantillas', 'HU028'],
       ['training-history', '/profesional/historial/entrenamientos', 'HU011'],
       ['health-history', '/profesional/historial/salud', 'HU012'],
+      ['nutrition-history', '/profesional/historial/alimentacion', 'HU013'],
       ['nutrition-plans', '/profesional/alimentacion/planes', 'HU014'],
       ['integrated-calendar', '/profesional/calendario', 'HU018'],
       ['profile', '/profesional/perfil', 'HU002'],
@@ -102,7 +103,7 @@ describe('Registro de navegación por actor (ADR-025, HU003)', () => {
 
       expect(upcoming.map((item) => item.id))
         .withContext(actor)
-        .toEqual(actor === 'service_provider' ? ['nutrition-history'] : []);
+        .toEqual([]);
     }
   });
 
