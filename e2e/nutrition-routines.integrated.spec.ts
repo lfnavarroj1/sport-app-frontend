@@ -22,6 +22,7 @@ import {
 const PASSWORD = 'clave-sintetica-e2e-123';
 const ROUTINES = /^\/v1\/nutrition-routine-templates$/;
 const RETIRE = /^\/v1\/nutrition-routine-templates\/[^/]+\/retire$/;
+const MY_ROUTINES = /^\/v1\/me\/nutrition-routine-templates$/;
 
 function baseUrl(): string {
   const url = process.env['PLAYWRIGHT_BASE_URL'];
@@ -56,10 +57,28 @@ async function expectStatus(
   ).toBe(expected);
 }
 
-function waitFor(page: Page, path: RegExp): Promise<Response> {
+function waitFor(page: Page, path: RegExp, method = 'POST'): Promise<Response> {
   return page.waitForResponse(
-    (r) => r.request().method() === 'POST' && path.test(new URL(r.url()).pathname),
+    (r) => r.request().method() === method && path.test(new URL(r.url()).pathname),
   );
+}
+
+/**
+ * La lista es una lectura CQRS (`nutrition_routine_template_view`): recarga hasta
+ * que la proyección muestre la rutina con `status`. Cada recarga espera la consulta
+ * del documento nuevo, que solo sale con la sesión ya renovada: una recarga nunca
+ * interrumpe una renovación en curso (lección de HU011 y HU013).
+ */
+async function waitForProjected(page: Page, item: Locator, status: string): Promise<void> {
+  await expect(async () => {
+    await page.reload({ waitUntil: 'commit' });
+    const response = await waitFor(page, MY_ROUTINES, 'GET');
+    await response.finished();
+    await expectStatus(response, 200, 'GET /v1/me/nutrition-routine-templates');
+    await expect(item.getByTestId('routine-status')).toHaveText(status, { timeout: 2_000 });
+  }, `la rutina debía quedar ${status} en la proyección (outbox → Pub/Sub → proyector)`).toPass({
+    timeout: 90_000,
+  });
 }
 
 async function newPage(browser: Browser): Promise<Page> {
@@ -179,9 +198,8 @@ test.describe('HU030 Rutinas de alimentación del profesional contra el BFF web 
       'Desayuno: Avena ×2, Mantequilla de maní ×1',
     );
 
-    // La lista la entrega el BFF tras recargar.
-    await page.reload();
-    await expect(item.getByTestId('routine-status')).toHaveText('Publicada');
+    // La lista la entrega el BFF tras recargar, cuando la proyección la incluye.
+    await waitForProjected(page, item, 'Publicada');
 
     // Otro profesional no puede retirarla.
     const outsiderEmail = uniqueEmail('otro-profesional');
@@ -207,8 +225,7 @@ test.describe('HU030 Rutinas de alimentación del profesional contra el BFF web 
     const retiredRoutine = (await retiredResponse.json()) as { status: string; version: number };
     expect(retiredRoutine.status).toBe('RETIRED');
     await expect(item.getByTestId('routine-status')).toHaveText('Retirada');
-    await page.reload();
-    await expect(item.getByTestId('routine-status')).toHaveText('Retirada');
+    await waitForProjected(page, item, 'Retirada');
     await expect(item.getByRole('button', { name: /Retirar/ })).toHaveCount(0);
 
     // CA4: retirar otra vez una rutina ya retirada la devuelve sin cambios.
