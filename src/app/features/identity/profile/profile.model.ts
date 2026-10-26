@@ -1,19 +1,48 @@
 import { ApiError } from '../../../core/api/api-error';
 import {
+  DIET_RESTRICTIONS,
   DemographicProfileRequestDto,
   DemographicProfileSectionDto,
+  DietPatternDto,
+  DietRestrictionDto,
+  FOOD_ALLERGIES,
+  FoodAllergyDto,
   GenderDto,
+  HABIT_SPORTS,
+  HabitIntensityDto,
+  HabitLevelDto,
+  HabitSportDto,
   IncomeRangeDto,
   MaritalStatusDto,
+  NutritionHabitsRequestDto,
+  NutritionHabitsSectionDto,
   PROFILE_ISSUES,
   PhysiologicalProfileRequestDto,
   PhysiologicalProfileSectionDto,
+  PrimaryGoalDto,
   ProfileResponseDto,
+  SportHabitDto,
+  SportHabitsPatchRequestDto,
+  SportHabitsRequestDto,
+  SportHabitsSectionDto,
+  TIME_SLOTS,
+  TimeSlotDto,
+  WEEK_DAYS,
+  WeekDayDto,
 } from '../../../core/api/bff-web/profile.api';
 
 export type Gender = GenderDto;
 export type MaritalStatus = MaritalStatusDto;
 export type IncomeRange = IncomeRangeDto;
+export type HabitSport = HabitSportDto;
+export type HabitIntensity = HabitIntensityDto;
+export type HabitLevel = HabitLevelDto;
+export type WeekDay = WeekDayDto;
+export type TimeSlot = TimeSlotDto;
+export type PrimaryGoal = PrimaryGoalDto;
+export type DietPattern = DietPatternDto;
+export type DietRestriction = DietRestrictionDto;
+export type FoodAllergy = FoodAllergyDto;
 
 /** Sección demográfica confirmada por el backend (HU005). */
 export interface DemographicProfile {
@@ -55,10 +84,59 @@ export interface PhysiologicalProfile {
   readonly updatedAt: string;
 }
 
+/** Un deporte declarado en los hábitos (HU006). */
+export interface SportHabit {
+  readonly sport: HabitSport;
+  readonly frequencyPerWeek: number;
+  readonly sessionDurationMinutes: number;
+  readonly intensity: HabitIntensity;
+  readonly level: HabitLevel;
+  /** Opcional: `null` si el deportista no lo indicó. */
+  readonly yearsPracticing: number | null;
+}
+
+/**
+ * Hábitos deportivos confirmados por el backend (HU006). Deportes, días y
+ * franjas llegan en el orden de su catálogo. Registrarlos no crea planes ni
+ * recomendaciones.
+ */
+export interface SportHabits {
+  readonly version: number;
+  readonly sports: readonly SportHabit[];
+  readonly days: readonly WeekDay[];
+  readonly timeSlots: readonly TimeSlot[];
+  readonly primaryGoal: PrimaryGoal | null;
+  /** Instante UTC (`Z`). */
+  readonly updatedAt: string;
+}
+
+/**
+ * Hábitos alimenticios confirmados por el backend (HU009, ADR-035). Restricciones
+ * y alergias llegan en el orden de su catálogo; la hidratación conserva el texto
+ * del contrato (`"2.5"`). Son datos de salud: solo viven en memoria. No
+ * prescriben ni diagnostican.
+ */
+export interface NutritionHabits {
+  readonly version: number;
+  readonly consentVersion: string;
+  /** Instante UTC (`Z`) en que se aceptó el consentimiento. */
+  readonly consentAcceptedAt: string;
+  readonly dietPattern: DietPattern;
+  readonly restrictions: readonly DietRestriction[];
+  readonly allergies: readonly FoodAllergy[];
+  readonly mealsPerDay: number;
+  /** Litros por día con un decimal, o `null` si no se indicó. */
+  readonly hydrationLitersPerDay: string | null;
+  /** Instante UTC (`Z`). */
+  readonly updatedAt: string;
+}
+
 /** Perfil proyectado: `null` en las secciones aún sin datos (consistencia eventual). */
 export interface AthleteProfile {
   readonly demographic: DemographicProfile | null;
   readonly physiological: PhysiologicalProfile | null;
+  readonly sportHabits: SportHabits | null;
+  readonly nutritionHabits: NutritionHabits | null;
   /** Instante UTC de la última proyección aplicada, o `null`. */
   readonly projectedAt: string | null;
 }
@@ -87,6 +165,48 @@ export interface PhysiologicalDraft {
   readonly restingHeartRateBpm: number | null;
   readonly bloodPressure: BloodPressure | null;
   readonly bodyTemperatureC: string | null;
+}
+
+/**
+ * Hábitos que captura el deportista (HU006). Los deportes van en el orden de
+ * las filas del formulario, para que la posición de `sports[i]` en un `422`
+ * corresponda a la fila que la causó.
+ */
+export interface SportHabitsDraft {
+  readonly sports: readonly SportHabit[];
+  readonly days: readonly WeekDay[];
+  readonly timeSlots: readonly TimeSlot[];
+  readonly primaryGoal: PrimaryGoal | null;
+}
+
+/**
+ * Secciones de los hábitos deportivos que la actualización parcial (HU008,
+ * ADR-035) reemplaza por separado: deportes, disponibilidad (días y franjas) y
+ * objetivo principal.
+ */
+export const SPORT_HABITS_SECTIONS = ['sports', 'availability', 'primaryGoal'] as const;
+export type SportHabitsSectionName = (typeof SPORT_HABITS_SECTIONS)[number];
+
+/**
+ * Actualización parcial de los hábitos (HU008): lo capturado y las secciones que
+ * cambiaron respecto de la versión vigente, que son las únicas que se envían.
+ */
+export interface SportHabitsUpdate {
+  readonly draft: SportHabitsDraft;
+  /** Al menos una, en el orden de `SPORT_HABITS_SECTIONS`. */
+  readonly sections: readonly SportHabitsSectionName[];
+}
+
+/** Hábitos alimenticios que captura el deportista (HU009), ya normalizados para el contrato. */
+export interface NutritionHabitsDraft {
+  /** Versión del consentimiento que aceptó (la de `healthDataConsentVersion`). */
+  readonly consentVersion: string;
+  readonly dietPattern: DietPattern;
+  readonly restrictions: readonly DietRestriction[];
+  readonly allergies: readonly FoodAllergy[];
+  readonly mealsPerDay: number;
+  /** Decimal como texto con punto (`"2.5"`), o `null` si no se indica. */
+  readonly hydrationLitersPerDay: string | null;
 }
 
 /** Regla incumplida (`details[{field, issue}]`, ADR-034). */
@@ -157,6 +277,143 @@ export function toPhysiologicalRequest(
   };
 }
 
+/**
+ * Cuerpo de `PUT /v1/me/sport-habits`: días y franjas sin repetir y en el orden
+ * de su catálogo (el que usa el backend); los deportes, en el orden capturado.
+ */
+export function toSportHabitsRequest(
+  draft: SportHabitsDraft,
+  expectedVersion: number | null,
+): SportHabitsRequestDto {
+  return {
+    ...(expectedVersion === null ? {} : { expected_version: expectedVersion }),
+    sports: draft.sports.map(toSportHabitDto),
+    availability: {
+      days: inCatalogOrder(draft.days, WEEK_DAYS),
+      time_slots: inCatalogOrder(draft.timeSlots, TIME_SLOTS),
+    },
+    primary_goal: draft.primaryGoal,
+  };
+}
+
+/**
+ * Cuerpo de `PATCH /v1/me/sport-habits` (HU008): `expected_version` y solo las
+ * secciones modificadas, cada una completa y con las mismas normalizaciones del
+ * `PUT`. Un objetivo borrado viaja como `primary_goal: null`.
+ */
+export function toSportHabitsPatchRequest(
+  update: SportHabitsUpdate,
+  expectedVersion: number,
+): SportHabitsPatchRequestDto {
+  const full = toSportHabitsRequest(update.draft, null);
+  return {
+    expected_version: expectedVersion,
+    ...(update.sections.includes('sports') ? { sports: full.sports } : {}),
+    ...(update.sections.includes('availability') ? { availability: full.availability } : {}),
+    ...(update.sections.includes('primaryGoal') ? { primary_goal: full.primary_goal } : {}),
+  };
+}
+
+/**
+ * Secciones que el deportista cambió respecto de los hábitos vigentes, en el
+ * orden de `SPORT_HABITS_SECTIONS`; vacía si no cambió nada. Se compara lo que
+ * el backend guardaría: deportes, días y franjas en el orden de su catálogo (el
+ * orden de las filas no es un cambio).
+ */
+export function modifiedSportHabitsSections(
+  current: SportHabits,
+  draft: SportHabitsDraft,
+): SportHabitsSectionName[] {
+  const changed: Record<SportHabitsSectionName, boolean> = {
+    sports: !sameJson(sportsInCatalogOrder(current.sports), sportsInCatalogOrder(draft.sports)),
+    availability:
+      !sameJson(inCatalogOrder(current.days, WEEK_DAYS), inCatalogOrder(draft.days, WEEK_DAYS)) ||
+      !sameJson(
+        inCatalogOrder(current.timeSlots, TIME_SLOTS),
+        inCatalogOrder(draft.timeSlots, TIME_SLOTS),
+      ),
+    primaryGoal: current.primaryGoal !== draft.primaryGoal,
+  };
+  return SPORT_HABITS_SECTIONS.filter((section) => changed[section]);
+}
+
+function toSportHabitDto(habit: SportHabit): SportHabitDto {
+  return {
+    sport: habit.sport,
+    frequency_per_week: habit.frequencyPerWeek,
+    session_duration_minutes: habit.sessionDurationMinutes,
+    intensity: habit.intensity,
+    level: habit.level,
+    years_practicing: habit.yearsPracticing,
+  };
+}
+
+function sportsInCatalogOrder(sports: readonly SportHabit[]): SportHabitDto[] {
+  return [...sports]
+    .sort((a, b) => HABIT_SPORTS.indexOf(a.sport) - HABIT_SPORTS.indexOf(b.sport))
+    .map(toSportHabitDto);
+}
+
+function sameJson(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
+ * Cuerpo de `PUT /v1/me/nutrition-habits` (ADR-035): restricciones y alergias sin
+ * repetir y en el orden de su catálogo; sin `user_id` ni texto libre.
+ */
+export function toNutritionHabitsRequest(
+  draft: NutritionHabitsDraft,
+  expectedVersion: number | null,
+): NutritionHabitsRequestDto {
+  return {
+    ...(expectedVersion === null ? {} : { expected_version: expectedVersion }),
+    consent: { version: draft.consentVersion },
+    diet_pattern: draft.dietPattern,
+    restrictions: inCatalogOrder(draft.restrictions, DIET_RESTRICTIONS),
+    allergies: inCatalogOrder(draft.allergies, FOOD_ALLERGIES),
+    meals_per_day: draft.mealsPerDay,
+    hydration_liters_per_day: draft.hydrationLitersPerDay,
+  };
+}
+
+export function toNutritionHabits(dto: NutritionHabitsSectionDto): NutritionHabits {
+  return {
+    version: dto.version,
+    consentVersion: dto.consent.version,
+    consentAcceptedAt: dto.consent.accepted_at,
+    dietPattern: dto.diet_pattern,
+    restrictions: dto.restrictions,
+    allergies: dto.allergies,
+    mealsPerDay: dto.meals_per_day,
+    hydrationLitersPerDay: dto.hydration_liters_per_day,
+    updatedAt: dto.updated_at,
+  };
+}
+
+/** Valores únicos de `values` en el orden de `catalog`; descarta los que no son del catálogo. */
+export function inCatalogOrder<T extends string>(values: readonly T[], catalog: readonly T[]): T[] {
+  return catalog.filter((item) => values.includes(item));
+}
+
+export function toSportHabits(dto: SportHabitsSectionDto): SportHabits {
+  return {
+    version: dto.version,
+    sports: dto.sports.map((habit) => ({
+      sport: habit.sport,
+      frequencyPerWeek: habit.frequency_per_week,
+      sessionDurationMinutes: habit.session_duration_minutes,
+      intensity: habit.intensity,
+      level: habit.level,
+      yearsPracticing: habit.years_practicing,
+    })),
+    days: dto.availability.days,
+    timeSlots: dto.availability.time_slots,
+    primaryGoal: dto.primary_goal,
+    updatedAt: dto.updated_at,
+  };
+}
+
 export function toDemographicProfile(dto: DemographicProfileSectionDto): DemographicProfile {
   return {
     version: dto.version,
@@ -197,6 +454,13 @@ export function toAthleteProfile(dto: ProfileResponseDto): AthleteProfile {
   return {
     demographic: dto.demographic === null ? null : toDemographicProfile(dto.demographic),
     physiological: dto.physiological === null ? null : toPhysiologicalProfile(dto.physiological),
+    sportHabits: dto.sport_habits === null ? null : toSportHabits(dto.sport_habits),
+    // Un BFF anterior a 0.21.0 omite `nutrition_habits`: se trata como «sin hábitos»
+    // para no dejar sin perfil las demás secciones.
+    nutritionHabits:
+      dto.nutrition_habits === null || dto.nutrition_habits === undefined
+        ? null
+        : toNutritionHabits(dto.nutrition_habits),
     projectedAt: dto.projected_at,
   };
 }

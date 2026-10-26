@@ -1,0 +1,134 @@
+<section class="training-page">
+  <header class="training-page__header">
+    <h1>{{ 'training.nutrition.editor.title' | translate }}</h1>
+    <p>{{ 'training.nutrition.editor.intro' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="training-page__card">
+    <mat-card-content>
+      <app-async-state
+        [state]="catalogState()"
+        emptyMessageKey="training.nutrition.editor.catalogEmpty"
+        (retry)="loadCatalog()"
+      >
+        @if (catalog(); as catalog) {
+          <!-- El formulario se conserva oculto para volver a editar sin perder datos. -->
+          <div [hidden]="step() !== 'edit'">
+            @if (step() === 'edit') {
+              <h2 #stepHeading tabindex="-1" class="training-page__step">
+                {{ 'training.nutrition.steps.edit' | translate }}
+              </h2>
+            }
+            <app-nutrition-plan-form
+              [catalog]="catalog"
+              [serverErrors]="serverErrors()"
+              (reviewed)="toReview($event)"
+              (edited)="onEdited()"
+            />
+          </div>
+
+          @if (step() === 'review') {
+            @if (draft(); as draft) {
+              <section data-testid="nutrition-review">
+                <h2 #stepHeading tabindex="-1" class="training-page__step">
+                  {{ 'training.nutrition.steps.review' | translate }}
+                </h2>
+                <p>
+                  {{
+                    'training.nutrition.review.message' | translate: { email: draft.athleteEmail }
+                  }}
+                </p>
+                <app-nutrition-plan-summary [plan]="draft" [catalog]="catalog" [headingLevel]="3">
+                  <dt>{{ 'training.nutrition.fields.athleteEmail' | translate }}</dt>
+                  <dd data-testid="nutrition-review-athlete">{{ draft.athleteEmail }}</dd>
+                </app-nutrition-plan-summary>
+
+                @if (failure(); as error) {
+                  <div class="training-page__error" role="alert" data-testid="nutrition-error">
+                    <p>{{ failureMessage(error) | translate }}</p>
+                    <p>{{ 'training.nutrition.errors.notSaved' | translate }}</p>
+                    @if (error.correlationId) {
+                      <p class="training-page__reference">
+                        {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                      </p>
+                    }
+                  </div>
+                }
+
+                <div class="training-page__actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="backToEdit()"
+                  >
+                    {{ 'training.nutrition.actions.backToEdit' | translate }}
+                  </button>
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="confirm()"
+                  >
+                    {{
+                      (submitting()
+                        ? 'training.nutrition.actions.assigning'
+                        : 'training.nutrition.actions.assign'
+                      ) | translate
+                    }}
+                  </button>
+                </div>
+              </section>
+            }
+          }
+
+          @if (step() === 'done') {
+            @if (created(); as result) {
+              <section role="status" data-testid="nutrition-created">
+                <h2 #stepHeading tabindex="-1" class="training-page__step">
+                  {{ 'training.nutrition.created.title' | translate }}
+                </h2>
+                <p>
+                  {{
+                    'training.nutrition.created.message'
+                      | translate: { title: result.plan.title, email: draft()?.athleteEmail }
+                  }}
+                </p>
+                @if (result.warnings.includes('nutrition_habits_missing')) {
+                  <div class="nutrition-page__notice" data-testid="nutrition-warning-habits">
+                    <p>{{ 'training.nutrition.warnings.nutrition_habits_missing' | translate }}</p>
+                  </div>
+                }
+                @if (result.replayed) {
+                  <p data-testid="nutrition-replayed">
+                    {{ 'training.nutrition.created.replayed' | translate }}
+                  </p>
+                }
+                <app-nutrition-plan-summary
+                  [plan]="result.plan"
+                  [catalog]="catalog"
+                  [headingLevel]="3"
+                >
+                  <dt>{{ 'training.nutrition.summary.status' | translate }}</dt>
+                  <dd>{{ 'training.nutrition.status.' + result.plan.status | translate }}</dd>
+                  <dt>{{ 'training.nutrition.summary.version' | translate }}</dt>
+                  <dd>{{ result.plan.version }}</dd>
+                  <dt>{{ 'training.nutrition.summary.createdAt' | translate }}</dt>
+                  <dd>{{ result.plan.createdAt | date: 'medium' }}</dd>
+                </app-nutrition-plan-summary>
+                <div class="training-page__actions">
+                  <a mat-stroked-button [routerLink]="[result.plan.id]">
+                    {{ 'training.nutrition.actions.viewPlan' | translate }}
+                  </a>
+                  <button mat-flat-button type="button" (click)="createAnother()">
+                    {{ 'training.nutrition.actions.createAnother' | translate }}
+                  </button>
+                </div>
+              </section>
+            }
+          }
+        }
+      </app-async-state>
+    </mat-card-content>
+  </mat-card>
+</section>

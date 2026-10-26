@@ -16,11 +16,17 @@ import { MatCardModule } from '@angular/material/card';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiError, toApiError } from '../../../../core/api/api-error';
-import { PROFILE_ERROR_CODES } from '../../../../core/api/bff-web/profile.api';
+import {
+  PROFILE_ERROR_CODES,
+  SPORT_HABITS_NOT_FOUND,
+} from '../../../../core/api/bff-web/profile.api';
 import { APP_CONFIG } from '../../../../core/config/app-config';
 import { AsyncState } from '../../../../shared/ui/async-state/async-state';
 import { ViewState, viewState } from '../../../../shared/ui/view-state';
+import { AccountStatementSection } from '../../../affiliation/account-statement/account-statement-section/account-statement-section';
+import { AccountSection } from '../account-form/account-section';
 import { DemographicForm } from '../demographic-form/demographic-form';
+import { NutritionHabitsForm } from '../nutrition-habits-form/nutrition-habits-form';
 import { PhysiologicalForm } from '../physiological-form/physiological-form';
 import { formatBirthDate, formatCountry, formatDecimal, formatInstant } from '../profile-format';
 import { ProfileGateway } from '../profile.gateway';
@@ -28,12 +34,20 @@ import {
   AthleteProfile,
   DemographicDraft,
   DemographicProfile,
+  NutritionHabits,
+  NutritionHabitsDraft,
   PhysiologicalDraft,
   PhysiologicalProfile,
   ProfileViolation,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
+  SPORT_HABITS_SECTIONS,
+  SportHabitsSectionName,
+  modifiedSportHabitsSections,
   newerSection,
 } from '../profile.model';
+import { SportHabitsForm } from '../sport-habits-form/sport-habits-form';
 
 const IDEMPOTENCY_KEY_REUSED = PROFILE_ERROR_CODES.idempotencyKeyReused;
 /** Reintentos automáticos como máximo de un comando ante fallos transitorios. */
@@ -47,6 +61,16 @@ export const PROFILE_PROJECTION_RETRY_DELAYS_MS = new InjectionToken<readonly nu
   'PROFILE_PROJECTION_RETRY_DELAYS_MS',
   { factory: () => [1_000, 2_000, 4_000] },
 );
+
+/**
+ * Secciones de «Mi perfil»: el deportista ve sus datos personales (HU002) y su
+ * perfil deportivo (HU005, HU006 y HU009); el organizador y el profesional, solo
+ * sus datos personales. Lo fija la ruta de cada actor.
+ */
+export type ProfileScope = 'athlete' | 'account';
+export const PROFILE_SCOPE = new InjectionToken<ProfileScope>('PROFILE_SCOPE', {
+  factory: () => 'athlete',
+});
 
 /** Mensaje de la sección tras el último comando. */
 type SectionMessage =
@@ -97,22 +121,37 @@ class SectionState<T extends { readonly version: number }> {
 }
 
 /**
- * Mi perfil (HU005) en `/deportista/perfil`. El deportista registra o reemplaza
- * sus datos demográficos y fisiológicos y ve los valores que confirmó el backend,
- * incluido el IMC estimado que este calcula (CA1). Las reglas incumplidas llegan
- * del backend y se marcan por campo (CA2, CA3). Los valores de salud solo viven
- * en la memoria de la pantalla (CA4). Un `409 version_conflict` no sobrescribe:
- * se recarga el perfil y se muestran los valores vigentes (CA6). La proyección es
- * eventual: se conserva la respuesta del comando mientras no la alcance.
+ * Mi perfil. Para los tres actores (`/deportista/perfil`, `/organizador/perfil` y
+ * `/profesional/perfil`) empieza con «Datos personales» (HU002, `<app-account-section>`).
+ * En `/deportista/perfil` sigue el perfil deportivo (HU005, HU006 y HU009): el deportista registra o
+ * reemplaza sus datos demográficos y fisiológicos y sus hábitos deportivos y
+ * alimenticios, y ve
+ * los valores que confirmó el backend, incluido el IMC estimado que este calcula
+ * (HU005 CA1, HU006 CA1). Las reglas incumplidas llegan del backend y se marcan
+ * por campo, con la fila del deporte cuando aplica (HU005 CA2 y CA3, HU006 CA2).
+ * Editar hábitos deportivos ya registrados es la actualización parcial de HU008
+ * (ADR-035): solo viajan las secciones modificadas y el backend conserva las demás.
+ * Los valores solo viven en la memoria de la pantalla (HU005 CA4). Un
+ * `409 version_conflict` no sobrescribe: se recarga el perfil y se muestran los
+ * valores vigentes (HU005 CA6, HU006 CA4). La proyección es eventual: se
+ * conserva la respuesta del comando mientras no la alcance. Registrar hábitos
+ * no crea planes ni recomendaciones. Los hábitos alimenticios exigen el
+ * consentimiento de datos de salud, como la sección fisiológica (HU009, ADR-035),
+ * y no sustituyen la valoración de un profesional. Para los tres actores termina
+ * con el «Estado de cuenta» de Afiliación (HU007, `<app-account-statement-section>`).
  */
 @Component({
   selector: 'app-profile-page',
   imports: [
+    AccountSection,
+    AccountStatementSection,
     AsyncState,
     DemographicForm,
     MatButtonModule,
     MatCardModule,
+    NutritionHabitsForm,
     PhysiologicalForm,
+    SportHabitsForm,
     TranslatePipe,
   ],
   templateUrl: './profile-page.html',
@@ -126,13 +165,26 @@ export class ProfilePage {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly projectionDelays = inject(PROFILE_PROJECTION_RETRY_DELAYS_MS);
 
-  /** Versión vigente del consentimiento; `null` deja la sección fisiológica no disponible. */
+  /**
+   * Versión vigente del consentimiento; `null` deja no disponibles la sección
+   * fisiológica y los hábitos alimenticios.
+   */
   protected readonly consentVersion = inject(APP_CONFIG).healthDataConsentVersion;
   protected readonly maxRetries = MAX_AUTOMATIC_RETRIES;
+  protected readonly sectionCount = SPORT_HABITS_SECTIONS.length;
+  /** El organizador y el profesional no tienen perfil deportivo: no se consulta. */
+  protected readonly athleteSections = inject(PROFILE_SCOPE) === 'athlete';
 
   protected readonly state = signal<ViewState<AthleteProfile>>(viewState.loading());
   protected readonly demographic = new SectionState<DemographicProfile>();
   protected readonly physiological = new SectionState<PhysiologicalProfile>();
+  protected readonly sportHabits = new SectionState<SportHabits>();
+  protected readonly nutritionHabits = new SectionState<NutritionHabits>();
+  /**
+   * Secciones de los hábitos deportivos que se enviaron en la última
+   * actualización parcial (HU008); `null` tras un registro (HU006).
+   */
+  protected readonly sportHabitsUpdated = signal<readonly SportHabitsSectionName[] | null>(null);
 
   /** Se agotaron las recargas automáticas o una recarga falló: se ofrece actualizar. */
   protected readonly projectionStalled = signal(false);
@@ -148,7 +200,9 @@ export class ProfilePage {
       this.destroyed = true;
       this.clearRefreshTimer();
     });
-    void this.load();
+    if (this.athleteSections) {
+      void this.load();
+    }
   }
 
   /** Carga inicial; también es el reintento de `<app-async-state>`. */
@@ -204,6 +258,40 @@ export class ProfilePage {
     );
   }
 
+  /**
+   * Sin hábitos vigentes los registra (HU006, `PUT`); con hábitos, envía solo las
+   * secciones que cambiaron (HU008, `PATCH`) con la versión mostrada. Si no cambió
+   * nada no se envía: el backend rechazaría un cuerpo sin secciones.
+   */
+  protected saveSportHabits(draft: SportHabitsDraft): Promise<void> {
+    const current = this.sportHabits.displayed();
+    if (current === null) {
+      this.sportHabitsUpdated.set(null);
+      return this.save(this.sportHabits, 'sport-habits', (expected, key, onRetry) =>
+        this.gateway.saveSportHabits(draft, expected, key, onRetry),
+      );
+    }
+    const sections = modifiedSportHabitsSections(current, draft);
+    if (sections.length === 0) {
+      return Promise.resolve();
+    }
+    this.sportHabitsUpdated.set(sections);
+    return this.save(this.sportHabits, 'sport-habits', (expected, key, onRetry) =>
+      this.gateway.updateSportHabits(
+        { draft, sections },
+        expected ?? current.version,
+        key,
+        onRetry,
+      ),
+    );
+  }
+
+  protected saveNutritionHabits(draft: NutritionHabitsDraft): Promise<void> {
+    return this.save(this.nutritionHabits, 'nutrition-habits', (expected, key, onRetry) =>
+      this.gateway.saveNutritionHabits(draft, expected, key, onRetry),
+    );
+  }
+
   /** Actualización manual cuando la proyección sigue atrasada. */
   protected refreshNow(): void {
     this.refreshRound = 0;
@@ -211,9 +299,13 @@ export class ProfilePage {
   }
 
   protected failureMessage(error: ApiError): string {
-    return error.code === IDEMPOTENCY_KEY_REUSED
-      ? 'profile.errors.idempotencyKeyReused'
-      : `common.errors.${error.kind}`;
+    if (error.code === IDEMPOTENCY_KEY_REUSED) {
+      return 'profile.errors.idempotencyKeyReused';
+    }
+    if (error.code === SPORT_HABITS_NOT_FOUND) {
+      return 'profile.habits.errors.notFound';
+    }
+    return `common.errors.${error.kind}`;
   }
 
   /** Tras agotar los reintentos automáticos, volver a guardar no duplica el registro. */
@@ -239,7 +331,7 @@ export class ProfilePage {
 
   private async save<T extends { readonly version: number }>(
     section: SectionState<T>,
-    prefix: 'demographic' | 'physiological',
+    prefix: 'demographic' | 'physiological' | 'sport-habits' | 'nutrition-habits',
     send: (
       expectedVersion: number | null,
       idempotencyKey: string,
@@ -334,7 +426,11 @@ export class ProfilePage {
     }
     this.refreshing.set(false);
 
-    const pending = this.demographic.pending() || this.physiological.pending();
+    const pending =
+      this.demographic.pending() ||
+      this.physiological.pending() ||
+      this.sportHabits.pending() ||
+      this.nutritionHabits.pending();
     if (failed) {
       this.projectionStalled.set(true);
     } else if (!pending) {
@@ -350,6 +446,8 @@ export class ProfilePage {
   private applyProjection(profile: AthleteProfile): void {
     this.demographic.projected.set(profile.demographic);
     this.physiological.projected.set(profile.physiological);
+    this.sportHabits.projected.set(profile.sportHabits);
+    this.nutritionHabits.projected.set(profile.nutritionHabits);
   }
 
   private clearRefreshTimer(): void {

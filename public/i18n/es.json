@@ -242,14 +242,229 @@
   "profile": {
     "title": "Mi perfil",
     "intro": "Consulta y mantén al día la información de tu perfil de deportista.",
-    "upcoming": "Próximamente",
+    "introAccount": "Consulta y mantén al día tus datos personales.",
     "personal": {
       "title": "Datos personales",
-      "upcoming": "Pronto podrás actualizar tu nombre y tu correo desde aquí."
+      "intro": "Tu nombre y el correo con el que inicias sesión. Solo tú puedes cambiarlos.",
+      "fields": {
+        "fullName": "Nombre completo",
+        "email": "Correo electrónico"
+      },
+      "hints": {
+        "email": "Si lo cambias, tu sesión sigue abierta y la próxima vez inicias sesión con el correo nuevo."
+      },
+      "actions": {
+        "edit": "Editar datos personales",
+        "save": "Guardar datos personales",
+        "cancel": "Cancelar"
+      },
+      "saved": "Guardamos tus datos personales.",
+      "replayed": "Esta confirmación corresponde a un envío anterior: no se repitió el cambio.",
+      "conflict": "Tus datos personales cambiaron desde otra sesión. No sobrescribimos nada: te mostramos los datos vigentes para que los revises.",
+      "emailTaken": "No puedes usar este correo. Ingresa otro.",
+      "notProjected": "Tus datos personales aún se están preparando. Vuelve a intentarlo en unos segundos.",
+      "retrying": "Reintentando el envío ({{attempt}} de {{max}})…",
+      "retryHint": "Puedes volver a intentarlo: no se repetirá el cambio."
     },
     "habits": {
       "title": "Hábitos deportivos",
-      "upcoming": "Pronto podrás registrar los deportes que practicas y tu disponibilidad."
+      "intro": "Cuéntanos qué deportes practicas y cuándo tienes tiempo para entrenar. Registrarlos no crea planes ni recomendaciones.",
+      "empty": "Aún no has registrado tus hábitos deportivos. Regístralos para que tu experiencia se ajuste a cómo entrenas.",
+      "notSpecified": "Sin especificar",
+      "actions": {
+        "register": "Registrar hábitos deportivos",
+        "edit": "Editar hábitos deportivos",
+        "save": "Guardar hábitos deportivos",
+        "cancel": "Cancelar",
+        "addSport": "Agregar deporte",
+        "removeSport": "Quitar",
+        "removeSportN": "Quitar el deporte {{n}}"
+      },
+      "fields": {
+        "sports": "Deportes que practicas",
+        "sportN": "Deporte {{n}}",
+        "sport": "Deporte",
+        "frequencyPerWeek": "Veces por semana",
+        "sessionDurationMinutes": "Duración por sesión (min)",
+        "intensity": "Intensidad",
+        "level": "Nivel",
+        "yearsPracticing": "Años practicándolo (opcional)",
+        "days": "Días disponibles",
+        "timeSlots": "Franjas horarias disponibles",
+        "primaryGoal": "Objetivo principal (opcional)"
+      },
+      "hints": {
+        "sports": "Registra de {{min}} a {{max}} deportes, sin repetir ninguno.",
+        "maxSports": "Ya agregaste el máximo de {{max}} deportes.",
+        "range": "Entre {{min}} y {{max}}.",
+        "partial": "Solo se guardan las secciones que cambies (deportes, disponibilidad u objetivo); las demás se conservan."
+      },
+      "units": {
+        "minutes": "min"
+      },
+      "validation": {
+        "daysRequired": "Marca al menos un día disponible.",
+        "timeSlotsRequired": "Marca al menos una franja horaria."
+      },
+      "intensities": {
+        "LOW": "Baja",
+        "MODERATE": "Moderada",
+        "HIGH": "Alta"
+      },
+      "levels": {
+        "BEGINNER": "Principiante",
+        "INTERMEDIATE": "Intermedio",
+        "ADVANCED": "Avanzado"
+      },
+      "days": {
+        "MON": "Lunes",
+        "TUE": "Martes",
+        "WED": "Miércoles",
+        "THU": "Jueves",
+        "FRI": "Viernes",
+        "SAT": "Sábado",
+        "SUN": "Domingo"
+      },
+      "timeSlots": {
+        "MORNING": "Mañana",
+        "AFTERNOON": "Tarde",
+        "EVENING": "Primeras horas de la noche",
+        "NIGHT": "Noche"
+      },
+      "goals": {
+        "HEALTH": "Salud",
+        "PERFORMANCE": "Rendimiento",
+        "WEIGHT_MANAGEMENT": "Control de peso",
+        "RECREATION": "Recreación",
+        "COMPETITION": "Competencia"
+      },
+      "summary": {
+        "sports": "Deportes",
+        "frequencyOne": "{{count}} vez por semana",
+        "frequencyOther": "{{count}} veces por semana",
+        "duration": "{{minutes}} min por sesión",
+        "intensity": "Intensidad: {{value}}",
+        "level": "Nivel: {{value}}",
+        "yearsOne": "{{count}} año practicándolo",
+        "yearsOther": "{{count}} años practicándolo",
+        "yearsNotSpecified": "Años de práctica sin especificar",
+        "days": "Días disponibles",
+        "timeSlots": "Franjas horarias",
+        "primaryGoal": "Objetivo principal",
+        "updatedAt": "Última actualización"
+      },
+      "saved": {
+        "created": "Registramos tus hábitos deportivos.",
+        "replaced": "Actualizamos tus hábitos deportivos.",
+        "updated": "Actualizamos tus hábitos deportivos.",
+        "updatedSections": "Secciones actualizadas:",
+        "preserved": "Lo que no cambiaste se conservó."
+      },
+      "conflict": "Tus hábitos deportivos cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus hábitos deportivos ({{attempt}} de {{max}})…",
+      "issues": {
+        "duplicateSport": "Este deporte ya está en otra fila.",
+        "tooManySports": "Puedes registrar como máximo {{max}} deportes."
+      },
+      "violationFields": {
+        "sports": "Deportes",
+        "row": "Deporte {{n}}",
+        "sport": "Deporte {{n}} (deporte)",
+        "frequencyPerWeek": "Deporte {{n}} (veces por semana)",
+        "sessionDurationMinutes": "Deporte {{n}} (duración por sesión)",
+        "intensity": "Deporte {{n}} (intensidad)",
+        "level": "Deporte {{n}} (nivel)",
+        "yearsPracticing": "Deporte {{n}} (años practicándolo)",
+        "days": "Días disponibles",
+        "timeSlots": "Franjas horarias",
+        "availability": "Disponibilidad",
+        "primaryGoal": "Objetivo principal"
+      },
+      "unchanged": "No cambiaste ningún dato: no hay nada que guardar.",
+      "sections": {
+        "sports": "Deportes",
+        "availability": "Disponibilidad",
+        "primaryGoal": "Objetivo principal"
+      },
+      "errors": {
+        "notFound": "Aún no hay hábitos deportivos que actualizar. Actualiza la página y regístralos primero."
+      }
+    },
+    "nutrition": {
+      "title": "Hábitos alimenticios",
+      "intro": "Cuéntanos cómo te alimentas: patrón, restricciones, alergias, comidas por día e hidratación. Son datos de salud: solo tú puedes consultarlos y registrarlos no crea planes ni recomendaciones.",
+      "empty": "Aún no has registrado tus hábitos alimenticios. Regístralos para que tu experiencia tenga en cuenta tus restricciones y alergias.",
+      "unavailable": "El registro de hábitos alimenticios no está disponible en este momento porque falta la versión vigente del consentimiento de datos de salud.",
+      "disclaimer": "Esta información es declarativa: no es un diagnóstico ni sustituye la valoración de un profesional de la salud.",
+      "conflict": "Tus hábitos alimenticios cambiaron en otra sesión y no se sobrescribieron. Te mostramos los valores vigentes; revísalos antes de volver a editarlos.",
+      "retrying": "Reintentando guardar tus hábitos alimenticios ({{attempt}} de {{max}})…",
+      "fields": {
+        "dietPattern": "Patrón alimentario",
+        "restrictions": "Restricciones alimentarias",
+        "allergies": "Alergias alimentarias",
+        "mealsPerDay": "Comidas por día",
+        "hydration": "Hidratación diaria (opcional)",
+        "consent": "Consentimiento de datos de salud"
+      },
+      "hints": {
+        "hydration": "Litros por día, entre {{min}} y {{max}}, con un decimal como máximo.",
+        "optionalList": "Marca todas las que apliquen; puedes no marcar ninguna."
+      },
+      "units": {
+        "liters": "L"
+      },
+      "patterns": {
+        "OMNIVORE": "Omnívoro",
+        "VEGETARIAN": "Vegetariano",
+        "VEGAN": "Vegano",
+        "PESCATARIAN": "Pescetariano",
+        "FLEXITARIAN": "Flexitariano"
+      },
+      "restrictions": {
+        "GLUTEN_FREE": "Sin gluten",
+        "LACTOSE_FREE": "Sin lactosa",
+        "LOW_SODIUM": "Bajo en sodio",
+        "LOW_SUGAR": "Bajo en azúcar",
+        "KETO": "Cetogénica",
+        "HALAL": "Halal",
+        "KOSHER": "Kosher"
+      },
+      "allergies": {
+        "PEANUTS": "Maní",
+        "TREE_NUTS": "Frutos secos de árbol",
+        "MILK": "Leche",
+        "EGGS": "Huevo",
+        "WHEAT": "Trigo",
+        "SOY": "Soya",
+        "FISH": "Pescado",
+        "SHELLFISH": "Mariscos",
+        "SESAME": "Ajonjolí"
+      },
+      "consent": {
+        "label": "Acepto que SportApp trate mis datos de salud, incluidas mis restricciones y alergias alimentarias, para personalizar mi experiencia (versión {{version}}).",
+        "hint": "Debes aceptarlo cada vez que guardes tus hábitos alimenticios.",
+        "requiredToSave": "Marca la casilla de consentimiento para habilitar «Guardar hábitos alimenticios».",
+        "issues": {
+          "required": "Debes aceptar el consentimiento de datos de salud para guardar tus hábitos alimenticios.",
+          "unsupported_consent_version": "La versión del consentimiento ya no está vigente. Recarga la página y acepta la versión actual para guardar."
+        }
+      },
+      "summary": {
+        "none": "Ninguna",
+        "notProvided": "Sin especificar",
+        "liters": "{{value}} L por día",
+        "updatedAt": "Última actualización"
+      },
+      "saved": {
+        "created": "Registramos tus hábitos alimenticios.",
+        "replaced": "Actualizamos tus hábitos alimenticios."
+      },
+      "actions": {
+        "register": "Registrar hábitos alimenticios",
+        "edit": "Editar hábitos alimenticios",
+        "save": "Guardar hábitos alimenticios",
+        "cancel": "Cancelar"
+      }
     },
     "hu005": {
       "title": "Datos demográficos y fisiológicos",
@@ -639,6 +854,393 @@
         "shortcut": "También puedes abrir el historial desde un plan que hayas asignado.",
         "goToPlans": "Ir a planes de entrenamiento"
       }
+    },
+    "nutrition": {
+      "editor": {
+        "title": "Crear plan de alimentación",
+        "intro": "Diseña un menú diario con alimentos del catálogo y asígnalo a un deportista que te haya autorizado.",
+        "catalogEmpty": "El catálogo de alimentos no está disponible en este momento."
+      },
+      "steps": {
+        "edit": "Datos del plan",
+        "review": "Confirma la asignación"
+      },
+      "sections": {
+        "athlete": "Deportista",
+        "plan": "Plan y periodo"
+      },
+      "fields": {
+        "athleteEmail": "Correo del deportista",
+        "title": "Título",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "objectives": "Objetivos",
+        "objectiveN": "Objetivo {{n}}",
+        "meals": "Menú diario",
+        "mealN": "Comida {{n}}",
+        "mealType": "Tipo de comida",
+        "itemN": "Alimento {{n}}",
+        "food": "Alimento",
+        "quantity": "Cantidad",
+        "unit": "Unidad"
+      },
+      "hints": {
+        "athleteEmail": "Correo exacto con el que el deportista se registró en SportApp.",
+        "period": "El periodo puede durar hasta 26 semanas.",
+        "objectives": "Entre {{min}} y {{max}} objetivos.",
+        "meals": "Entre {{min}} y {{max}} comidas. El menú se repite cada día del periodo.",
+        "items": "Entre {{min}} y {{max}} alimentos por comida.",
+        "quantity": "Entre 0,1 y 5000, con un decimal como máximo.",
+        "unit": "Elige primero el alimento."
+      },
+      "actions": {
+        "addObjective": "Agregar objetivo",
+        "removeObjective": "Quitar el objetivo {{n}}",
+        "addMeal": "Agregar comida",
+        "removeMeal": "Quitar la comida {{n}}",
+        "removeMealShort": "Quitar comida",
+        "addItem": "Agregar alimento",
+        "addItemTo": "Agregar alimento a la comida {{n}}",
+        "removeItem": "Quitar el alimento {{n}} de la comida {{meal}}",
+        "remove": "Quitar",
+        "review": "Revisar plan",
+        "backToEdit": "Volver a editar",
+        "assign": "Confirmar y asignar",
+        "assigning": "Asignando…",
+        "viewPlan": "Consultar el plan",
+        "createAnother": "Crear otro plan",
+        "loadMore": "Cargar más"
+      },
+      "errors": {
+        "rulesTitle": "El plan no se guardó porque no cumple estas reglas:",
+        "athleteNotAuthorized": "No puedes asignar planes a este correo: no corresponde a un deportista que te haya autorizado.",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa el plan y vuelve a confirmarlo.",
+        "notSaved": "El plan no se guardó."
+      },
+      "rules": {
+        "item": "{{field}}: {{rule}}",
+        "fieldPlan": "Plan",
+        "fieldObjective": "Objetivo {{n}}",
+        "fieldMealType": "Tipo de la comida {{n}}",
+        "fieldMealItems": "Alimentos de la comida {{n}}",
+        "fieldItem": {
+          "foodCode": "Comida {{meal}}, alimento {{item}}",
+          "quantity": "Cantidad del alimento {{item}} de la comida {{meal}}",
+          "unit": "Unidad del alimento {{item}} de la comida {{meal}}"
+        },
+        "end_date_before_start_date": "la fecha de fin es anterior a la de inicio.",
+        "period_too_long": "el periodo supera la duración máxima permitida.",
+        "unknown_value": "el valor no pertenece al catálogo.",
+        "unit_not_allowed": "la unidad no está permitida para este alimento.",
+        "out_of_range": "el valor está fuera del rango permitido.",
+        "conflicts_with_allergy": "contiene un alérgeno que el deportista registró.",
+        "conflicts_with_restriction": "no es compatible con una restricción alimentaria del deportista.",
+        "unknown": "no cumple las reglas del plan."
+      },
+      "review": {
+        "message": "Revisa el plan antes de asignarlo a {{email}}. Al confirmar, el deportista podrá consultarlo."
+      },
+      "summary": {
+        "period": "Periodo",
+        "periodValue": "Del {{start}} al {{end}}",
+        "meals": "Menú diario ({{count}})",
+        "mealsHint": "El menú se repite cada día del periodo.",
+        "mealCaption": "Comida {{n}}: {{meal}}",
+        "amount": "{{value}} {{unit}}",
+        "status": "Estado",
+        "version": "Versión",
+        "createdAt": "Creado"
+      },
+      "status": {
+        "ASSIGNED": "Asignado"
+      },
+      "created": {
+        "title": "Plan asignado",
+        "message": "El plan «{{title}}» quedó asignado a {{email}}.",
+        "replayed": "Este plan ya se había registrado con esta misma confirmación; no se creó otro."
+      },
+      "warnings": {
+        "nutrition_habits_missing": "El deportista aún no ha registrado sus hábitos alimenticios: el plan se creó sin poder validar alergias ni restricciones."
+      },
+      "detail": {
+        "title": "Plan de alimentación",
+        "notFound": "El plan aún no está disponible para consulta o no tienes acceso a él. Si acabas de crearlo, espera unos segundos y vuelve a intentarlo.",
+        "authorizationRevoked": "Ya no tienes una autorización vigente de este deportista, así que no puedes consultar el plan."
+      },
+      "athlete": {
+        "title": "Mi alimentación",
+        "intro": "Consulta los planes de alimentación que te asignaron los profesionales que autorizaste.",
+        "plansTitle": "Planes de alimentación",
+        "empty": "Aún no tienes planes de alimentación. Si un profesional acaba de asignarte uno, aparecerá en unos segundos.",
+        "countMore": "Planes mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Planes mostrados: {{count}}."
+      },
+      "mealTypes": {
+        "BREAKFAST": "Desayuno",
+        "LUNCH": "Almuerzo",
+        "DINNER": "Cena",
+        "SNACK": "Refrigerio",
+        "HYDRATION": "Hidratación"
+      },
+      "categories": {
+        "GRAIN": "Cereales y granos",
+        "PROTEIN": "Proteínas",
+        "DAIRY": "Lácteos",
+        "FRUIT": "Frutas",
+        "VEGETABLE": "Verduras",
+        "LEGUME": "Legumbres",
+        "FAT": "Grasas",
+        "BEVERAGE": "Bebidas",
+        "SUPPLEMENT": "Suplementos"
+      },
+      "units": {
+        "G": "Gramos (g)",
+        "ML": "Mililitros (ml)",
+        "UNIT": "Unidades",
+        "CUP": "Tazas",
+        "TBSP": "Cucharadas"
+      },
+      "unitsShort": {
+        "G": "g",
+        "ML": "ml",
+        "UNIT": "und.",
+        "CUP": "taza(s)",
+        "TBSP": "cda."
+      }
+    },
+    "routes": {
+      "title": "Rutas",
+      "intro": "Publica rutas para que los deportistas las reciban como sugerencia en la app móvil. Indica el deporte, la distancia, la dificultad, la ciudad, el punto de inicio y, si quieres, puntos intermedios.",
+      "form": {
+        "title": "Publicar una ruta"
+      },
+      "sections": {
+        "route": "Datos de la ruta",
+        "startPoint": "Punto de inicio"
+      },
+      "fields": {
+        "name": "Nombre",
+        "description": "Descripción (opcional)",
+        "sport": "Deporte",
+        "distanceKm": "Distancia (km)",
+        "difficulty": "Dificultad",
+        "city": "Ciudad",
+        "countryCode": "País (código ISO de 2 letras)",
+        "startLat": "Latitud de inicio",
+        "startLng": "Longitud de inicio",
+        "waypoints": "Puntos intermedios (opcionales)"
+      },
+      "waypointN": "Punto intermedio {{n}}",
+      "waypointLat": "Latitud del punto {{n}}",
+      "waypointLng": "Longitud del punto {{n}}",
+      "hints": {
+        "distanceKm": "Entre 0,1 y 500,0 km, con un decimal como máximo.",
+        "countryCode": "Por ejemplo, CO.",
+        "coordinates": "En grados decimales: la latitud va de -90 a 90 y la longitud de -180 a 180. Por ejemplo, 4,6584 y -74,0937.",
+        "waypoints": "En orden de recorrido; hasta {{max}}. No se carga ningún trazado ni mapa."
+      },
+      "units": {
+        "km": "km"
+      },
+      "difficulties": {
+        "LOW": "Baja",
+        "MODERATE": "Moderada",
+        "HIGH": "Alta"
+      },
+      "status": {
+        "PUBLISHED": "Publicada",
+        "RETIRED": "Retirada"
+      },
+      "validation": {
+        "distanceFormat": "Usa un número con un decimal como máximo, por ejemplo 12,5.",
+        "distanceRange": "Debe estar entre 0,1 y 500,0 km."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "unknown": "El valor no es válido.",
+        "required": "Este dato es obligatorio.",
+        "invalid_length": "La longitud no es válida.",
+        "out_of_range": "El valor está fuera del rango permitido.",
+        "unknown_value": "El valor no es válido.",
+        "field_not_allowed": "Este dato no se puede enviar."
+      },
+      "violationFields": {
+        "waypoint": "Punto intermedio {{n}}",
+        "waypointLat": "Punto intermedio {{n}} (latitud)",
+        "waypointLng": "Punto intermedio {{n}} (longitud)",
+        "request": "Solicitud"
+      },
+      "values": {
+        "distance": "{{value}} km",
+        "point": "{{lat}}, {{lng}}"
+      },
+      "list": {
+        "title": "Tus rutas",
+        "empty": "Aún no has publicado rutas.",
+        "place": "Lugar",
+        "noWaypoints": "Sin puntos intermedios",
+        "publishedAt": "Publicada",
+        "retiredAt": "Retirada",
+        "version": "Versión",
+        "moreError": "No pudimos cargar más rutas. Inténtalo de nuevo.",
+        "note": "Una ruta retirada deja de sugerirse, pero se conserva en tu lista. Publicar una ruta no valora su seguridad."
+      },
+      "published": {
+        "message": "Publicamos la ruta «{{name}}».",
+        "replayed": "Esta confirmación corresponde a un envío anterior: no se publicó otra ruta."
+      },
+      "retire": {
+        "confirm": "¿Retirar «{{name}}»? Dejará de sugerirse a los deportistas; seguirá en tu lista como retirada."
+      },
+      "retired": {
+        "message": "Retiramos la ruta. Ya no se sugerirá a los deportistas."
+      },
+      "retrying": "Reintentando publicar la ruta ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "Revisa estos datos:",
+        "idempotencyKeyReused": "No pudimos confirmar la publicación. Revisa los datos y vuelve a publicar.",
+        "retryHint": "Puedes volver a intentarlo: no se publicará una ruta duplicada.",
+        "versionConflict": "La ruta cambió desde que la cargaste y no se retiró. Actualiza la lista y vuelve a intentarlo.",
+        "routeNotFound": "La ruta no existe o no es tuya."
+      },
+      "actions": {
+        "new": "Publicar una ruta",
+        "publish": "Publicar ruta",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar",
+        "addWaypoint": "Agregar punto intermedio",
+        "removeWaypointN": "Quitar el punto intermedio {{n}}",
+        "retire": "Retirar",
+        "retireNamed": "Retirar la ruta «{{name}}»",
+        "confirmRetire": "Sí, retirar",
+        "retiring": "Retirando…",
+        "refresh": "Actualizar lista",
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando…"
+      }
+    },
+    "templates": {
+      "title": "Plantillas de entrenamiento",
+      "intro": "Publica plantillas de plan para que los deportistas las reciban como sugerencia en la app móvil según su deporte y objetivo. Una plantilla no se asigna a nadie: para asignar un plan a un deportista usa «Crear planes de entrenamiento».",
+      "form": {
+        "title": "Publicar una plantilla"
+      },
+      "sections": {
+        "template": "Datos de la plantilla"
+      },
+      "fields": {
+        "title": "Título",
+        "objectives": "Objetivos",
+        "sport": "Deporte",
+        "goal": "Objetivo principal",
+        "level": "Nivel",
+        "durationWeeks": "Duración (semanas)",
+        "weeklySessions": "Sesiones de la semana tipo"
+      },
+      "sessionN": "Sesión {{n}}",
+      "sessionDay": "Día de la sesión {{n}}",
+      "sessionMinutes": "Duración de la sesión {{n}} (minutos)",
+      "sessionDescription": "Descripción de la sesión {{n}}",
+      "hints": {
+        "objectives": "Entre {{min}} y {{max}} caracteres.",
+        "durationWeeks": "Un número entero de {{min}} a {{max}}.",
+        "durationMinutes": "De {{min}} a {{max}} minutos.",
+        "weeklySessions": "Entre {{min}} y {{max}} sesiones, en el orden en que se realizan durante la semana. Puedes repetir un día."
+      },
+      "units": {
+        "minutes": "min"
+      },
+      "goals": {
+        "HEALTH": "Salud",
+        "PERFORMANCE": "Rendimiento",
+        "WEIGHT_MANAGEMENT": "Control de peso",
+        "RECREATION": "Recreación",
+        "COMPETITION": "Competencia"
+      },
+      "levels": {
+        "BEGINNER": "Principiante",
+        "INTERMEDIATE": "Intermedio",
+        "ADVANCED": "Avanzado"
+      },
+      "days": {
+        "MON": "Lunes",
+        "TUE": "Martes",
+        "WED": "Miércoles",
+        "THU": "Jueves",
+        "FRI": "Viernes",
+        "SAT": "Sábado",
+        "SUN": "Domingo"
+      },
+      "status": {
+        "PUBLISHED": "Publicada",
+        "RETIRED": "Retirada"
+      },
+      "validation": {
+        "integer": "Usa un número entero."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "unknown": "El valor no es válido.",
+        "required": "Este dato es obligatorio.",
+        "invalid_length": "La longitud no es válida.",
+        "out_of_range": "El valor está fuera del rango permitido.",
+        "unknown_value": "El valor no es válido.",
+        "not_integer": "Debe ser un número entero.",
+        "field_not_allowed": "Este dato no se puede enviar."
+      },
+      "violationFields": {
+        "session": "Sesión {{n}}",
+        "sessionDayOfWeek": "Sesión {{n}} (día)",
+        "sessionDescription": "Sesión {{n}} (descripción)",
+        "sessionDurationMinutes": "Sesión {{n}} (duración)",
+        "request": "Solicitud"
+      },
+      "values": {
+        "sessionsSummary": "{{count}} por semana · {{minutes}} min en total",
+        "minutes": "{{value}} min"
+      },
+      "list": {
+        "title": "Tus plantillas",
+        "empty": "Aún no has publicado plantillas.",
+        "publishedAt": "Publicada",
+        "retiredAt": "Retirada",
+        "version": "Versión",
+        "moreError": "No pudimos cargar más plantillas. Inténtalo de nuevo.",
+        "note": "Una plantilla retirada deja de sugerirse, pero se conserva en tu lista. Sugerir una plantilla no la asigna ni inicia el plan."
+      },
+      "published": {
+        "message": "Publicamos la plantilla «{{title}}».",
+        "replayed": "Esta confirmación corresponde a un envío anterior: no se publicó otra plantilla."
+      },
+      "retire": {
+        "confirm": "¿Retirar «{{title}}»? Dejará de sugerirse a los deportistas; seguirá en tu lista como retirada."
+      },
+      "retired": {
+        "message": "Retiramos la plantilla. Ya no se sugerirá a los deportistas."
+      },
+      "retrying": "Reintentando publicar la plantilla ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "Revisa estos datos:",
+        "idempotencyKeyReused": "No pudimos confirmar la publicación. Revisa los datos y vuelve a publicar.",
+        "retryHint": "Puedes volver a intentarlo: no se publicará una plantilla duplicada.",
+        "versionConflict": "La plantilla cambió desde que la cargaste y no se retiró. Actualiza la lista y vuelve a intentarlo.",
+        "templateNotFound": "La plantilla no existe o no es tuya."
+      },
+      "actions": {
+        "new": "Publicar una plantilla",
+        "publish": "Publicar plantilla",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar",
+        "addSession": "Agregar sesión",
+        "removeSessionN": "Quitar la sesión {{n}}",
+        "retire": "Retirar",
+        "retireNamed": "Retirar la plantilla «{{title}}»",
+        "confirmRetire": "Sí, retirar",
+        "retiring": "Retirando…",
+        "refresh": "Actualizar lista",
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando…"
+      }
     }
   },
   "shell": {
@@ -652,7 +1254,8 @@
       "health": "Salud",
       "nutrition": "Alimentación",
       "calendar": "Calendario",
-      "account": "Mi cuenta"
+      "account": "Mi cuenta",
+      "routes": "Rutas"
     },
     "items": {
       "home": "Inicio",
@@ -674,9 +1277,12 @@
       "nutrition-plans": "Crear planes de alimentación",
       "athlete-training-plans": "Planes de entrenamiento",
       "athlete-training-history": "Mi historial de entrenamiento",
+      "athlete-nutrition": "Mi alimentación",
       "athlete-services": "Servicios",
       "sport-calendar": "Calendario deportivo",
-      "sports-medicine": "Servicios médicos y deportivos"
+      "sports-medicine": "Servicios médicos y deportivos",
+      "organizer-routes": "Rutas",
+      "training-templates": "Plantillas de entrenamiento"
     },
     "plan": {
       "title": "Opciones de tu plan",
@@ -854,9 +1460,495 @@
         "idempotencyKeyReused": "No pudimos confirmar esta publicación. Inténtalo de nuevo.",
         "retryHint": "Si vuelves a intentarlo, el evento no se publicará dos veces."
       }
+    },
+    "calendar": {
+      "title": "Calendario de eventos",
+      "intro": "Consulta los eventos publicados para elegir fechas con menos coincidencias con tu público.",
+      "browserZone": "Los horarios se muestran en tu zona horaria ({{zone}}).",
+      "filtersLabel": "Periodo y filtros del calendario",
+      "modeLabel": "Vista del calendario",
+      "modes": {
+        "month": "Mes",
+        "list": "Lista"
+      },
+      "actions": {
+        "previousMonth": "Mes anterior",
+        "nextMonth": "Mes siguiente",
+        "apply": "Consultar",
+        "showOwnMonth": "Ver el mes de mi evento",
+        "loadMore": "Cargar más"
+      },
+      "fields": {
+        "from": "Desde",
+        "to": "Hasta",
+        "discipline": "Disciplina",
+        "city": "Ciudad",
+        "cursor": "Página",
+        "limit": "Tamaño de página",
+        "query": "Consulta"
+      },
+      "hints": {
+        "period": "Ambos días incluidos; hasta {{max}} días.",
+        "filter": "Opcional. No distingue mayúsculas ni tildes."
+      },
+      "own": {
+        "title": "Coincidencias con mi evento",
+        "intro": "Elige uno de tus eventos para ver qué eventos publicados se cruzan con él en fecha y comparten disciplina o ciudad.",
+        "select": "Mi evento",
+        "none": "Ninguno",
+        "option": "{{name}} — {{date}} ({{status}})",
+        "empty": "Aún no tienes eventos. Cuando crees uno, podrás comparar sus fechas aquí.",
+        "error": "No pudimos cargar tus eventos."
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado"
+      },
+      "conflicts": {
+        "title": "Eventos que coinciden: {{count}}",
+        "informative": "Es información de apoyo: no bloquea la publicación ni reserva fechas.",
+        "evaluatedAt": "Consultado el {{date}}.",
+        "none": "Ningún evento publicado coincide con este evento.",
+        "notFound": "Ese evento ya no está disponible entre tus eventos."
+      },
+      "results": {
+        "title": "Eventos publicados",
+        "empty": "No hay eventos publicados en este periodo con esos filtros.",
+        "countMore": "Eventos mostrados: {{count}}. Hay más disponibles.",
+        "countAll": "Eventos mostrados: {{count}}."
+      },
+      "issues": {
+        "title": "No pudimos consultar el calendario:",
+        "item": "{{field}}: {{rule}}",
+        "invalid_datetime": "la fecha no es válida.",
+        "ends_before_starts": "la fecha final es anterior a la inicial.",
+        "out_of_range": "el periodo supera los {{max}} días permitidos.",
+        "invalid_length": "debe tener entre 2 y 80 caracteres.",
+        "invalid_cursor": "la página solicitada ya no es válida; vuelve a consultar.",
+        "unknown": "el valor no es válido."
+      },
+      "event": {
+        "time": "{{start}} – {{end}}",
+        "zone": "Zona del evento: {{zone}}",
+        "zoneWithTime": "Hora del evento: {{time}} ({{zone}})",
+        "own": "Mi evento",
+        "conflict": "Coincide"
+      },
+      "reasons": {
+        "SAME_DISCIPLINE": "misma disciplina",
+        "SAME_CITY": "misma ciudad"
+      },
+      "month": {
+        "dayEvents": "Eventos del {{date}}"
+      }
+    },
+    "integratedCalendar": {
+      "title": {
+        "athlete": "Calendario deportivo",
+        "organizer": "Calendario integrado",
+        "service_provider": "Calendario integrado"
+      },
+      "intro": {
+        "athlete": "Consulta en un solo lugar los eventos publicados, las sesiones de tus planes de entrenamiento, la disponibilidad de tus servicios asociados y tus inscripciones.",
+        "organizer": "Consulta en un solo lugar tus eventos en borrador y publicados.",
+        "service_provider": "Consulta en un solo lugar la disponibilidad de tus servicios y los eventos publicados."
+      },
+      "browserZone": "Los horarios se muestran en tu zona horaria ({{zone}}).",
+      "periodLabel": "Periodo del calendario",
+      "modeLabel": "Vista del calendario",
+      "modes": {
+        "month": "Mes",
+        "list": "Lista"
+      },
+      "actions": {
+        "previousMonth": "Mes anterior",
+        "nextMonth": "Mes siguiente",
+        "apply": "Consultar"
+      },
+      "fields": {
+        "from": "Desde",
+        "to": "Hasta",
+        "period": "Periodo"
+      },
+      "hints": {
+        "period": "Ambos días incluidos; hasta {{max}} días."
+      },
+      "issues": {
+        "title": "No pudimos consultar el calendario:",
+        "item": "{{field}}: {{rule}}",
+        "invalid_datetime": "la fecha no es válida.",
+        "ends_before_starts": "la fecha final es anterior a la inicial.",
+        "out_of_range": "el periodo supera los {{max}} días permitidos.",
+        "required": "indica la fecha inicial y la final.",
+        "unknown": "el valor no es válido."
+      },
+      "incomplete": {
+        "title": "Información incompleta",
+        "item": "{{source}}: {{status}}.",
+        "notice": "Puede haber actividades de esas fuentes que no se muestran. Vuelve a consultar en unos minutos."
+      },
+      "sourceStatus": {
+        "UNAVAILABLE": "no está disponible",
+        "TIMEOUT": "no respondió a tiempo",
+        "unknown": "no se pudo confirmar"
+      },
+      "truncated": {
+        "title": "Hay más actividades de las que se muestran",
+        "notice": "Estas fuentes tienen más de 200 actividades en el periodo y solo se muestran las primeras. Acota el periodo en la vista de lista para verlas todas."
+      },
+      "sourcesFilter": "Mostrar fuentes",
+      "sourceOption": "{{source}} ({{count}})",
+      "sources": {
+        "OWN_EVENT": "Mis eventos",
+        "EVENT_PUBLISHED": "Eventos publicados",
+        "EVENT_REGISTRATION": "Mis inscripciones",
+        "TRAINING_PLAN_SESSION": "Sesiones de mis planes",
+        "OWN_SERVICE_AVAILABILITY": "Disponibilidad de mis servicios",
+        "ASSOCIATED_SERVICE_AVAILABILITY": "Mis servicios asociados",
+        "unknown": "Otra fuente"
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado",
+        "REGISTERED": "Inscrito",
+        "ASSIGNED": "Asignada",
+        "AVAILABLE": "Disponible",
+        "unknown": "Sin estado informado"
+      },
+      "empty": {
+        "none": "No tienes actividades en este periodo.",
+        "incomplete": "Las fuentes que respondieron no tienen actividades en este periodo. Como hay información incompleta, no podemos confirmar que no tengas actividades.",
+        "noSource": "Elige al menos una fuente para ver sus actividades.",
+        "filtered": "Las fuentes elegidas no tienen actividades en este periodo."
+      },
+      "count": "Actividades mostradas: {{count}}. Consultado el {{date}}.",
+      "item": {
+        "time": "{{start}} – {{end}}",
+        "allDay": "Sin hora fija",
+        "session": "{{minutes}} min · esfuerzo percibido (RPE) {{rpe}}",
+        "capacity": "cupo: {{count}}",
+        "zone": "Zona: {{zone}}",
+        "zoneWithTime": "Hora local: {{time}} ({{zone}})"
+      },
+      "month": {
+        "dayItems": "Actividades del {{date}}"
+      }
+    },
+    "attendees": {
+      "title": "Inscritos de mis eventos",
+      "intro": "Elige uno de tus eventos para ver quiénes se inscribieron, cuántas inscripciones tiene y su estado.",
+      "privacy": "Solo ves el nombre de cada inscrito, su estado, la fecha de inscripción y la tarifa aplicada: sin datos de contacto ni exportación.",
+      "select": {
+        "title": "Evento",
+        "label": "Tu evento",
+        "option": "{{name}} · {{date}} · {{status}}",
+        "hint": "Elige uno de tus eventos para ver sus inscritos.",
+        "empty": "Aún no tienes eventos. Cuando crees y publiques uno, aquí verás sus inscritos.",
+        "error": "No pudimos consultar tus eventos."
+      },
+      "list": {
+        "title": "Inscritos de «{{name}}»",
+        "titleGeneric": "Inscritos del evento",
+        "caption": "Inscritos de «{{name}}», en orden de inscripción"
+      },
+      "filter": {
+        "label": "Filtrar inscripciones por estado",
+        "REGISTERED": "Inscritos",
+        "ALL": "Todos los estados"
+      },
+      "status": {
+        "REGISTERED": "Inscrito"
+      },
+      "counts": {
+        "byStatus": "Total del evento · {{status}}",
+        "filtered": "Según el filtro"
+      },
+      "columns": {
+        "name": "Nombre",
+        "status": "Estado",
+        "registeredAt": "Fecha de inscripción",
+        "fee": "Tarifa aplicada (informativa)"
+      },
+      "noName": "Nombre no disponible",
+      "noFee": "Sin tarifa",
+      "feeNote": "La tarifa aplicada es informativa: no indica que la inscripción esté pagada.",
+      "shown": "Mostrando {{count}} de {{total}} inscripciones.",
+      "empty": "Este evento aún no tiene inscritos.",
+      "emptyPage": "No hay más inscripciones para mostrar.",
+      "namesUnavailable": "No pudimos obtener los nombres de los inscritos en este momento. El estado, la fecha y la tarifa sí están completos.",
+      "notFound": "El evento no existe o no es tuyo: no hay inscritos que mostrar.",
+      "moreError": "No pudimos cargar más inscritos. Inténtalo de nuevo.",
+      "actions": {
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando…",
+        "recheck": "Volver a consultar"
+      }
+    },
+    "pricing": {
+      "title": "Tarifas de eventos",
+      "intro": "Asigna el valor en pesos colombianos de tus eventos o retíralo. La tarifa informa a los deportistas cuánto cuesta participar.",
+      "informative": "La tarifa es informativa: no genera cobros, pagos ni reembolsos.",
+      "registrations": "Inscripciones vigentes: {{count}}",
+      "list": {
+        "title": "Tus eventos",
+        "label": "Eventos propios y su tarifa",
+        "empty": "Aún no tienes eventos. Crea uno para asignarle una tarifa."
+      },
+      "detail": {
+        "choose": "Elige un evento de la lista para asignar o retirar su tarifa."
+      },
+      "fee": {
+        "none": "Sin tarifa",
+        "free": "Gratuito",
+        "amount": "Tarifa: {{amount}}"
+      },
+      "fields": {
+        "fee": "Tarifa actual",
+        "registrations": "Inscripciones vigentes",
+        "currency": "Moneda",
+        "starts_at": "Inicio del evento",
+        "expected_version": "Versión del evento",
+        "other": "Solicitud"
+      },
+      "form": {
+        "amount": "Valor de la tarifa",
+        "prefix": "$",
+        "currency": "COP",
+        "hint": "Pesos colombianos (COP), con hasta dos decimales separados por coma. Escribe 0 si el evento es gratuito.",
+        "preview": "Se mostrará como {{amount}}.",
+        "previewFree": "Se mostrará como evento gratuito.",
+        "errors": {
+          "required": "Escribe el valor de la tarifa. Usa 0 si el evento es gratuito.",
+          "format": "Escribe solo números, por ejemplo 85.000 o 85000,50.",
+          "tooManyDecimals": "Usa como máximo dos decimales.",
+          "outOfRange": "El valor máximo es $ 99.999.999,99."
+        }
+      },
+      "warnings": {
+        "registrations": "Este evento tiene {{count}} inscripciones vigentes. Las inscripciones existentes conservan su tarifa.",
+        "started": "Este evento ya comenzó. Si intentas cambiar su tarifa, el sistema lo rechazará."
+      },
+      "actions": {
+        "save": "Guardar tarifa",
+        "remove": "Retirar tarifa",
+        "confirm": "Confirmar",
+        "saving": "Guardando…",
+        "cancel": "Cancelar"
+      },
+      "confirm": {
+        "setTitle": "¿Asignar {{fee}} a «{{name}}»?",
+        "setFreeTitle": "¿Marcar «{{name}}» como gratuito?",
+        "removeTitle": "¿Retirar la tarifa de «{{name}}»?",
+        "registrations": "Las inscripciones existentes conservan su tarifa; el cambio no las modifica."
+      },
+      "retrying": "No pudimos confirmar el cambio. Reintentando ({{attempt}} de {{max}})…",
+      "result": {
+        "assigned": "Tarifa asignada",
+        "removed": "Tarifa retirada",
+        "replayed": "Este cambio ya se había confirmado; no se volvió a aplicar.",
+        "registrationsKept": "Las inscripciones existentes conservan su tarifa.",
+        "visibility": "El detalle público del evento mostrará la tarifa en unos instantes."
+      },
+      "conflict": {
+        "message": "El evento cambió mientras lo revisabas. Actualízalo y vuelve a intentarlo.",
+        "messageWithVersion": "El evento cambió mientras lo revisabas (versión vigente: {{version}}). Actualízalo y vuelve a intentarlo.",
+        "refresh": "Actualizar evento"
+      },
+      "violations": {
+        "title": "La tarifa no se guardó por estos motivos:",
+        "unchanged": "La tarifa del evento no cambió."
+      },
+      "issues": {
+        "required": "Este dato es obligatorio.",
+        "unknown_value": "El valor debe tener exactamente dos decimales.",
+        "too_many_decimals": "Usa como máximo dos decimales.",
+        "out_of_range": "El valor está fuera del rango permitido (de 0 a 99.999.999,99).",
+        "unsupported_currency": "Solo se admiten pesos colombianos (COP).",
+        "field_not_allowed": "La solicitud incluye un dato no permitido.",
+        "event_already_started": "El evento ya comenzó; su tarifa no se puede cambiar.",
+        "unknown": "El valor no cumple una regla del evento."
+      },
+      "errors": {
+        "notFound": "No encontramos este evento o no te pertenece.",
+        "idempotencyKeyReused": "No pudimos confirmar este cambio. Inténtalo de nuevo.",
+        "retryHint": "Si vuelves a intentarlo, el cambio no se aplicará dos veces."
+      }
     }
   },
   "services": {
+    "create": {
+      "title": "Crear servicio",
+      "intro": "Prepara la oferta de un servicio como borrador. Podrás revisarlo y publicarlo más adelante; mientras tanto, los deportistas no lo ven.",
+      "sections": {
+        "service": "Servicio",
+        "price": "Tarifa",
+        "availability": "Disponibilidad inicial (opcional)"
+      },
+      "fields": {
+        "name": "Nombre del servicio",
+        "description": "Descripción",
+        "category": "Categoría",
+        "modality": "Modalidad",
+        "amount": "Valor",
+        "currency": "Moneda",
+        "billingUnit": "Unidad de cobro",
+        "startDate": "Fecha de inicio",
+        "startTime": "Hora de inicio",
+        "endDate": "Fecha de fin",
+        "endTime": "Hora de fin",
+        "timeZone": "Zona horaria",
+        "capacity": "Cupo (personas)"
+      },
+      "currencies": {
+        "COP": "COP · Peso colombiano"
+      },
+      "billingUnits": {
+        "SERVICE": "Por servicio",
+        "SESSION": "Por sesión",
+        "HOUR": "Por hora",
+        "DAY": "Por día"
+      },
+      "hints": {
+        "description": "Entre {{min}} y {{max}} caracteres.",
+        "amount": "Sin separadores de miles; usa coma o punto para los decimales (hasta 2). Escribe 0 si el servicio es gratuito.",
+        "amountPreview": "Los deportistas verán {{price}}.",
+        "amountFree": "Los deportistas verán {{price}}: servicio gratuito.",
+        "currency": "Por ahora, las tarifas se publican solo en pesos colombianos.",
+        "priceNote": "La tarifa es un precio de referencia con los impuestos aplicables incluidos. No forma parte de los planes de afiliación y crear el servicio no genera cobros, facturas, pagos ni contrataciones.",
+        "timeZone": "Zona horaria en la que prestas el servicio; las fechas y horas se interpretan en ella.",
+        "capacity": "De {{min}} a {{max}} personas."
+      },
+      "validation": {
+        "amountFormat": "Usa un valor de hasta 9 cifras y 2 decimales, sin separadores de miles.",
+        "integer": "Ingresa un número entero."
+      },
+      "intervals": {
+        "rules": "Agrega hasta {{max}} horarios. Cada uno debe empezar en el futuro, durar como máximo 24 horas y terminar dentro de los próximos 365 días. Pueden ser seguidos, pero no superponerse.",
+        "empty": "Aún no agregas horarios. Puedes guardar el borrador sin disponibilidad; la necesitarás para publicar el servicio.",
+        "item": "Horario {{number}}",
+        "fieldOf": "Horario {{number}} · {{field}}",
+        "title": "Horario",
+        "add": "Agregar horario",
+        "remove": "Quitar horario {{number}}",
+        "count": "{{count}} de {{max}} horarios"
+      },
+      "actions": {
+        "save": "Guardar borrador",
+        "saving": "Guardando…",
+        "createAnother": "Crear otro servicio"
+      },
+      "retrying": "El servicio no respondió. Reintentando ({{attempt}} de {{max}})…",
+      "errors": {
+        "rulesTitle": "El servicio no se guardó porque no cumple estas reglas:",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Revisa los datos y vuelve a guardar el borrador.",
+        "retryHint": "Puedes volver a intentarlo: si el servicio ya se había guardado, no se creará otro."
+      },
+      "issues": {
+        "item": "{{field}}: {{rule}}",
+        "fieldRequest": "Solicitud",
+        "required": "es obligatorio.",
+        "field_not_allowed": "no está permitido.",
+        "unsupported_currency": "la moneda no está admitida; usa COP.",
+        "out_of_range": "está fuera del rango permitido.",
+        "too_many_decimals": "admite como máximo 2 decimales.",
+        "invalid_length": "la longitud no es válida.",
+        "unknown_value": "el valor no es válido.",
+        "not_in_future": "debe ser una fecha y hora futura.",
+        "ends_before_starts": "el fin debe ser posterior al inicio.",
+        "overlapping_interval": "se superpone con otro horario.",
+        "time_zone_unknown": "la zona horaria no es válida.",
+        "time_zone_offset_mismatch": "la hora no existe o no coincide con la zona horaria en esa fecha.",
+        "too_many_intervals": "supera el máximo de horarios permitido.",
+        "unknown": "no cumple las reglas del servicio."
+      },
+      "created": {
+        "title": "Borrador guardado",
+        "message": "El servicio «{{name}}» quedó guardado como borrador.",
+        "replayed": "Este borrador ya se había guardado con esta misma solicitud; no se creó otro.",
+        "noIntervals": "Sin horarios por ahora.",
+        "interval": "{{start}} – {{end}} ({{zone}}) · Cupo: {{capacity}}",
+        "draftNote": "Los borradores no aparecen en el catálogo de servicios hasta que los publiques."
+      },
+      "summary": {
+        "status": "Estado",
+        "price": "Tarifa",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "version": "Versión"
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "PUBLISHED": "Publicado"
+      }
+    },
+    "publish": {
+      "title": "Publicar servicios",
+      "intro": "Revisa tus servicios y publica un borrador para que los deportistas puedan encontrarlo en el catálogo.",
+      "list": {
+        "statusLabel": "Estado de los servicios",
+        "tabs": {
+          "DRAFT": "Borradores",
+          "PUBLISHED": "Publicados"
+        },
+        "label": {
+          "DRAFT": "Servicios en borrador",
+          "PUBLISHED": "Servicios publicados"
+        },
+        "empty": {
+          "DRAFT": "No tienes servicios en borrador. Crea uno desde «Crear servicio».",
+          "PUBLISHED": "Todavía no has publicado servicios."
+        },
+        "futureIntervals": "Horarios futuros: {{count}}",
+        "publishedAt": "Publicado el {{date}}",
+        "countAll": "Servicios mostrados: {{count}}.",
+        "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
+        "loadMore": "Cargar más"
+      },
+      "detail": {
+        "choose": "Elige un servicio de la lista para revisar sus requisitos y publicarlo."
+      },
+      "fields": {
+        "publishedAt": "Publicado el"
+      },
+      "requirements": {
+        "title": "Requisitos para publicar",
+        "price": "Tarifa en COP",
+        "availability": "Disponibilidad futura",
+        "noUpcoming": "Sin horarios futuros.",
+        "priceNote": "La tarifa es un precio de referencia con los impuestos aplicables incluidos. Publicar no confirma pagos ni la incluye en los planes de afiliación de los deportistas."
+      },
+      "warnings": {
+        "noUpcoming": "Este servicio no tiene horarios futuros. Para publicarlo necesita al menos uno; agrégalo al crear un nuevo borrador."
+      },
+      "confirm": {
+        "title": "¿Publicar «{{name}}»?",
+        "message": "Al publicarlo, los deportistas podrán verlo en el catálogo de servicios con su tarifa y sus horarios. Publicar no reserva cupos ni genera cobros."
+      },
+      "actions": {
+        "publish": "Publicar",
+        "confirm": "Sí, publicar",
+        "publishing": "Publicando…",
+        "cancel": "Cancelar"
+      },
+      "retrying": "El servicio no respondió. Reintentando ({{attempt}} de {{max}})…",
+      "result": {
+        "title": "Servicio publicado",
+        "message": "El servicio «{{name}}» ya está publicado.",
+        "replayed": "Este servicio ya se había publicado con esta misma solicitud; no se publicó dos veces.",
+        "visibility": "Los deportistas ya pueden encontrarlo en el catálogo de servicios."
+      },
+      "violations": {
+        "title": "El servicio no se publicó porque le faltan estos requisitos:",
+        "stillDraft": "El servicio sigue como borrador.",
+        "availabilityRequired": "necesita al menos un horario futuro."
+      },
+      "alreadyPublished": "Este servicio ya está publicado.",
+      "errors": {
+        "notFound": "El servicio no existe o no es tuyo.",
+        "idempotencyKeyReused": "No pudimos confirmar este intento. Vuelve a publicar el servicio.",
+        "retryHint": "Si vuelves a intentarlo, el servicio no se publicará dos veces."
+      }
+    },
     "availability": {
       "title": "Servicios",
       "titleMedical": "Servicios médicos y deportivos",
@@ -905,13 +1997,273 @@
       },
       "unavailable": "Sin espacios en el periodo",
       "restricted": {
-        "SPORTS_MEDICINE": "La categoría Medicina deportiva está disponible con el plan Premium. Podrás comparar los planes en «Mi plan» (Próximamente)."
+        "SPORTS_MEDICINE": "La categoría Medicina deportiva está disponible con el plan Premium. Puedes comparar los planes en «Mi plan»."
       },
       "listLabel": "Servicios disponibles",
       "empty": "No hay servicios disponibles para este periodo y estos filtros.",
       "countAll": "Servicios mostrados: {{count}}.",
       "countMore": "Servicios mostrados: {{count}}. Hay más disponibles.",
       "loadMore": "Cargar más"
+    },
+    "associations": {
+      "title": "Mis servicios asociados",
+      "intro": "Asocia a tu perfil los servicios médicos deportivos que quieras tener a mano y quítalos cuando ya no los necesites.",
+      "privacyNote": "Asociar un servicio no comparte tus datos de salud con el profesional, no contrata, no reserva ni paga nada.",
+      "showHistory": "Mostrar también los servicios que quitaste",
+      "empty": "Aún no tienes servicios médicos deportivos asociados.",
+      "emptyHistory": "Aún no has asociado servicios médicos deportivos.",
+      "loadMore": "Cargar más",
+      "associatedAt": "Asociado el",
+      "endedAt": "Quitado el",
+      "comparePlans": "Comparar planes",
+      "retrying": "Reintentando la asociación (intento {{attempt}} de 3)…",
+      "status": {
+        "ACTIVE": "Asociado",
+        "INACTIVE": "Quitado"
+      },
+      "confirm": {
+        "associate": "¿Asociar «{{name}}» a tu perfil?",
+        "dissociate": "¿Quitar «{{name}}» de tus servicios asociados? Seguirá en tu historial."
+      },
+      "action": {
+        "associate": "Asociar",
+        "associateNamed": "Asociar {{name}}",
+        "confirmAssociate": "Sí, asociar",
+        "associating": "Asociando…",
+        "dissociate": "Quitar",
+        "dissociateNamed": "Quitar {{name}}",
+        "confirmDissociate": "Sí, quitar",
+        "dissociating": "Quitando…",
+        "cancel": "Cancelar",
+        "associated": "Asociado a tu perfil",
+        "done": {
+          "associated": "Servicio asociado a tu perfil.",
+          "exists": "Este servicio ya estaba asociado a tu perfil.",
+          "dissociated": "Quitaste el servicio. Puedes verlo en el historial."
+        }
+      },
+      "notice": {
+        "associated": "Asociaste «{{name}}» a tu perfil.",
+        "exists": "«{{name}}» ya estaba asociado a tu perfil; está resaltado en la lista.",
+        "dissociated": "Quitaste «{{name}}». La asociación queda en tu historial."
+      },
+      "errors": {
+        "capabilityRequired": "Tu plan actual no incluye los servicios médicos y deportivos.",
+        "serviceNotFound": "Este servicio ya no está disponible para asociar.",
+        "associationNotFound": "Esta asociación ya no existe. Actualizamos tu lista.",
+        "idempotencyKeyReused": "No pudimos confirmar la solicitud. Inténtalo de nuevo."
+      }
     }
+  },
+  "affiliation": {
+    "periodicities": {
+      "NONE": "Sin periodicidad",
+      "MONTHLY": "Mensual",
+      "QUARTERLY": "Trimestral",
+      "ANNUAL": "Anual"
+    },
+    "capabilities": {
+      "training_plan_manage": "Planes de entrenamiento",
+      "training_routes_suggest": "Rutas sugeridas",
+      "events_suggest": "Eventos sugeridos",
+      "training_plans_suggest": "Entrenamientos sugeridos",
+      "services_support_suggest": "Acompañamiento y logística",
+      "nutrition_routines_suggest": "Rutinas de alimentación",
+      "integrations_strava_connect": "Conexión con Strava",
+      "training_session_record": "Registrar entrenamiento",
+      "training_dashboard_view": "Tablero de entrenamiento",
+      "training_metrics_ftp_vo2max": "FTP y VO₂max",
+      "calendar_sport_view": "Calendario deportivo",
+      "training_realtime_monitor": "Monitoreo en tiempo real",
+      "devices_measurement_connect": "Dispositivos de medición",
+      "nutrition_session_reminders": "Recordatorios de alimentación durante la sesión",
+      "services_sports_medicine_access": "Servicios médicos y deportivos",
+      "services_virtual_sessions_schedule": "Sesiones virtuales"
+    },
+    "myPlan": {
+      "title": "Mi plan",
+      "intro": "Consulta tu plan actual, compara los planes por lo que incluyen y cambia de plan cuando quieras.",
+      "free": "Sin costo",
+      "noEnd": "Sin vencimiento",
+      "offer": "{{periodicity}}: {{price}}",
+      "durationOne": "1 mes",
+      "durationMany": "{{count}} meses",
+      "retrying": "No pudimos confirmar el cambio. Reintentando ({{attempt}} de {{max}})…",
+      "fields": {
+        "plan": "Plan",
+        "periodicity": "Periodicidad",
+        "price": "Precio de referencia",
+        "duration": "Duración",
+        "periodStart": "Desde",
+        "periodEnd": "Hasta"
+      },
+      "current": {
+        "title": "Tu plan actual",
+        "provisioning": "Estamos activando tu plan gratuito. Podrás cambiar de plan en cuanto esté confirmado."
+      },
+      "compare": {
+        "title": "Comparar planes",
+        "priceNote": "Precios de referencia en pesos colombianos, antes de impuestos. Cada plan incluye todo lo de los planes anteriores.",
+        "current": "Plan actual",
+        "offers": "Precios",
+        "includes": "Incluye",
+        "adds": "Agrega a los planes anteriores",
+        "inherited": "Incluye además {{count}} funciones de los planes anteriores",
+        "notSelectable": "Este plan no está disponible para seleccionar."
+      },
+      "selection": {
+        "title": "Cambiar al plan {{name}}",
+        "periodicity": "Elige la periodicidad:",
+        "periodicityMissing": "Elige una periodicidad para continuar.",
+        "currentOffer": "tu periodicidad actual",
+        "free": "Este plan no tiene costo ni periodicidad."
+      },
+      "confirm": {
+        "title": "Confirma el cambio de plan",
+        "gained": "Obtendrás",
+        "lost": "Dejarás de tener",
+        "paymentNotice": "SportApp no procesa el pago; se registra un compromiso informativo.",
+        "freeNotice": "SportApp no procesa pagos. Al volver al plan gratuito, los compromisos informativos vigentes quedan sin efecto."
+      },
+      "result": {
+        "title": "Tu plan cambió",
+        "message": "Ahora tienes el plan {{name}}.",
+        "replayed": "Este cambio ya se había registrado; te mostramos el mismo resultado.",
+        "commitment": "SportApp no procesó ningún pago: se registró un compromiso informativo pendiente de pago externo.",
+        "waived": "SportApp no procesó ningún pago: los compromisos informativos vigentes quedaron sin efecto.",
+        "menuUpdating": "Actualizando las opciones de tu menú…",
+        "menuUpdated": "Tu menú ya muestra las opciones de tu plan.",
+        "menuFailed": "No pudimos actualizar las opciones de tu menú. Reintenta desde el menú."
+      },
+      "actions": {
+        "choose": "Elegir {{name}}",
+        "continue": "Continuar",
+        "cancel": "Cancelar",
+        "back": "Volver",
+        "confirm": "Confirmar cambio",
+        "changing": "Cambiando plan…",
+        "reload": "Recargar mi plan",
+        "recheck": "Volver a consultar"
+      },
+      "errors": {
+        "versionConflict": "Tu plan cambió mientras lo revisabas (quizá en otra pestaña). Recarga para ver tu plan vigente antes de elegir de nuevo.",
+        "subscriptionUnchanged": "Ya tienes ese plan con esa periodicidad: no hay nada que cambiar.",
+        "subscriptionProvisioning": "Tu plan gratuito aún se está activando. Vuelve a consultar en unos segundos.",
+        "planNotSelectable": "Ese plan ya no está disponible para seleccionar. Recarga los planes.",
+        "planNotFound": "Ese plan ya no existe. Recarga los planes.",
+        "idempotencyKeyReused": "No pudimos confirmar el cambio con esa solicitud. Inténtalo de nuevo: no se aplicó ningún cambio duplicado.",
+        "validation": "La periodicidad elegida no corresponde a ese plan. Elige otra.",
+        "retryHint": "Si lo intentas de nuevo, no se aplicará un cambio duplicado."
+      },
+      "statementLink": "Ver mi estado de cuenta"
+    },
+    "statement": {
+      "title": "Estado de cuenta",
+      "intro": "Tu plan, sus compromisos informativos y los movimientos de tu suscripción.",
+      "paymentsNotIntegrated": "SportApp no registra pagos: la información de pagos no está confirmada y no hay un saldo calculado.",
+      "timeZone": "Fechas y horas en tu zona horaria ({{zone}}).",
+      "free": "Sin costo",
+      "amountUnconfirmed": "{{amount}} (precio de referencia, pago no confirmado)",
+      "provisioning": "Estamos activando tu plan gratuito. Tu estado de cuenta estará disponible en cuanto se confirme.",
+      "notApplicable": "Tu tipo de cuenta no tiene un plan de afiliación, así que no tiene compromisos ni movimientos.",
+      "none": "No tienes una suscripción activa. Abajo puedes consultar tu historial.",
+      "plans": {
+        "FREE": "Gratuito",
+        "INTERMEDIATE": "Intermedio",
+        "PREMIUM": "Premium"
+      },
+      "subscription": {
+        "title": "Tu plan",
+        "plan": "Plan",
+        "version": "Versión del plan",
+        "offer": "Oferta",
+        "price": "Precio",
+        "periodStart": "Inicio del periodo",
+        "nextDue": "Próximo vencimiento",
+        "noDue": "Sin vencimiento"
+      },
+      "balance": {
+        "label": "Saldo",
+        "unavailable": "No disponible: SportApp no registra pagos"
+      },
+      "commitments": {
+        "title": "Compromisos informativos",
+        "empty": "No tienes compromisos de pago.",
+        "amount": "Importe",
+        "period": "Periodo",
+        "periodRange": "{{start}} al {{end}}",
+        "dueAt": "Fecha de pago (informativa)",
+        "status": {
+          "PENDING_EXTERNAL": "Pendiente de pago externo: SportApp no lo cobra ni lo confirma",
+          "WAIVED": "Sin efecto: volviste al plan gratuito antes del fin del periodo"
+        }
+      },
+      "movements": {
+        "title": "Movimientos",
+        "empty": "Aún no hay movimientos.",
+        "date": "Fecha",
+        "type": "Movimiento",
+        "plan": "Plan",
+        "amount": "Importe",
+        "noAmount": "No aplica",
+        "cursorRejected": "No pudimos cargar más movimientos desde este punto. Vuelve a cargar el estado de cuenta.",
+        "types": {
+          "FREE_ACTIVATED": "Plan gratuito activado",
+          "PLAN_CHANGED": "Cambio de plan",
+          "RETURNED_TO_FREE": "Regreso al plan gratuito",
+          "COMMITMENT_CREATED": "Compromiso informativo registrado",
+          "COMMITMENT_WAIVED": "Compromiso informativo sin efecto"
+        }
+      },
+      "actions": {
+        "loadMore": "Cargar más movimientos",
+        "loadingMore": "Cargando movimientos…",
+        "recheck": "Volver a consultar",
+        "reload": "Volver a cargar el estado de cuenta"
+      }
+    }
+  },
+  "food": {
+    "oats": "Avena",
+    "white_rice": "Arroz blanco",
+    "brown_rice": "Arroz integral",
+    "quinoa": "Quinua",
+    "whole_wheat_bread": "Pan integral",
+    "pasta": "Pasta",
+    "corn_arepa": "Arepa de maíz",
+    "chicken_breast": "Pechuga de pollo",
+    "beef": "Carne de res",
+    "pork_loin": "Lomo de cerdo",
+    "salmon": "Salmón",
+    "tuna": "Atún",
+    "shrimp": "Camarones",
+    "egg": "Huevo",
+    "tofu": "Tofu",
+    "milk": "Leche",
+    "greek_yogurt": "Yogur griego",
+    "fresh_cheese": "Queso fresco",
+    "banana": "Banano",
+    "apple": "Manzana",
+    "orange": "Naranja",
+    "berries": "Frutos rojos",
+    "spinach": "Espinaca",
+    "broccoli": "Brócoli",
+    "carrot": "Zanahoria",
+    "tomato": "Tomate",
+    "black_beans": "Fríjoles negros",
+    "lentils": "Lentejas",
+    "chickpeas": "Garbanzos",
+    "olive_oil": "Aceite de oliva",
+    "avocado": "Aguacate",
+    "peanut_butter": "Mantequilla de maní",
+    "almonds": "Almendras",
+    "tahini": "Tahini",
+    "water": "Agua",
+    "coffee": "Café",
+    "orange_juice": "Jugo de naranja",
+    "sports_drink": "Bebida deportiva",
+    "whey_protein": "Proteína de suero",
+    "plant_protein": "Proteína vegetal",
+    "electrolytes": "Electrolitos"
   }
 }

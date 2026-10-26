@@ -1,0 +1,48 @@
+// Tarifas de eventos (HU025): lista maestra y detalle a su lado (ADR-012).
+.event-pricing {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(0, 1.4fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.event-pricing__items {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.event-pricing__link {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+}
+
+.event-pricing__link--active {
+  border-color: var(--mat-sys-primary);
+  background: var(--mat-sys-secondary-container);
+}
+
+.event-pricing__name {
+  font: var(--mat-sys-title-medium);
+}
+
+.event-pricing__meta {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+  overflow-wrap: anywhere;
+}
+
+.event-pricing__fee {
+  font: var(--mat-sys-label-large);
+}

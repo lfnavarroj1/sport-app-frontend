@@ -1,0 +1,54 @@
+.calendar-month__wrapper {
+  overflow-x: auto;
+}
+
+.calendar-month {
+  width: 100%;
+  min-width: 48rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  caption {
+    padding: 0 0 0.75rem;
+    font: var(--mat-sys-title-medium);
+    font-weight: 700;
+    text-align: left;
+    text-transform: capitalize;
+  }
+
+  th {
+    padding: 0.5rem;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+    text-transform: capitalize;
+
+    abbr {
+      text-decoration: none;
+    }
+  }
+
+  td {
+    height: 6rem;
+    padding: 0.375rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    vertical-align: top;
+  }
+}
+
+.calendar-month__day--outside {
+  background: var(--mat-sys-surface-container-low);
+}
+
+.calendar-month__number {
+  display: block;
+  margin-bottom: 0.25rem;
+  font: var(--mat-sys-label-large);
+}
+
+.calendar-month__events {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

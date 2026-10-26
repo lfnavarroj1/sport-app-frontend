@@ -2,24 +2,29 @@ import {
   DEMOGRAPHIC_SECTION,
   EMPTY_PROFILE,
   FULL_PROFILE,
+  NUTRITION_HABITS_SECTION,
+  VALID_NUTRITION_HABITS_REQUEST,
   PHYSIOLOGICAL_SECTION,
   SIMULATED_HEALTH_CONSENT_VERSION,
   VALID_DEMOGRAPHIC_REQUEST,
   VALID_PHYSIOLOGICAL_REQUEST,
 } from '../../../../testing/bff-web/profile.fixtures';
+import { ProfileResponseDto } from '../../../core/api/bff-web/profile.api';
 import {
-  DemographicDraft,
-  PhysiologicalDraft,
   ageOn,
   conflictVersion,
   decimalTenths,
+  DemographicDraft,
   localDate,
   localDateTimeToUtc,
   newerSection,
   normalizeDecimal,
+  PhysiologicalDraft,
   toAthleteProfile,
   toDemographicRequest,
   toLocalDateTimeInput,
+  toNutritionHabits,
+  toNutritionHabitsRequest,
   toPhysiologicalProfile,
   toPhysiologicalRequest,
 } from './profile.model';
@@ -43,6 +48,73 @@ const PHYSIOLOGICAL_DRAFT: PhysiologicalDraft = {
   bloodPressure: { systolic: 118, diastolic: 76 },
   bodyTemperatureC: '36.6',
 };
+
+describe('profile.model: hábitos alimenticios (HU009)', () => {
+  it('el cuerpo ordena restricciones y alergias por catálogo, sin repetidos ni user_id', () => {
+    const body = toNutritionHabitsRequest(
+      {
+        consentVersion: SIMULATED_HEALTH_CONSENT_VERSION,
+        dietPattern: 'VEGETARIAN',
+        restrictions: ['LOW_SUGAR', 'LACTOSE_FREE', 'LOW_SUGAR'],
+        allergies: ['SHELLFISH', 'PEANUTS'],
+        mealsPerDay: 4,
+        hydrationLitersPerDay: '2.5',
+      },
+      null,
+    );
+
+    expect(body).toEqual(VALID_NUTRITION_HABITS_REQUEST);
+    expect('expected_version' in body).toBeFalse();
+  });
+
+  it('al reemplazar incluye expected_version', () => {
+    expect(
+      toNutritionHabitsRequest(
+        {
+          consentVersion: SIMULATED_HEALTH_CONSENT_VERSION,
+          dietPattern: 'VEGAN',
+          restrictions: [],
+          allergies: [],
+          mealsPerDay: 3,
+          hydrationLitersPerDay: null,
+        },
+        2,
+      ),
+    ).toEqual({
+      expected_version: 2,
+      consent: { version: SIMULATED_HEALTH_CONSENT_VERSION },
+      diet_pattern: 'VEGAN',
+      restrictions: [],
+      allergies: [],
+      meals_per_day: 3,
+      hydration_liters_per_day: null,
+    });
+  });
+
+  it('un perfil de un BFF anterior a 0.21.0, sin nutrition_habits, no pierde las demás secciones', () => {
+    const legacy = Object.fromEntries(
+      Object.entries(FULL_PROFILE).filter(([key]) => key !== 'nutrition_habits'),
+    );
+    const profile = toAthleteProfile(legacy as unknown as ProfileResponseDto);
+
+    expect(profile.nutritionHabits).toBeNull();
+    expect(profile.demographic?.version).toBe(1);
+  });
+
+  it('transforma la sección con el consentimiento y la hidratación como texto', () => {
+    expect(toNutritionHabits(NUTRITION_HABITS_SECTION)).toEqual({
+      version: 1,
+      consentVersion: SIMULATED_HEALTH_CONSENT_VERSION,
+      consentAcceptedAt: NUTRITION_HABITS_SECTION.consent.accepted_at,
+      dietPattern: 'VEGETARIAN',
+      restrictions: ['LACTOSE_FREE', 'LOW_SUGAR'],
+      allergies: ['PEANUTS', 'SHELLFISH'],
+      mealsPerDay: 4,
+      hydrationLitersPerDay: '2.5',
+      updatedAt: NUTRITION_HABITS_SECTION.updated_at,
+    });
+  });
+});
 
 describe('profile.model (HU005)', () => {
   describe('solicitudes', () => {
@@ -120,6 +192,8 @@ describe('profile.model (HU005)', () => {
       expect(toAthleteProfile(EMPTY_PROFILE)).toEqual({
         demographic: null,
         physiological: null,
+        sportHabits: null,
+        nutritionHabits: null,
         projectedAt: null,
       });
     });

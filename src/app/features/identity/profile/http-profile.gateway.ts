@@ -15,15 +15,25 @@ import {
   AthleteProfile,
   DemographicDraft,
   DemographicProfile,
+  NutritionHabits,
+  NutritionHabitsDraft,
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
+  SportHabitsUpdate,
   conflictVersion,
   toAthleteProfile,
   toDemographicProfile,
   toDemographicRequest,
+  toNutritionHabits,
+  toNutritionHabitsRequest,
   toPhysiologicalProfile,
   toPhysiologicalRequest,
+  toSportHabits,
+  toSportHabitsPatchRequest,
+  toSportHabitsRequest,
 } from './profile.model';
 
 /** Estados transitorios que se reintentan automáticamente (sin red, 502, 503, 504). */
@@ -39,10 +49,12 @@ export const PROFILE_RETRY_DELAYS_MS = new InjectionToken<readonly number[]>(
 );
 
 /**
- * Implementación de HU005 sobre `GET /v1/me/profile`,
- * `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile` del BFF
- * web (contrato 0.16.0). Los valores del perfil son datos sensibles: no se
- * registran en consola ni se guardan fuera de la memoria de la pestaña.
+ * Implementación de HU005, HU006, HU008 y HU009 sobre `GET /v1/me/profile`,
+ * `PUT /v1/me/demographic-profile`, `PUT /v1/me/physiological-profile`,
+ * `PUT` y `PATCH /v1/me/sport-habits` y `PUT /v1/me/nutrition-habits` del BFF
+ * web (contrato 0.30.0). Los valores del
+ * perfil son datos sensibles: no se registran en consola ni se guardan fuera de
+ * la memoria de la pestaña.
  */
 @Injectable()
 export class HttpProfileGateway extends ProfileGateway {
@@ -89,6 +101,48 @@ export class HttpProfileGateway extends ProfileGateway {
     return this.save(
       (token) => this.api.putPhysiologicalProfile(token, body, idempotencyKey),
       toPhysiologicalProfile,
+      onRetry,
+    );
+  }
+
+  saveSportHabits(
+    draft: SportHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>> {
+    const body = toSportHabitsRequest(draft, expectedVersion);
+    return this.save(
+      (token) => this.api.putSportHabits(token, body, idempotencyKey),
+      toSportHabits,
+      onRetry,
+    );
+  }
+
+  updateSportHabits(
+    update: SportHabitsUpdate,
+    expectedVersion: number,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>> {
+    const body = toSportHabitsPatchRequest(update, expectedVersion);
+    return this.save(
+      (token) => this.api.patchSportHabits(token, body, idempotencyKey),
+      toSportHabits,
+      onRetry,
+    );
+  }
+
+  saveNutritionHabits(
+    draft: NutritionHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<NutritionHabits>> {
+    const body = toNutritionHabitsRequest(draft, expectedVersion);
+    return this.save(
+      (token) => this.api.putNutritionHabits(token, body, idempotencyKey),
+      toNutritionHabits,
       onRetry,
     );
   }
@@ -153,7 +207,8 @@ export class HttpProfileGateway extends ProfileGateway {
         return { kind: 'conflict', currentVersion: conflictVersion(body.details ?? []) };
       }
     }
-    // Incluye `permission_required`, `idempotency_key_reused`, transitorios agotados
+    // Incluye `permission_required`, `idempotency_key_reused`,
+    // `sport_habits_not_found` (HU008), transitorios agotados
     // y cualquier respuesta no prevista: nunca se interpreta como éxito.
     return { kind: 'failed', error: toApiError(error) };
   }

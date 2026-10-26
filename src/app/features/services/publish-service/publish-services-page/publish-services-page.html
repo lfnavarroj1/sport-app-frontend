@@ -1,0 +1,122 @@
+<section class="services-page">
+  <header class="services-page__header">
+    <h1>{{ 'services.publish.title' | translate }}</h1>
+    <p>{{ 'services.publish.intro' | translate }}</p>
+  </header>
+
+  <div class="publish-services">
+    <mat-card appearance="outlined" class="services-page__card publish-services__list">
+      <mat-card-content>
+        <mat-button-toggle-group
+          class="publish-services__tabs"
+          [value]="status()"
+          (change)="selectStatus($event.value)"
+          [attr.aria-label]="'services.publish.list.statusLabel' | translate"
+        >
+          <mat-button-toggle value="DRAFT" data-testid="services-tab-draft">
+            {{ 'services.publish.list.tabs.DRAFT' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle value="PUBLISHED" data-testid="services-tab-published">
+            {{ 'services.publish.list.tabs.PUBLISHED' | translate }}
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <app-async-state [state]="state()" [emptyMessageKey]="emptyKey()" (retry)="loadFirst()">
+          <ul
+            #list
+            class="publish-services__items"
+            data-testid="own-services-list"
+            [attr.aria-label]="'services.publish.list.label.' + status() | translate"
+          >
+            @for (service of services(); track service.id) {
+              <li class="publish-services__item" [attr.data-service]="service.id">
+                <a
+                  class="publish-services__link"
+                  [routerLink]="[service.id]"
+                  routerLinkActive="publish-services__link--active"
+                  ariaCurrentWhenActive="page"
+                >
+                  <span class="publish-services__name">{{ service.name }}</span>
+                  <span class="publish-services__meta">
+                    {{ 'services.availability.categories.' + service.category | translate }} ·
+                    {{ 'services.availability.modalities.' + service.modality | translate }}
+                  </span>
+                  <span class="publish-services__meta">
+                    {{
+                      'services.availability.price.value'
+                        | translate
+                          : {
+                              amount: price(service),
+                              unit:
+                                ('services.availability.billingUnits.' + service.price.billingUnit
+                                | translate),
+                            }
+                    }}
+                  </span>
+                  <span class="publish-services__meta">
+                    {{
+                      'services.publish.list.futureIntervals'
+                        | translate: { count: futureCount(service) }
+                    }}
+                  </span>
+                  @if (service.publishedAt) {
+                    <span class="publish-services__meta">
+                      {{
+                        'services.publish.list.publishedAt'
+                          | translate: { date: (service.publishedAt | date: 'medium') }
+                      }}
+                    </span>
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+
+          <p class="publish-services__count" role="status" data-testid="own-services-count">
+            {{
+              (nextCursor() ? 'services.publish.list.countMore' : 'services.publish.list.countAll')
+                | translate: { count: services().length }
+            }}
+          </p>
+
+          @if (moreError(); as error) {
+            <div class="services-page__error" role="alert" data-testid="own-services-more-error">
+              <p>{{ 'common.errors.' + error.kind | translate }}</p>
+              @if (error.correlationId) {
+                <p class="services-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (nextCursor()) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
+              {{
+                (loadingMore()
+                  ? 'common.state.loading'
+                  : moreError()
+                    ? 'common.state.retry'
+                    : 'services.publish.list.loadMore'
+                ) | translate
+              }}
+            </button>
+          }
+        </app-async-state>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="publish-services__detail">
+      @if (!detailOpen()) {
+        <p class="services-page__note" data-testid="service-detail-placeholder">
+          {{ 'services.publish.detail.choose' | translate }}
+        </p>
+      }
+      <router-outlet (activate)="detailOpen.set(true)" (deactivate)="detailOpen.set(false)" />
+    </div>
+  </div>
+</section>

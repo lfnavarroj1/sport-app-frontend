@@ -1,0 +1,264 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="profile-form"
+  data-testid="sport-habits-form"
+>
+  @if (summary().length > 0) {
+    <div class="profile-form__errors" role="alert" tabindex="-1" data-testid="sport-habits-errors">
+      <p>{{ 'profile.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'profile.issues.item'
+                | translate
+                  : {
+                      field: (item.field.key | translate: item.field.params),
+                      rule: (item.issue | translate: { max: limits.sportsMax }),
+                    }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (editing()) {
+    <p class="profile-form__note" data-testid="sport-habits-partial-hint">
+      {{ 'profile.habits.hints.partial' | translate }}
+    </p>
+  }
+
+  <fieldset class="profile-form__group" formArrayName="sports" data-testid="sport-habits-sports">
+    <legend>{{ 'profile.habits.fields.sports' | translate }}</legend>
+    <p class="profile-form__note">
+      {{
+        'profile.habits.hints.sports' | translate: { min: limits.sportsMin, max: limits.sportsMax }
+      }}
+    </p>
+    @if (sports.errors?.['profileRule']; as rule) {
+      <p class="profile-form__rule" data-testid="sport-habits-sports-rule">
+        {{ rule | translate: { max: limits.sportsMax } }}
+      </p>
+    }
+
+    @for (row of sports.controls; track $index; let i = $index) {
+      <fieldset
+        class="profile-form__group sport-habits-form__row"
+        [formGroupName]="i"
+        [attr.data-testid]="'sport-row-' + i"
+      >
+        <legend>{{ 'profile.habits.fields.sportN' | translate: { n: i + 1 } }}</legend>
+        <div class="profile-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'profile.habits.fields.sport' | translate }}</mat-label>
+            <mat-select formControlName="sport" data-focus="sport" required>
+              @for (sport of sportOptions; track sport) {
+                <mat-option [value]="sport" [disabled]="takenElsewhere(sport, i)">{{
+                  'training.sports.' + sport | translate
+                }}</mat-option>
+              }
+            </mat-select>
+            @if (duplicated(i)) {
+              <mat-hint class="profile-form__rule" [attr.data-testid]="'sport-row-duplicate-' + i">
+                {{ 'profile.habits.issues.duplicateSport' | translate }}
+              </mat-hint>
+            }
+            <mat-error><app-profile-field-error [control]="row.controls.sport" /></mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'profile.habits.fields.frequencyPerWeek' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="frequencyPerWeek"
+              [min]="limits.frequencyMin"
+              [max]="limits.frequencyMax"
+              required
+            />
+            <mat-hint>{{
+              'profile.habits.hints.range'
+                | translate: { min: limits.frequencyMin, max: limits.frequencyMax }
+            }}</mat-hint>
+            <mat-error>
+              <app-profile-field-error [control]="row.controls.frequencyPerWeek" />
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'profile.habits.fields.sessionDurationMinutes' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="sessionDurationMinutes"
+              [min]="limits.durationMin"
+              [max]="limits.durationMax"
+              required
+            />
+            <span matTextSuffix aria-hidden="true">{{
+              'profile.habits.units.minutes' | translate
+            }}</span>
+            <mat-hint>{{
+              'profile.habits.hints.range'
+                | translate: { min: limits.durationMin, max: limits.durationMax }
+            }}</mat-hint>
+            <mat-error>
+              <app-profile-field-error [control]="row.controls.sessionDurationMinutes" />
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="profile-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'profile.habits.fields.intensity' | translate }}</mat-label>
+            <mat-select formControlName="intensity" required>
+              @for (intensity of intensities; track intensity) {
+                <mat-option [value]="intensity">{{
+                  'profile.habits.intensities.' + intensity | translate
+                }}</mat-option>
+              }
+            </mat-select>
+            <mat-error><app-profile-field-error [control]="row.controls.intensity" /></mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'profile.habits.fields.level' | translate }}</mat-label>
+            <mat-select formControlName="level" required>
+              @for (level of levels; track level) {
+                <mat-option [value]="level">{{
+                  'profile.habits.levels.' + level | translate
+                }}</mat-option>
+              }
+            </mat-select>
+            <mat-error><app-profile-field-error [control]="row.controls.level" /></mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'profile.habits.fields.yearsPracticing' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="yearsPracticing"
+              [min]="limits.yearsMin"
+              [max]="limits.yearsMax"
+            />
+            <mat-hint>{{
+              'profile.habits.hints.range'
+                | translate: { min: limits.yearsMin, max: limits.yearsMax }
+            }}</mat-hint>
+            <mat-error>
+              <app-profile-field-error [control]="row.controls.yearsPracticing" />
+            </mat-error>
+          </mat-form-field>
+        </div>
+        @if (rowCount() > limits.sportsMin) {
+          <div>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="submitting()"
+              [attr.aria-label]="'profile.habits.actions.removeSportN' | translate: { n: i + 1 }"
+              [attr.data-testid]="'sport-row-remove-' + i"
+              (click)="removeSport(i)"
+            >
+              {{ 'profile.habits.actions.removeSport' | translate }}
+            </button>
+          </div>
+        }
+      </fieldset>
+    }
+
+    <div class="sport-habits-form__add">
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="sport-habits-add"
+        [disabled]="atMax() || submitting()"
+        (click)="addSport()"
+      >
+        {{ 'profile.habits.actions.addSport' | translate }}
+      </button>
+      @if (atMax()) {
+        <p class="profile-form__note" data-testid="sport-habits-max">
+          {{ 'profile.habits.hints.maxSports' | translate: { max: limits.sportsMax } }}
+        </p>
+      }
+    </div>
+  </fieldset>
+
+  <fieldset
+    class="profile-form__group"
+    formGroupName="days"
+    data-group="days"
+    data-testid="sport-habits-days"
+    aria-describedby="sport-habits-days-rule"
+  >
+    <legend>{{ 'profile.habits.fields.days' | translate }}</legend>
+    <div class="sport-habits-form__options">
+      @for (day of weekDays; track day) {
+        <mat-checkbox [formControlName]="day">{{
+          'profile.habits.days.' + day | translate
+        }}</mat-checkbox>
+      }
+    </div>
+    <p class="profile-form__rule" id="sport-habits-days-rule" aria-live="polite">
+      @if (groupRule(form.controls.days, 'profile.habits.validation.daysRequired'); as rule) {
+        <span data-testid="sport-habits-days-error">{{ rule | translate }}</span>
+      }
+    </p>
+  </fieldset>
+
+  <fieldset
+    class="profile-form__group"
+    formGroupName="timeSlots"
+    data-group="timeSlots"
+    data-testid="sport-habits-time-slots"
+    aria-describedby="sport-habits-time-slots-rule"
+  >
+    <legend>{{ 'profile.habits.fields.timeSlots' | translate }}</legend>
+    <div class="sport-habits-form__options">
+      @for (slot of timeSlots; track slot) {
+        <mat-checkbox [formControlName]="slot">{{
+          'profile.habits.timeSlots.' + slot | translate
+        }}</mat-checkbox>
+      }
+    </div>
+    <p class="profile-form__rule" id="sport-habits-time-slots-rule" aria-live="polite">
+      @if (
+        groupRule(form.controls.timeSlots, 'profile.habits.validation.timeSlotsRequired');
+        as rule
+      ) {
+        <span data-testid="sport-habits-time-slots-error">{{ rule | translate }}</span>
+      }
+    </p>
+  </fieldset>
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.habits.fields.primaryGoal' | translate }}</mat-label>
+      <mat-select formControlName="primaryGoal">
+        <mat-option [value]="null">{{ 'profile.habits.notSpecified' | translate }}</mat-option>
+        @for (goal of goals; track goal) {
+          <mat-option [value]="goal">{{ 'profile.habits.goals.' + goal | translate }}</mat-option>
+        }
+      </mat-select>
+      <mat-error><app-profile-field-error [control]="form.controls.primaryGoal" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  @if (unchanged()) {
+    <p class="profile-form__note" role="status" tabindex="-1" data-testid="sport-habits-unchanged">
+      {{ 'profile.habits.unchanged' | translate }}
+    </p>
+  }
+
+  <div class="profile-form__actions">
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{ 'profile.habits.actions.save' | translate }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'profile.habits.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>

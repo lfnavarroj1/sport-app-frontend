@@ -50,7 +50,14 @@ export class SessionStore {
   private renewalTimer: ReturnType<typeof setTimeout> | null = null;
   private restoration: Promise<void> | null = null;
 
-  readonly user = computed(() => this.current()?.user ?? null);
+  /** Nombre y correo confirmados por HU002 después de iniciar la sesión vigente. */
+  private readonly userChanges = signal<Pick<SessionUser, 'fullName' | 'email'> | null>(null);
+
+  readonly user = computed(() => {
+    const user = this.current()?.user ?? null;
+    const changes = this.userChanges();
+    return user !== null && changes !== null ? { ...user, ...changes } : user;
+  });
   readonly isAuthenticated = computed(() => this.current() !== null);
   readonly lastEndReason = this.endReason.asReadonly();
 
@@ -80,6 +87,8 @@ export class SessionStore {
   start(session: Session): void {
     this.cancelTimers();
     this.endReason.set(null);
+    // La sesión nueva o renovada trae el nombre y el correo vigentes del BFF.
+    this.userChanges.set(null);
     this.current.set(session);
     const lifetime = session.expiresAt - Date.now();
     this.expiryTimer = setTimeout(() => this.end('expired'), lifetime);
@@ -89,9 +98,21 @@ export class SessionStore {
     }
   }
 
+  /**
+   * Muestra el nombre y el correo que el backend confirmó al editar la cuenta
+   * (HU002) sin cerrar la sesión: no cambia el access token, su vencimiento ni
+   * la renovación. Sin sesión vigente no hace nada.
+   */
+  updateUser(changes: Pick<SessionUser, 'fullName' | 'email'>): void {
+    if (this.current() !== null) {
+      this.userChanges.set({ fullName: changes.fullName, email: changes.email });
+    }
+  }
+
   /** Termina la sesión y descarta el access token de la memoria. */
   end(reason: SessionEndReason | null = null): void {
     this.cancelTimers();
+    this.userChanges.set(null);
     this.current.set(null);
     this.endReason.set(reason);
   }

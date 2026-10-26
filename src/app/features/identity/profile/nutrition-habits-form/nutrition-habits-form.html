@@ -1,0 +1,157 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="profile-form"
+  data-testid="nutrition-habits-form"
+>
+  @if (summary().length > 0) {
+    <div
+      class="profile-form__errors"
+      role="alert"
+      tabindex="-1"
+      data-testid="nutrition-habits-errors"
+    >
+      <p>{{ 'profile.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'profile.issues.item'
+                | translate: { field: (item.field | translate), rule: (item.issue | translate) }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="profile-form__row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.nutrition.fields.dietPattern' | translate }}</mat-label>
+      <mat-select formControlName="dietPattern" required>
+        @for (pattern of patterns; track pattern) {
+          <mat-option [value]="pattern">{{
+            'profile.nutrition.patterns.' + pattern | translate
+          }}</mat-option>
+        }
+      </mat-select>
+      <mat-error><app-profile-field-error [control]="form.controls.dietPattern" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.nutrition.fields.mealsPerDay' | translate }}</mat-label>
+      <mat-select formControlName="mealsPerDay" required>
+        @for (count of meals; track count) {
+          <mat-option [value]="count">{{ count }}</mat-option>
+        }
+      </mat-select>
+      <mat-error><app-profile-field-error [control]="form.controls.mealsPerDay" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'profile.nutrition.fields.hydration' | translate }}</mat-label>
+      <input
+        matInput
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        formControlName="hydration"
+      />
+      <span matTextSuffix aria-hidden="true">{{
+        'profile.nutrition.units.liters' | translate
+      }}</span>
+      <mat-hint>{{ 'profile.nutrition.hints.hydration' | translate: hydrationRange }}</mat-hint>
+      <mat-error><app-profile-field-error [control]="form.controls.hydration" /></mat-error>
+    </mat-form-field>
+  </div>
+
+  <fieldset
+    class="profile-form__group"
+    formGroupName="restrictions"
+    data-testid="nutrition-habits-restrictions"
+    aria-describedby="nutrition-habits-restrictions-hint nutrition-habits-restrictions-rule"
+  >
+    <legend>{{ 'profile.nutrition.fields.restrictions' | translate }}</legend>
+    <p class="profile-form__note" id="nutrition-habits-restrictions-hint">
+      {{ 'profile.nutrition.hints.optionalList' | translate }}
+    </p>
+    <div class="nutrition-habits-form__options">
+      @for (restriction of restrictionOptions; track restriction) {
+        <mat-checkbox [formControlName]="restriction">{{
+          'profile.nutrition.restrictions.' + restriction | translate
+        }}</mat-checkbox>
+      }
+    </div>
+    <p class="profile-form__rule" id="nutrition-habits-restrictions-rule" aria-live="polite">
+      @if (rule(form.controls.restrictions); as message) {
+        <span data-testid="nutrition-habits-restrictions-error">{{ message | translate }}</span>
+      }
+    </p>
+  </fieldset>
+
+  <fieldset
+    class="profile-form__group"
+    formGroupName="allergies"
+    data-testid="nutrition-habits-allergies"
+    aria-describedby="nutrition-habits-allergies-hint nutrition-habits-allergies-rule"
+  >
+    <legend>{{ 'profile.nutrition.fields.allergies' | translate }}</legend>
+    <p class="profile-form__note" id="nutrition-habits-allergies-hint">
+      {{ 'profile.nutrition.hints.optionalList' | translate }}
+    </p>
+    <div class="nutrition-habits-form__options">
+      @for (allergy of allergyOptions; track allergy) {
+        <mat-checkbox [formControlName]="allergy">{{
+          'profile.nutrition.allergies.' + allergy | translate
+        }}</mat-checkbox>
+      }
+    </div>
+    <p class="profile-form__rule" id="nutrition-habits-allergies-rule" aria-live="polite">
+      @if (rule(form.controls.allergies); as message) {
+        <span data-testid="nutrition-habits-allergies-error">{{ message | translate }}</span>
+      }
+    </p>
+  </fieldset>
+
+  <p class="profile-form__note" role="note" data-testid="nutrition-habits-disclaimer">
+    {{ 'profile.nutrition.disclaimer' | translate }}
+  </p>
+
+  <fieldset class="profile-form__group">
+    <legend>{{ 'profile.nutrition.fields.consent' | translate }}</legend>
+    <mat-checkbox formControlName="consent" required>
+      {{ 'profile.nutrition.consent.label' | translate: { version: consentVersion() } }}
+    </mat-checkbox>
+    <p class="profile-form__note">{{ 'profile.nutrition.consent.hint' | translate }}</p>
+    <p class="profile-form__note">
+      {{ 'profile.physiological.consent.policyPending' | translate }}
+    </p>
+    @if (rule(form.controls.consent); as message) {
+      <p class="profile-form__rule" role="alert" data-testid="nutrition-habits-consent-error">
+        {{ message | translate }}
+      </p>
+    }
+  </fieldset>
+
+  @if (!consentChecked()) {
+    <p
+      class="profile-form__note"
+      id="nutrition-habits-consent-required"
+      data-testid="nutrition-habits-consent-required"
+    >
+      {{ 'profile.nutrition.consent.requiredToSave' | translate }}
+    </p>
+  }
+  <div class="profile-form__actions">
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="submitting() || !consentChecked()"
+      [attr.aria-describedby]="consentChecked() ? null : 'nutrition-habits-consent-required'"
+    >
+      {{ 'profile.nutrition.actions.save' | translate }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'profile.nutrition.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>

@@ -79,7 +79,7 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     expect(features(element)).toContain('service-create');
     expect(features(element)).toContain('service-publish');
     expect(features(element)).not.toContain('event-create');
-    expect(element.querySelector('[data-feature="service-create"]')?.textContent).toContain(
+    expect(element.querySelector('[data-feature="health-history"]')?.textContent).toContain(
       'Próximamente',
     );
   });
@@ -102,6 +102,7 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     expect(features(element)).toEqual([
       'athlete-training-history',
       'athlete-services',
+      'athlete-nutrition',
       'athlete-training-plans',
       'sport-calendar',
     ]);
@@ -111,8 +112,12 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
     const element = await render('athlete', accessReady('athlete', 'PROVISIONING'));
 
     expect(planText(element)).toContain('Estamos activando tu plan');
-    // Solo las funciones que no dependen del plan (HU011 y HU020).
-    expect(features(element)).toEqual(['athlete-training-history', 'athlete-services']);
+    // Solo las funciones que no dependen del plan (HU011, HU020 y HU014).
+    expect(features(element)).toEqual([
+      'athlete-training-history',
+      'athlete-services',
+      'athlete-nutrition',
+    ]);
   });
 
   it('mientras consulta y ante un fallo no asume ningún plan', async () => {
@@ -126,6 +131,10 @@ describe('ActorHomePage (ADR-025, HU003 CA7–CA9)', () => {
       error: { kind: 'server', status: 503, code: 'upstream_unavailable', correlationId: null },
     });
     expect(planText(failed)).toBe('No pudimos consultar tu plan. Reintenta desde el menú.');
-    expect(features(failed)).toEqual(['athlete-training-history', 'athlete-services']);
+    expect(features(failed)).toEqual([
+      'athlete-training-history',
+      'athlete-services',
+      'athlete-nutrition',
+    ]);
   });
 });

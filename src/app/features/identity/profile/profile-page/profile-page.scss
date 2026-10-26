@@ -1,4 +1,4 @@
-// Mi perfil (HU005) dentro del área del deportista; mismo lenguaje visual que eventos.
+// Mi perfil (HU002, HU005, HU006 y HU009) en el área de cada actor; mismo lenguaje visual que eventos.
 :host {
   display: block;
 }
@@ -34,10 +34,6 @@
   box-shadow: var(--sa-shadow-card);
 }
 
-.profile-page__card--upcoming {
-  background: var(--mat-sys-surface-container-low);
-}
-
 .profile-page__title {
   display: flex;
   flex-wrap: wrap;
@@ -46,14 +42,6 @@
   margin: 0 0 0.5rem;
   font: var(--mat-sys-title-large);
   font-weight: 700;
-}
-
-.profile-page__badge {
-  padding: 0.125rem 0.75rem;
-  border-radius: 999px;
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-  font: var(--mat-sys-label-medium);
 }
 
 .profile-section {
@@ -133,4 +121,46 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+// Hábitos deportivos (HU006): un renglón por deporte y listas cortas como etiquetas.
+.profile-page__habits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  strong {
+    flex-basis: 100%;
+    font: var(--mat-sys-title-small);
+    font-weight: 700;
+  }
+}
+
+.profile-page__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.125rem 0.75rem;
+    border-radius: 999px;
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    font: var(--mat-sys-label-large);
+  }
 }

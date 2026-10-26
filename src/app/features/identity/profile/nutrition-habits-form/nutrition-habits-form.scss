@@ -1,0 +1,8 @@
+// Formulario de hábitos alimenticios (HU009): mismo lenguaje visual que los de HU005 y HU006.
+@use '../profile-form';
+
+.nutrition-habits-form__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}

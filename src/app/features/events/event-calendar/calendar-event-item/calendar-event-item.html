@@ -1,0 +1,39 @@
+@let item = entry();
+<span class="calendar-event__name">{{ item.name }}</span>
+@if (compact()) {
+  <span class="calendar-event__meta">
+    {{ item.startsAt | date: 'shortTime' }} · {{ item.city }}
+  </span>
+} @else {
+  <span class="calendar-event__meta">{{ item.discipline }} · {{ item.city }}</span>
+  <span class="calendar-event__meta" data-testid="calendar-event-time">
+    {{
+      'events.calendar.event.time'
+        | translate
+          : {
+              start: item.startsAt | date: 'EEE d MMM y, HH:mm',
+              end: item.endsAt | date: (spansDays() ? 'EEE d MMM, HH:mm' : 'HH:mm'),
+            }
+    }}
+  </span>
+}
+<span class="calendar-event__zone" data-testid="calendar-event-zone">
+  @if (eventLocalStart(); as local) {
+    {{ 'events.calendar.event.zoneWithTime' | translate: { zone: item.timeZone, time: local } }}
+  } @else {
+    {{ 'events.calendar.event.zone' | translate: { zone: item.timeZone } }}
+  }
+</span>
+@if (own()) {
+  <span class="calendar-event__badge calendar-event__badge--own" data-testid="calendar-event-own">
+    {{ 'events.calendar.event.own' | translate }}
+  </span>
+}
+@if (reasons().length > 0) {
+  <span class="calendar-event__badge" data-testid="calendar-event-conflict">
+    {{ 'events.calendar.event.conflict' | translate }}:
+    @for (reason of reasons(); track reason; let last = $last) {
+      {{ 'events.calendar.reasons.' + reason | translate }}{{ last ? '' : ', ' }}
+    }
+  </span>
+}

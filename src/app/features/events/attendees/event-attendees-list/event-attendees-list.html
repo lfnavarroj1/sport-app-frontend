@@ -1,0 +1,155 @@
+<mat-card appearance="outlined" class="events-page__card" data-testid="attendees-detail">
+  <mat-card-content>
+    @if (notFound()) {
+      <div class="events-page__error" role="alert" data-testid="attendees-not-found">
+        <p>{{ 'events.attendees.notFound' | translate }}</p>
+      </div>
+    } @else {
+      <h2 class="events-page__step" id="attendees-list-title">
+        @if (event(); as selected) {
+          {{ 'events.attendees.list.title' | translate: { name: selected.name } }}
+        } @else {
+          {{ 'events.attendees.list.titleGeneric' | translate }}
+        }
+      </h2>
+
+      <mat-button-toggle-group
+        class="attendees__filter"
+        [value]="filter()"
+        (change)="selectFilter($event.value)"
+        [attr.aria-label]="'events.attendees.filter.label' | translate"
+      >
+        @for (option of filters; track option) {
+          <mat-button-toggle [value]="option" [attr.data-testid]="'attendees-filter-' + option">
+            {{ 'events.attendees.filter.' + option | translate }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <app-async-state [state]="state()" (retry)="loadFirst()">
+        @if (page(); as view) {
+          <dl class="events-page__facts" data-testid="attendees-counts">
+            @for (entry of view.byStatus; track entry.status) {
+              <dt>
+                @if (statusKey(entry.status); as key) {
+                  {{
+                    'events.attendees.counts.byStatus' | translate: { status: (key | translate) }
+                  }}
+                } @else {
+                  {{ 'events.attendees.counts.byStatus' | translate: { status: entry.status } }}
+                }
+              </dt>
+              <dd [attr.data-testid]="'attendees-count-' + entry.status">{{ entry.count }}</dd>
+            }
+            <dt>{{ 'events.attendees.counts.filtered' | translate }}</dt>
+            <dd data-testid="attendees-total">{{ view.total }}</dd>
+          </dl>
+
+          @if (!view.namesAvailable) {
+            <div class="attendees__warning" role="status" data-testid="attendees-names-unavailable">
+              <p>{{ 'events.attendees.namesUnavailable' | translate }}</p>
+              <button mat-stroked-button type="button" (click)="loadFirst()">
+                {{ 'events.attendees.actions.recheck' | translate }}
+              </button>
+            </div>
+          }
+
+          @if (view.attendees.length === 0) {
+            <p class="events-page__note" role="status" data-testid="attendees-empty">
+              {{
+                (view.total === 0 ? 'events.attendees.empty' : 'events.attendees.emptyPage')
+                  | translate
+              }}
+            </p>
+          } @else {
+            <div class="attendees__table-wrapper">
+              <table class="attendees__table" data-testid="attendees-table">
+                <caption>
+                  @if (event(); as selected) {
+                    {{ 'events.attendees.list.caption' | translate: { name: selected.name } }}
+                  } @else {
+                    {{ 'events.attendees.list.titleGeneric' | translate }}
+                  }
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'events.attendees.columns.name' | translate }}</th>
+                    <th scope="col">{{ 'events.attendees.columns.status' | translate }}</th>
+                    <th scope="col">{{ 'events.attendees.columns.registeredAt' | translate }}</th>
+                    <th scope="col">{{ 'events.attendees.columns.fee' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (attendee of view.attendees; track attendee.registrationId) {
+                    <tr [attr.data-registration]="attendee.registrationId">
+                      <th scope="row">
+                        @if (attendee.displayName !== null) {
+                          {{ attendee.displayName }}
+                        } @else {
+                          <span class="attendees__unknown" data-testid="attendee-name-unavailable">
+                            {{ 'events.attendees.noName' | translate }}
+                          </span>
+                        }
+                      </th>
+                      <td>
+                        @if (statusKey(attendee.status); as key) {
+                          {{ key | translate }}
+                        } @else {
+                          {{ attendee.status }}
+                        }
+                      </td>
+                      <td>{{ attendee.registeredAt | date: 'medium' }}</td>
+                      <td>
+                        @if (fee(attendee); as amount) {
+                          {{ amount }}
+                        } @else {
+                          {{ 'events.attendees.noFee' | translate }}
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="events-page__note" aria-live="polite" data-testid="attendees-shown">
+              {{
+                'events.attendees.shown'
+                  | translate: { count: view.attendees.length, total: view.total }
+              }}
+            </p>
+            <p class="events-page__note">{{ 'events.attendees.feeNote' | translate }}</p>
+          }
+
+          @if (moreError(); as error) {
+            <div class="events-page__error" role="alert" data-testid="attendees-more-error">
+              <p>{{ 'events.attendees.moreError' | translate }}</p>
+              @if (error.correlationId) {
+                <p class="events-page__reference">
+                  {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                </p>
+              }
+            </div>
+          }
+          @if (view.nextCursor !== null) {
+            <div class="events-page__actions">
+              <button
+                mat-stroked-button
+                type="button"
+                data-testid="attendees-load-more"
+                [disabled]="loadingMore()"
+                (click)="loadMore()"
+              >
+                {{
+                  (loadingMore()
+                    ? 'events.attendees.actions.loadingMore'
+                    : 'events.attendees.actions.loadMore'
+                  ) | translate
+                }}
+              </button>
+            </div>
+          }
+        }
+      </app-async-state>
+    }
+  </mat-card-content>
+</mat-card>

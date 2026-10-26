@@ -1,0 +1,259 @@
+<section
+  class="statement"
+  [id]="fragment"
+  aria-labelledby="account-statement-title"
+  data-testid="account-statement"
+>
+  <h2 #heading id="account-statement-title" class="statement__title" tabindex="-1">
+    {{ 'affiliation.statement.title' | translate }}
+  </h2>
+  <p class="statement__note">{{ 'affiliation.statement.intro' | translate }}</p>
+
+  <app-async-state [state]="state()" (retry)="load()">
+    @if (statement(); as data) {
+      <div [attr.data-statement-status]="data.status" data-testid="account-statement-content">
+        @switch (data.status) {
+          @case ('PROVISIONING') {
+            <div
+              class="statement__status"
+              role="status"
+              data-testid="account-statement-provisioning"
+            >
+              <p>{{ 'affiliation.statement.provisioning' | translate }}</p>
+              <button mat-stroked-button type="button" (click)="load()">
+                {{ 'affiliation.statement.actions.recheck' | translate }}
+              </button>
+            </div>
+          }
+          @case ('NOT_APPLICABLE') {
+            <p
+              class="statement__status"
+              role="status"
+              data-testid="account-statement-not-applicable"
+            >
+              {{ 'affiliation.statement.notApplicable' | translate }}
+            </p>
+          }
+          @default {
+            <p class="statement__payments" role="note" data-testid="account-statement-payments">
+              {{ 'affiliation.statement.paymentsNotIntegrated' | translate }}
+            </p>
+            <p class="statement__note" data-testid="account-statement-time-zone">
+              {{ 'affiliation.statement.timeZone' | translate: { zone: timeZone } }}
+            </p>
+
+            <h3 class="statement__subtitle">
+              {{ 'affiliation.statement.subscription.title' | translate }}
+            </h3>
+            @if (data.subscription; as subscription) {
+              <dl class="statement__facts" data-testid="account-statement-subscription">
+                <dt>{{ 'affiliation.statement.subscription.plan' | translate }}</dt>
+                <dd data-testid="account-statement-plan">
+                  @if (planKey(subscription.planCode ?? ''); as key) {
+                    {{ key | translate }}
+                  } @else {
+                    {{ subscription.planCode }}
+                  }
+                </dd>
+                <dt>{{ 'affiliation.statement.subscription.version' | translate }}</dt>
+                <dd data-testid="account-statement-plan-version">{{ subscription.version }}</dd>
+                <dt>{{ 'affiliation.statement.subscription.offer' | translate }}</dt>
+                <dd data-testid="account-statement-offer">
+                  @if (subscription.periodicity) {
+                    {{ 'affiliation.periodicities.' + subscription.periodicity | translate }}
+                  }
+                </dd>
+                <dt>{{ 'affiliation.statement.subscription.price' | translate }}</dt>
+                <dd data-testid="account-statement-price">
+                  @if (subscription.periodicity === 'NONE' || subscription.price === null) {
+                    {{ 'affiliation.statement.free' | translate }}
+                  } @else {
+                    {{
+                      'affiliation.statement.amountUnconfirmed'
+                        | translate: { amount: amount(subscription.price) }
+                    }}
+                  }
+                </dd>
+                <dt>{{ 'affiliation.statement.subscription.periodStart' | translate }}</dt>
+                <dd data-testid="account-statement-period-start">
+                  @if (subscription.periodStart) {
+                    {{ instant(subscription.periodStart) }}
+                  }
+                </dd>
+                <dt>{{ 'affiliation.statement.subscription.nextDue' | translate }}</dt>
+                <dd data-testid="account-statement-next-due">
+                  @if (subscription.periodEnd) {
+                    {{ instant(subscription.periodEnd) }}
+                  } @else {
+                    {{ 'affiliation.statement.subscription.noDue' | translate }}
+                  }
+                </dd>
+                <dt>{{ 'affiliation.statement.balance.label' | translate }}</dt>
+                <dd data-testid="account-statement-balance">
+                  {{ 'affiliation.statement.balance.unavailable' | translate }}
+                </dd>
+              </dl>
+            } @else {
+              <p class="statement__status" role="status" data-testid="account-statement-none">
+                {{ 'affiliation.statement.none' | translate }}
+              </p>
+            }
+
+            <h3 class="statement__subtitle">
+              {{ 'affiliation.statement.commitments.title' | translate }}
+            </h3>
+            @if (data.commitments.length === 0) {
+              <p class="statement__note" data-testid="account-statement-no-commitments">
+                {{ 'affiliation.statement.commitments.empty' | translate }}
+              </p>
+            } @else {
+              <ul class="statement__commitments" data-testid="account-statement-commitments">
+                @for (commitment of data.commitments; track commitment.id) {
+                  <li
+                    class="statement__commitment"
+                    [attr.data-commitment-status]="commitment.status"
+                  >
+                    <p class="statement__commitment-head">
+                      <strong>
+                        @if (planKey(commitment.planCode); as key) {
+                          {{ key | translate }}
+                        } @else {
+                          {{ commitment.planCode }}
+                        }
+                        · {{ 'affiliation.periodicities.' + commitment.periodicity | translate }}
+                      </strong>
+                      <span class="statement__badge">
+                        {{
+                          'affiliation.statement.commitments.status.' + commitment.status
+                            | translate
+                        }}
+                      </span>
+                    </p>
+                    <dl class="statement__facts">
+                      <dt>{{ 'affiliation.statement.commitments.amount' | translate }}</dt>
+                      <dd>
+                        {{
+                          'affiliation.statement.amountUnconfirmed'
+                            | translate: { amount: amount(commitment.amount) }
+                        }}
+                      </dd>
+                      <dt>{{ 'affiliation.statement.commitments.period' | translate }}</dt>
+                      <dd>
+                        {{
+                          'affiliation.statement.commitments.periodRange'
+                            | translate
+                              : {
+                                  start: instant(commitment.periodStart),
+                                  end: instant(commitment.periodEnd),
+                                }
+                        }}
+                      </dd>
+                      <dt>{{ 'affiliation.statement.commitments.dueAt' | translate }}</dt>
+                      <dd>{{ instant(commitment.dueAt) }}</dd>
+                    </dl>
+                  </li>
+                }
+              </ul>
+            }
+
+            <h3 class="statement__subtitle" id="account-statement-movements-title">
+              {{ 'affiliation.statement.movements.title' | translate }}
+            </h3>
+            @if (data.movements.length === 0) {
+              <p class="statement__note" data-testid="account-statement-no-movements">
+                {{ 'affiliation.statement.movements.empty' | translate }}
+              </p>
+            } @else {
+              <div class="statement__table-wrapper">
+                <table
+                  class="statement__table"
+                  aria-labelledby="account-statement-movements-title"
+                  data-testid="account-statement-movements"
+                >
+                  <thead>
+                    <tr>
+                      <th scope="col">{{ 'affiliation.statement.movements.date' | translate }}</th>
+                      <th scope="col">{{ 'affiliation.statement.movements.type' | translate }}</th>
+                      <th scope="col">{{ 'affiliation.statement.movements.plan' | translate }}</th>
+                      <th scope="col">
+                        {{ 'affiliation.statement.movements.amount' | translate }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (movement of data.movements; track movement.id) {
+                      <tr [attr.data-movement-type]="movement.type">
+                        <td>{{ instant(movement.occurredAt) }}</td>
+                        <td>
+                          {{ 'affiliation.statement.movements.types.' + movement.type | translate }}
+                        </td>
+                        <td>
+                          @if (planKey(movement.planCode); as key) {
+                            {{ key | translate }}
+                          } @else {
+                            {{ movement.planCode }}
+                          }
+                          @if (movement.periodicity !== 'NONE') {
+                            · {{ 'affiliation.periodicities.' + movement.periodicity | translate }}
+                          }
+                        </td>
+                        <td>
+                          @if (movement.amount !== null) {
+                            {{ amount(movement.amount) }}
+                          } @else {
+                            {{ 'affiliation.statement.movements.noAmount' | translate }}
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            @if (moreError(); as error) {
+              <div class="statement__error" role="alert" data-testid="account-statement-more-error">
+                @if (cursorRejected(error)) {
+                  <p>{{ 'affiliation.statement.movements.cursorRejected' | translate }}</p>
+                } @else {
+                  <p>{{ 'common.errors.' + error.kind | translate }}</p>
+                }
+                @if (error.correlationId) {
+                  <p class="statement__reference">
+                    {{ 'common.errors.reference' | translate: { id: error.correlationId } }}
+                  </p>
+                }
+                @if (cursorRejected(error)) {
+                  <button mat-stroked-button type="button" (click)="load()">
+                    {{ 'affiliation.statement.actions.reload' | translate }}
+                  </button>
+                } @else {
+                  <button mat-stroked-button type="button" (click)="loadMore()">
+                    {{ 'common.state.retry' | translate }}
+                  </button>
+                }
+              </div>
+            } @else if (data.nextCursor !== null) {
+              <div class="statement__actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  data-testid="account-statement-load-more"
+                  [disabled]="loadingMore()"
+                  (click)="loadMore()"
+                >
+                  {{
+                    (loadingMore()
+                      ? 'affiliation.statement.actions.loadingMore'
+                      : 'affiliation.statement.actions.loadMore'
+                    ) | translate
+                  }}
+                </button>
+              </div>
+            }
+          }
+        }
+      </div>
+    }
+  </app-async-state>
+</section>

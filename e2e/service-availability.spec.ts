@@ -102,7 +102,7 @@ test.describe('HU020 Visualizar disponibilidad de servicios (simulador del contr
 
     const restricted = page.getByTestId('availability-restricted');
     await expect(restricted).toHaveText(
-      'La categoría Medicina deportiva está disponible con el plan Premium. Podrás comparar los planes en «Mi plan» (Próximamente).',
+      'La categoría Medicina deportiva está disponible con el plan Premium. Puedes comparar los planes en «Mi plan».',
     );
     await expect(restricted.locator('a')).toHaveCount(0);
     await expect(list(page)).not.toContainText('Medicina deportiva');

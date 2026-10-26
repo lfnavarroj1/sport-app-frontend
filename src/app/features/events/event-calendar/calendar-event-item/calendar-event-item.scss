@@ -1,0 +1,52 @@
+:host {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  background: var(--mat-sys-surface);
+  overflow-wrap: anywhere;
+}
+
+:host(.calendar-event--conflict) {
+  border-color: var(--mat-sys-tertiary);
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
+:host(.calendar-event--own) {
+  border-color: var(--mat-sys-primary);
+}
+
+.calendar-event__name {
+  font: var(--mat-sys-title-small);
+}
+
+.calendar-event__meta,
+.calendar-event__zone {
+  font: var(--mat-sys-body-small);
+}
+
+.calendar-event__zone {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+:host(.calendar-event--conflict) .calendar-event__zone {
+  color: inherit;
+}
+
+.calendar-event__badge {
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--mat-sys-tertiary);
+  color: var(--mat-sys-on-tertiary);
+  font: var(--mat-sys-label-medium);
+}
+
+.calendar-event__badge--own {
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+}

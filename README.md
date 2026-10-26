@@ -166,6 +166,18 @@ Feature `src/app/features/training/history`, contrato `bff-web` 0.8.0 para el hi
 - Filtros por fecha de fin (día UTC, inclusiva) y deporte (los que informa el backend en `filters.sports`). Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo (codificado con `encodeURIComponent`) y agrega la página tal como llega. Cada fila abre su detalle.
 - Pruebas: `e2e/training-history.spec.ts` (`@simulado`) y `e2e/training-history.integrated.spec.ts` (`@integrado`). La integrada produce 25 sesiones reales con HU032 en `bff-mobile` (`PLAYWRIGHT_BFF_MOBILE_URL`) y cubre los filtros, las dos páginas, el acceso del profesional autorizado y el rechazo a un tercero y tras revocar. Su recorrido de CA5 (lista por nombre y correo y retiro tras revocar) requiere `bff-web` 0.15.0 desplegado.
 
+## Planes de alimentación (HU014)
+
+Feature `src/app/features/training/nutrition`, contrato `bff-web` 0.18.0 (`core/api/bff-web/nutrition.api.ts`) y ADR-037.
+
+- **Profesional** (`/profesional/alimentacion/planes`, permiso `nutrition.plan.author`; la guarda `requirePermission` rechaza la ruta cuando la vista de capacidades confirma que falta). El editor se habilita con el catálogo cerrado de `GET /v1/food-catalog`, que se guarda solo en memoria y se revalida con `If-None-Match` (un `304` conserva el anterior). Captura el correo exacto del deportista, el título, 1–5 objetivos, el periodo y el menú diario: 1–8 comidas con su tipo y 1–15 alimentos por comida, con cantidad y una de las unidades permitidas del alimento (al elegirlo se propone su unidad por defecto). La cantidad acepta coma o punto y viaja como cadena decimal con punto.
+- En la web solo se validan las restricciones del contrato (obligatorios, longitudes, cantidades de elementos y formato de la cantidad). El periodo, el catálogo, las unidades, el rango y el **bloqueo por alergia o restricción** del deportista los decide el backend: `422 nutrition_plan_invalid` se lista arriba y se marca junto al ítem indicado por `meals[i].items[j]`, con todas sus causas, y nada se guarda.
+- El plan se revisa antes de `POST /v1/nutrition-plans`. La `Idempotency-Key` se conserva en los reintentos y se renueva si cambian los datos (como HU010). Se presenta el plan devuelto por `201` sin esperar la proyección; si el deportista no registró hábitos, se muestra el aviso `nutrition_habits_missing`. Un `503` (Usuarios caído) informa que el plan no se guardó.
+- `/profesional/alimentacion/planes/:planId` consulta el plan (`GET /v1/nutrition-plans/{plan_id}`): un `404` justo después de crearlo significa que aún se proyecta (o que el plan es ajeno), y `403 athlete_authorization_required` (autorización revocada) se muestra sin datos.
+- **Deportista** (`/deportista/alimentacion`, opción base «Mi alimentación», sin capacidad de plan): sección «Planes de alimentación» con `GET /v1/me/nutrition-plans`, en el orden del backend y con «Cargar más» por cursor. Cada plan muestra su estado confirmado, la versión y el menú. Los consumos de HU013 serán otra sección de la misma pantalla.
+- Sin calorías, nutrientes, recomendaciones ni juicios. Los nombres de los alimentos salen de `label_key` (`food.*` en `public/i18n/es.json`); si el catálogo no está disponible, se muestra el código.
+- Pruebas: `e2e/nutrition-plans.spec.ts` (`@simulado`: plan bloqueado por alergia, corregido y visible para el deportista) y `e2e/nutrition-plans.integrated.spec.ts` (`@integrado`: reintento idempotente, aviso sin hábitos, proyección y rechazo a un tercero). La integrada requiere `bff-web` 0.18.0, `training-management` 0.9.0 y `users-management` 0.8.0 desplegados. El bloqueo real por alergia solo podrá probarse integrado cuando HU009 registre hábitos.
+
 ## Crear evento (HU021)
 
 Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core/api/bff-web/events.api.ts`) y ADR-028.
@@ -174,6 +186,18 @@ Feature `src/app/features/events/create-event`, contrato `bff-web` 0.10.0 (`core
 - En la web solo se validan las restricciones del contrato (longitudes tras recortar, patrón del país, rangos y enteros). Fecha futura, país existente y coherencia de la zona los decide el backend y se listan desde `details[{field, issue}]`.
 - `Idempotency-Key` por intento lógico: se reintenta automáticamente hasta tres veces (1, 2 y 4 s) solo ante falta de red, `502`, `503` o `504`; nunca ante `4xx`. Al agotar los reintentos, volver a crear usa la misma clave.
 - Se presenta el borrador devuelto por `201` en la hora local del evento, sin consultar la proyección.
+
+## Calendario de eventos (HU023)
+
+Feature `src/app/features/events/event-calendar`, contrato `bff-web` 0.18.0 (las operaciones son las de 0.17.0; `core/api/bff-web/events.api.ts`) y ADR-040.
+
+- `/organizador/eventos/calendario` (permiso `events.calendar.view`; la guarda `requirePermission` de HU024 rechaza la ruta cuando la vista de capacidades confirma que falta). Muestra los eventos **publicados** de `GET /v1/events` en vista de mes (tabla de lunes a domingo, cada evento en su día de inicio) o de lista, en el orden del backend y con «Cargar más» por cursor. No hay organizador ni dirección en la respuesta.
+- Periodo: en el mes, de la medianoche del día 1 a la del mes siguiente; en la lista, «Desde» y «Hasta» con ambos días incluidos. Todo en la zona del navegador, enviado en UTC. La web valida con la regla del backend (el fin no puede ser anterior al inicio, hasta 92 días) y no consulta un periodo inválido. Un `422` del backend se lista y se marca en su campo.
+- Filtros opcionales por disciplina y ciudad, recortados; la igualdad sin mayúsculas ni tildes la aplica el backend.
+- Horarios en la zona del navegador, que la pantalla declara; la zona del evento siempre es visible y, si difiere, también su hora local.
+- «Mi evento» lista los eventos propios (`GET /v1/me/events`, borradores y publicados). Al elegir uno, `GET /v1/me/events/{event_id}/conflicts` trae las coincidencias, que se listan y se resaltan en el mes y la lista con sus motivos en texto («misma disciplina», «misma ciudad»). Son información de apoyo: no bloquean la publicación ni reservan fechas. Un `404 event_not_found` se informa sin datos. «Ver el mes de mi evento» lleva el calendario a su mes.
+- Sin inscripción, edición ni publicación desde esta pantalla.
+- Pruebas: `e2e/event-calendar.spec.ts` (`@simulado`) y `e2e/event-calendar.integrated.spec.ts` (`@integrado`: otro organizador crea y publica por API dos eventos que se solapan con el borrador propio, uno en la misma ciudad y otro sin relación; se comprueban la proyección, el filtro por ciudad, la coincidencia por ciudad, el `404` de un evento ajeno y el `422` de más de 92 días). La integrada requiere `bff-web` 0.17.0 o posterior y `events-management` 0.6.0 desplegados.
 
 ## Publicar eventos (HU024)
 
@@ -186,6 +210,27 @@ Feature `src/app/features/events/publish-event`, contrato `bff-web` 0.16.0 (`cor
 - No captura tarifa, inscritos ni notificaciones, ni edita el evento.
 - Pruebas: `e2e/publish-event.spec.ts` (`@simulado`) y `e2e/publish-event.integrated.spec.ts` (`@integrado`). La integrada crea el borrador por API con `POST /v1/events` de `bff-web` (la URL sale del `app-config.json` del ambiente), lo publica desde la pantalla y lo espera en publicados. También comprueba el `404` para un tercero, el `200` público y el `422 not_in_future`. Requiere `bff-web` 0.16.0 desplegado.
 
+## Crear servicio (HU015)
+
+Feature `src/app/features/services/create-service`, contrato `bff-web` 0.16.0 (`core/api/bff-web/services.api.ts`, `POST /v1/services`) y ADR-027.
+
+- `/profesional/servicios/nuevo` (permiso `services.create`): exactamente los campos de ADR-027. Categoría, modalidad, moneda (solo `COP`) y unidad de cobro son listas cerradas. El importe se escribe como texto con coma o punto y viaja como cadena decimal (`"85000.50"`), sin pasar por un número de punto flotante; el formato `es-CO` solo se usa para mostrarlo. `0` es un servicio gratuito.
+- Disponibilidad inicial opcional: hasta 100 horarios explícitos, cada uno con fecha y hora de inicio y fin locales, zona IANA (por defecto, la del navegador o la del horario anterior) y cupo de 1 a 100. La web compone cada instante con el desfase de su zona (`event-time.ts`). Sin horarios no se envía `availability`.
+- En la web solo se validan las restricciones del contrato (longitudes tras recortar, patrón del importe, catálogos, cupo y máximo de horarios). Futuro, duración de 24 h, horizonte de 365 días, orden, superposición y desfase los decide el backend: se listan desde `details[{field, issue}]` y se marcan en el horario indicado por `availability[i]`.
+- `Idempotency-Key` por intento lógico, con los mismos reintentos que HU021. `provider_id` nunca se envía. Se presenta el borrador devuelto por `201` (estado, versión, tarifa de referencia y horarios en su zona); no se publica, cobra ni contrata.
+- Pruebas: `e2e/create-service.spec.ts` (`@simulado`) y `e2e/create-service.integrated.spec.ts` (`@integrado`). La integrada pierde la primera respuesta en la red y comprueba que el reintento devuelve el mismo servicio con `Idempotent-Replayed`, que el borrador no aparece en el catálogo de un deportista, que el BFF rechaza al deportista con `403` y que las reglas de los horarios se marcan en su campo. Requiere `bff-web` 0.9.0 o superior desplegado.
+
+## Publicar servicios (HU019)
+
+Feature `src/app/features/services/publish-service`, contrato `bff-web` 0.16.0 (`core/api/bff-web/services.api.ts`) y ADR-027.
+
+- `/profesional/servicios/publicacion` (permiso `services.publish`; la guarda `requirePermission` de HU024 rechaza la ruta cuando la vista de capacidades confirma que falta). Pestañas «Borradores» y «Publicados» con `GET /v1/me/services?status`, en el orden del backend y con «Cargar más» por cursor.
+- Elegir un servicio abre su detalle a la derecha (`/:serviceId`, `GET /v1/me/services/{service_id}`; uno ajeno o inexistente responde `404` y se informa sin datos). La tarifa en COP, la unidad de cobro y la disponibilidad futura se muestran como requisitos separados. Se aclara que publicar no confirma pagos ni incluye la tarifa en la afiliación.
+- «Publicar» pide confirmación y envía `POST /v1/services/{service_id}/publish` sin cuerpo. Se usa una `Idempotency-Key` por intento lógico, que se conserva en los reintentos automáticos (red, `502`, `503`, `504`; hasta tres) y manuales, y se renueva tras el éxito o ante `idempotency_key_reused`.
+- Un `422` lista los requisitos faltantes junto a cada fila y el servicio sigue como borrador. Sin horarios futuros se advierte antes de enviar, pero la regla es del backend.
+- Servicios complementarios no tiene proyección: tras el `200`, la lista vuelve a consultar el backend y el servicio ya aparece entre los publicados.
+- Pruebas: `e2e/publish-service.spec.ts` (`@simulado`) y `e2e/publish-service.integrated.spec.ts` (`@integrado`). La integrada crea los borradores por API con `POST /v1/services`, publica desde la pantalla perdiendo la primera respuesta en la red y comprueba la misma clave con `Idempotent-Replayed` y versión 2. También comprueba el `200` sin cambio de versión con otra clave, el `404` para otro profesional, la aparición en el catálogo de un deportista y el `422 availability required`. Requiere `bff-web` 0.11.0 o superior desplegado.
+
 ## Disponibilidad de servicios (HU020)
 
 Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`core/api/bff-web/services-availability.api.ts`) y ADR-038.
@@ -196,17 +241,48 @@ Feature `src/app/features/services/availability`, contrato `bff-web` 0.12.0 (`co
 - Los horarios llegan en UTC con la zona del servicio: se muestran en la zona del navegador sin alterar el instante y, si difiere, se indica la zona del servicio. Orden y páginas los define el backend: «Cargar más» envía el `next_cursor` sin modificarlo.
 - Ningún error se presenta como catálogo vacío: `401` termina la sesión como vencida; `403`, `422`, `503` y `504` muestran el error con su código de referencia.
 
+## Datos personales (HU002)
+
+Feature `src/app/features/identity/profile/account-form`, contrato `bff-web` 0.28.0 (`core/api/bff-web/account.api.ts`) y ADR-035.
+
+- **Tres actores:** «Mi perfil» navega a `/deportista/perfil`, `/organizador/perfil` y `/profesional/perfil`, sin permiso ni capacidad. La sección «Datos personales» lee la cuenta con `GET /v1/me/account` y edita el nombre y el correo con `PUT /v1/me/account` (`expected_version`, `full_name`, `email`). El organizador y el profesional solo ven esta sección (`ACCOUNT_PROFILE_ROUTES`, `PROFILE_SCOPE = 'account'`); no se consulta el perfil deportivo.
+- En la web solo se validan obligatorios, longitudes (nombre 1–120 tras recortar, correo hasta 254) y el formato del correo. La normalización y la unicidad las decide el backend: se muestra lo que confirma el `200`, el `422` se marca por campo y `409 email_already_registered` se marca en el correo sin revelar nada de la otra cuenta.
+- `409 version_conflict` no sobrescribe: recarga la cuenta (proyección eventual de `user_directory`) y muestra los valores vigentes; mientras no la alcanza, impide editar y ofrece «Actualizar datos». `404 user_not_found` (cuenta aún no proyectada) se informa con un reintento. `Idempotency-Key` y reintentos como en HU005.
+- Tras el `200`, la cabecera muestra el nombre confirmado sin cerrar la sesión (`SessionStore.updateUser`); la siguiente renovación adopta el usuario del BFF. El cambio de correo no revoca la sesión: el siguiente inicio usa el correo nuevo.
+- Pruebas: `e2e/account.spec.ts` (`@simulado`, simulador `e2e/support/account-simulator.ts`, que `simulateProfile` también registra) y `e2e/account.integrated.spec.ts` (`@integrado`: los tres actores, recarga desde la proyección, inicio con el correo nuevo, correo ajeno y conflicto entre pestañas), que requiere `bff-web` 0.28.0 y `users-management` 0.13.0 con el proyector actualizado.
+
 ## Datos demográficos y fisiológicos (HU005)
 
 Feature `src/app/features/identity/profile`, contrato `bff-web` 0.13.0 (`core/api/bff-web/profile.api.ts`) y ADR-034.
 
-- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. «Datos personales» (HU002) y «Hábitos deportivos» (HU006) aparecen como «Próximamente». Para el organizador y el profesional, «Mi perfil» sigue como «Próximamente» hasta HU002.
+- **Deportista** (`/deportista/perfil`, opción «Mi perfil» sin capacidad de plan): la sección «Datos demográficos y fisiológicos» lee el perfil con `GET /v1/me/profile` y registra o reemplaza cada conjunto con `PUT /v1/me/demographic-profile` y `PUT /v1/me/physiological-profile`. La página empieza con «Datos personales» (HU002, ver «Datos personales»); «Hábitos deportivos» es la sección de HU006 (ver la sección siguiente).
 - Una sección vacía (`null`) es una invitación a registrar, nunca un error. Se muestra la respuesta del comando mientras la proyección no la alcance; si no llega tras los reintentos, se avisa y se ofrece «Actualizar datos».
 - Catálogos cerrados en listas, unidades en la etiqueta de cada campo, decimales como texto (acepta coma o punto) y la fecha de la medición en la hora del navegador, enviada en UTC. La edad es informativa. En la web solo se validan las restricciones por campo del contrato; la edad permitida, la presión coherente y la ventana de la medición las decide el backend y se marcan desde `details[{field, issue}]`.
 - **Consentimiento:** «Guardar datos fisiológicos» solo se habilita al marcar la casilla con la versión de `healthDataConsentVersion`, y la casilla se vuelve a pedir en cada guardado. Sin esa versión (`null`) el registro fisiológico no está disponible. El texto de la política aún no existe: no hay enlace.
 - El IMC lo calcula el backend y se presenta como «IMC estimado», sin rangos ni clasificaciones: no es una evaluación médica. Los valores de salud no se escriben en consola ni en almacenamiento del navegador.
 - `expected_version` es la versión mostrada; `409 version_conflict` no sobrescribe: recarga y muestra los valores vigentes. `Idempotency-Key` por intento lógico, con hasta tres reintentos automáticos (1, 2 y 4 s) ante falta de red, `502`, `503` o `504`; un reintento manual tras un fallo transitorio usa la misma clave.
 - Pruebas: `e2e/profile.spec.ts` (`@simulado`, simulador `e2e/support/profile-simulator.ts`) y `e2e/profile.integrated.spec.ts` (`@integrado`), que requiere `bff-web` 0.13.0, `users-management` 0.6.0, `usuarios-read-projector` y `HEALTH_DATA_CONSENT_VERSION=local-dev` en `sportapp-runtime`. Hoy la composición local no cumple esos requisitos, así que el recorrido integrado está bloqueado.
+
+## Hábitos deportivos (HU006)
+
+Feature `src/app/features/identity/profile` (`sport-habits-form/`, `sport-habits-violations.ts`), contrato `bff-web` 0.19.0 (`core/api/bff-web/profile.api.ts`) y ADR-034.
+
+- **Deportista** (`/deportista/perfil`, sección «Hábitos deportivos»): lee los hábitos de `GET /v1/me/profile` (`sport_habits`) y los registra o reemplaza completos con `PUT /v1/me/sport-habits`. Sin hábitos (`null`) la sección invita a registrarlos. Registrar hábitos no crea planes ni recomendaciones, y la pantalla no los infiere.
+- De 1 a 5 deportes del catálogo de HU010, cada uno con veces por semana (1–7), duración por sesión (10–600 min), intensidad, nivel y, opcionalmente, años de práctica (0–80); días y franjas disponibles (al menos uno de cada uno) y objetivo principal opcional. Todos los catálogos son controles cerrados.
+- Un deporte elegido no se ofrece en otra fila y «Agregar deporte» se deshabilita en la quinta. En la web solo se validan las restricciones del contrato; las reglas del backend llegan en `details[{field, issue}]` y se marcan en la fila y el campo de su posición (`sports[1].sport`), porque los deportes se envían en el orden de las filas. Días y franjas viajan en el orden del catálogo.
+- Se muestra la respuesta del comando (`201`/`200`, con `Idempotent-Replayed`) mientras la proyección no la alcanza. `expected_version` es la versión mostrada; `409 version_conflict` no sobrescribe: recarga y muestra los hábitos vigentes. `Idempotency-Key` y reintentos como en HU005.
+- Pruebas: `e2e/sport-habits.spec.ts` (`@simulado`, mismo simulador de HU005) y `e2e/sport-habits.integrated.spec.ts` (`@integrado`: registro, recarga desde la proyección, conflicto entre pestañas y un `422` real del backend), que requiere `bff-web` 0.19.0, `users-management` 0.9.0 con la migración `0005_sport_habits` y el proyector compatible desplegados.
+
+## Mi plan (HU016)
+
+Feature `src/app/features/affiliation/my-plan`, contrato `bff-web` 0.20.0 (`core/api/bff-web/affiliation.api.ts`) y ADR-036.
+
+- **Deportista** (`/deportista/plan`, opción «Mi plan» del menú): plan actual de `GET /v1/me/subscription` (periodicidad, precio de referencia y periodo) y comparación de los planes de `GET /v1/plans`, ordenados por nivel. Por cada plan se listan sus ofertas en COP (`es-CO`, desde la cadena decimal) y las capacidades que agrega frente a los niveles inferiores; las heredadas van en una lista desplegable. Se comparan conjuntos de capacidades, nunca nombres de plan.
+- La periodicidad solo se elige en planes con ofertas pagas; un plan sin costo envía `NONE`. La confirmación resume la oferta, lo que se gana o se pierde y el aviso «SportApp no procesa el pago; se registra un compromiso informativo». Volver a `FREE` informa que los compromisos vigentes quedan sin efecto.
+- `POST /v1/me/subscription/changes` envía `expected_subscription_version` con la versión mostrada. `Idempotency-Key` por intento, la misma mientras no cambie la solicitud. Hasta tres reintentos automáticos (1, 2 y 4 s) ante red, `502`, `503` o `504`, y reintento manual con la misma clave. `version_conflict`, `subscription_unchanged`, `subscription_provisioning`, `plan_not_selectable`, `plan_not_found` e `idempotency_key_reused` tienen mensajes propios; los que dependen del plan vigente ofrecen recargarlo.
+- Tras el `200` se muestra la suscripción confirmada y se vuelve a consultar `GET /v1/me/capabilities` (`SessionAccessStore.reload()`): el menú se reconstruye sin cerrar la sesión. En `PROVISIONING` no se permite elegir y se ofrece volver a consultar. Catálogo y suscripción viven solo en memoria.
+- Guarda `requireCapability` (`features/affiliation/require-capability.guard.ts`) en las rutas del deportista que exigen una capacidad (`entrenamientos/planes` y `servicios/medico-deportivos`): con la vista confirmada y sin la capacidad `ACTIVE`, una URL directa lleva a `/acceso-no-autorizado`.
+- Pruebas: `e2e/my-plan.spec.ts` (`@simulado`, simulador `e2e/support/affiliation-simulator.ts`, que actualiza las capacidades de la sesión tras cada cambio) y `e2e/my-plan.integrated.spec.ts` (`@integrado`: `FREE` → `PREMIUM` trimestral → `FREE` con las cinco capacidades nuevas, y `409 version_conflict` entre pestañas). La integrada requiere `bff-web` 0.20.0 o posterior y `affiliation-management` 0.3.0 con las migraciones `0003_plan_price_offers` y `0004_subscription_changes` desplegados.
 
 ## Contenedor y Kubernetes
 
@@ -301,3 +377,7 @@ Commits: `<tipo>(<alcance>): <descripción>`, por ejemplo `feat(identity): regis
 - Cabeceras de seguridad HTTP (CSP y relacionadas): sin decisión documentada.
 - Umbral de cobertura web, herramientas SAST/secretos y `CODEOWNERS`.
 - Idiomas y países del MVP y estándar de accesibilidad (ADR-012).
+- HU023: despliegue conjunto de `bff-web` 0.17.0 o posterior y `events-management` 0.6.0 para el recorrido integrado; ratificar en ADR-040 las decisiones del backend del 2026-10-20 (periodo y propiedad del evento en las coincidencias).
+- HU006: despliegue de `bff-web` 0.19.0, `users-management` 0.9.0 (migración `0005_sport_habits`) y el proyector compatible para el recorrido integrado.
+- HU014: despliegue de `bff-web` 0.18.0, `training-management` 0.9.0 y `users-management` 0.8.0 para el recorrido integrado; HU009 para probar el bloqueo real por alergia; ratificar el catálogo `food-catalog-2026-10-13.v1`, sus unidades y los nombres en español de los alimentos.
+- HU016: despliegue de `bff-web` 0.20.0 o posterior y `affiliation-management` 0.3.0 (migraciones `0003_plan_price_offers` y `0004_subscription_changes`, `AFFILIATION_EXPECTED_CATALOG_VERSION=plans-2026-10-13.v1`, `USERS_MANAGEMENT_BASE_URL`) para el recorrido integrado; la composición local sirve `bff-web` 0.15.0 (`dev-20261018-0553`), que responde `404` a `GET /v1/plans`.

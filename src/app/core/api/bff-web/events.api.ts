@@ -9,7 +9,13 @@ import { STRICT_CODEC } from './training-history.api';
  * Transporte de las operaciones de eventos del contrato bff-web 0.16.0 (ver
  * `contract.ts`): `POST /v1/events` (operationId `create_v1_events_post`,
  * ADR-028, HU021) y, para HU024 (ADR-033), `GET /v1/me/events`,
- * `GET /v1/events/{event_id}` y `POST /v1/events/{event_id}/publish`. Todas se
+ * `GET /v1/events/{event_id}` y `POST /v1/events/{event_id}/publish`; desde 0.17.0,
+ * para HU023 (ADR-040), `GET /v1/events` (calendario de publicados) y
+ * `GET /v1/me/events/{event_id}/conflicts` (coincidencias); desde 0.22.0, para
+ * HU022 (ADR-039), `GET /v1/me/events/{event_id}/registrations` (inscritos), y desde
+ * 0.26.0, para HU025 (ADR-040), `PUT` y `DELETE /v1/events/{event_id}/fee` (tarifa
+ * informativa), con `fee` en las consultas y `registration_count` para el
+ * propietario. Todas se
  * autentican con el access token; `organizer_id` sale del token y nunca viaja en
  * la solicitud. Estos tipos son del transporte: la interfaz los transforma antes
  * de usarlos.
@@ -133,11 +139,24 @@ export interface EventAggregateResponseDto {
   readonly created_at: string;
   readonly updated_at: string;
   readonly published_at: string | null;
+  /** Tarifa informativa (HU025); `null` sin tarifa. No es un cobro. */
+  readonly fee: EventFeeDto | null;
+  /** Último cambio de la tarifa; `null` si nunca se definió. */
+  readonly fee_updated_at: string | null;
+}
+
+/**
+ * Esquema `OwnEventResponse`: el agregado como lo ve su organizador (HU025). Lo
+ * devuelven `GET /v1/me/events` y los comandos de tarifa.
+ */
+export interface OwnEventResponseDto extends EventAggregateResponseDto {
+  /** Inscripciones vigentes; cambiar la tarifa no las modifica (ADR-032). */
+  readonly registration_count: number;
 }
 
 /** Esquema `MyEventsResponse`: orden `starts_at` y `event_id` ascendentes. */
 export interface MyEventsResponseDto {
-  readonly items: readonly EventAggregateResponseDto[];
+  readonly items: readonly OwnEventResponseDto[];
   readonly next_cursor: string | null;
 }
 
@@ -158,12 +177,11 @@ export interface EventDetailLocationDto {
   readonly country_code: string;
 }
 
-/** Esquema `EventFee` (HU025). */
+/** Esquema `EventFee` (HU025, ADR-040): `0.00` es gratuito. */
 export interface EventFeeDto {
   /** Cadena decimal con dos decimales. */
   readonly amount: string;
   readonly currency: string;
-  readonly billing_unit: string;
 }
 
 /** Esquema `EventDetailResponse` de `GET /v1/events/{event_id}` en el canal web. */
@@ -180,8 +198,10 @@ export interface EventDetailResponseDto {
   /** `DRAFT` solo lo recibe el organizador propietario. */
   readonly status: EventStatusDto;
   readonly version: number;
-  /** `null` hasta HU025. */
+  /** Informativa; `null` sin tarifa (HU025). */
   readonly fee: EventFeeDto | null;
+  /** Inscripciones vigentes: solo para el organizador propietario; `null` para los demás. */
+  readonly registration_count: number | null;
 }
 
 /** Límites del parámetro `limit` de `GET /v1/me/events`. */
@@ -216,7 +236,208 @@ export const PUBLISH_EVENT_ERROR_CODES = {
   upstreamTimeout: 'upstream_timeout',
 } as const;
 
-/** Cliente del BFF web para los eventos del organizador (HU021 y HU024). */
+/** Esquema `PublishedEventLocation`: sin dirección. */
+export interface PublishedEventLocationDto {
+  readonly name: string;
+  readonly city: string;
+  readonly country_code: string;
+}
+
+/** Esquema `PublishedEventItem` de `GET /v1/events`: sin `organizer_id` (HU023 CA1). */
+export interface PublishedEventItemDto {
+  readonly event_id: string;
+  readonly name: string;
+  readonly discipline: string;
+  readonly location: PublishedEventLocationDto;
+  readonly starts_at: string;
+  readonly ends_at: string;
+  readonly time_zone: string;
+  readonly status: 'PUBLISHED';
+  readonly version: number;
+  /** Informativa; `null` sin tarifa (HU025). */
+  readonly fee: EventFeeDto | null;
+}
+
+/** Esquema `PublishedEventsResponse`: orden `starts_at` y `event_id` ascendentes. */
+export interface PublishedEventsResponseDto {
+  readonly items: readonly PublishedEventItemDto[];
+  readonly next_cursor: string | null;
+}
+
+/** Parámetros de `GET /v1/events`; los opcionales ausentes no se envían. */
+export interface PublishedEventsQueryDto {
+  /** Instante ISO 8601 con desfase UTC explícito. */
+  readonly from: string;
+  readonly to: string;
+  readonly discipline?: string | null;
+  readonly city?: string | null;
+  /** 1–200; el BFF usa 200 si no se envía. */
+  readonly limit?: number | null;
+  /** Cursor opaco de `next_cursor`, reenviado con los mismos filtros. */
+  readonly cursor?: string | null;
+}
+
+/** Límites del parámetro `limit` de `GET /v1/events`. */
+export const PUBLISHED_EVENTS_LIMIT = { min: 1, max: 200, default: 200 } as const;
+
+/** Motivos de una coincidencia, en el orden del contrato. */
+export const CONFLICT_REASONS = ['SAME_DISCIPLINE', 'SAME_CITY'] as const;
+export type ConflictReasonDto = (typeof CONFLICT_REASONS)[number];
+
+/** Esquema `EventConflict`. */
+export interface EventConflictDto {
+  readonly event_id: string;
+  readonly name: string;
+  readonly discipline: string;
+  readonly city: string;
+  readonly starts_at: string;
+  readonly ends_at: string;
+  readonly time_zone: string;
+  readonly reasons: readonly ConflictReasonDto[];
+}
+
+/** Esquema `EventConflictsResponse`. */
+export interface EventConflictsResponseDto {
+  readonly conflicts: readonly EventConflictDto[];
+  readonly evaluated_at: string;
+}
+
+/** Códigos de error que el contrato declara para `GET /v1/events`. */
+export const PUBLISHED_EVENTS_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/**
+ * Motivos de `details[].issue` del `422` de `GET /v1/events`, enumerados en la
+ * descripción de la respuesta.
+ */
+export const PUBLISHED_EVENTS_ISSUES = [
+  'invalid_datetime',
+  'ends_before_starts',
+  'out_of_range',
+  'invalid_length',
+  'invalid_cursor',
+] as const;
+
+/** Códigos de error que el contrato declara para `GET /v1/me/events/{event_id}/conflicts`. */
+export const EVENT_CONFLICTS_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  eventNotFound: 'event_not_found',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/**
+ * Filtro `status` de `GET /v1/me/events/{event_id}/registrations`: `REGISTERED`
+ * (por defecto en el BFF) o `ALL`.
+ */
+export const ATTENDEE_STATUS_FILTERS = ['REGISTERED', 'ALL'] as const;
+export type AttendeeStatusFilterDto = (typeof ATTENDEE_STATUS_FILTERS)[number];
+
+/** Parámetros de la consulta de inscritos; los ausentes no se envían. */
+export interface EventAttendeesQueryDto {
+  readonly status?: AttendeeStatusFilterDto | null;
+  /** 1–100; el BFF usa 20 si no se envía. */
+  readonly limit?: number | null;
+  /** Cursor opaco de `next_cursor`; la web nunca lo interpreta. */
+  readonly cursor?: string | null;
+}
+
+/** Esquema `AppliedFee`: tarifa informativa de la inscripción, no un cobro. */
+export interface AppliedFeeDto {
+  /** Cadena decimal con dos decimales. */
+  readonly amount: string;
+  readonly currency: string;
+}
+
+/** Esquema `AttendeeItem`: identidad mínima, sin correo ni perfil (ADR-039). */
+export interface AttendeeItemDto {
+  readonly registration_id: string;
+  readonly athlete_id: string;
+  /** `full_name` de Usuarios; `null` si Usuarios no lo entregó. */
+  readonly display_name: string | null;
+  /** El contrato 0.22.0 solo publica `REGISTERED`. */
+  readonly status: string;
+  /** Instante UTC con sufijo `Z`. */
+  readonly registered_at: string;
+  readonly applied_fee: AppliedFeeDto | null;
+}
+
+/** Esquema `AttendeesSource`: estado de la consulta de nombres a Usuarios. */
+export interface AttendeesSourceDto {
+  readonly source: 'users';
+  readonly status: 'OK' | 'UNAVAILABLE';
+}
+
+/**
+ * Esquema `EventAttendeesResponse`. `total` cuenta las inscripciones que
+ * cumplen el filtro; `by_status`, todas las del evento.
+ */
+export interface EventAttendeesResponseDto {
+  readonly items: readonly AttendeeItemDto[];
+  readonly total: number;
+  readonly by_status: Readonly<Record<string, number>>;
+  readonly next_cursor: string | null;
+  readonly sources: readonly AttendeesSourceDto[];
+}
+
+/** Límites del parámetro `limit` de la consulta de inscritos. */
+export const EVENT_ATTENDEES_LIMIT = { min: 1, max: 100, default: 20 } as const;
+
+/** Códigos de error que el contrato declara para la consulta de inscritos. */
+export const EVENT_ATTENDEES_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  eventNotFound: 'event_not_found',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Cuerpo `EventFeeRequest` de `PUT /v1/events/{event_id}/fee` (ADR-040). */
+export interface EventFeeRequestDto {
+  /** Cadena decimal con exactamente dos decimales, de `0.00` a `99999999.99`. */
+  readonly amount: string;
+  readonly currency: typeof EVENT_FEE_CURRENCY;
+  readonly expected_version: number;
+}
+
+/** Única moneda de la tarifa (ADR-027 y ADR-040). */
+export const EVENT_FEE_CURRENCY = 'COP';
+
+/** Patrón y límites de `amount` en el contrato (`0.00` es gratuito). */
+export const EVENT_FEE_AMOUNT_PATTERN = /^[0-9]+\.[0-9]{2}$/;
+export const EVENT_FEE_LIMITS = { min: '0.00', max: '99999999.99', integerDigits: 8 } as const;
+
+/** Códigos de error que el contrato declara para `PUT` y `DELETE /v1/events/{event_id}/fee`. */
+export const EVENT_FEE_ERROR_CODES = {
+  invalidAccessToken: 'invalid_access_token',
+  permissionRequired: 'permission_required',
+  eventNotFound: 'event_not_found',
+  versionConflict: 'version_conflict',
+  idempotencyKeyReused: 'idempotency_key_reused',
+  validationError: 'validation_error',
+  upstreamUnavailable: 'upstream_unavailable',
+  upstreamTimeout: 'upstream_timeout',
+} as const;
+
+/** Motivos de `details[].issue` del `422` de la tarifa enumerados en el contrato. */
+export const EVENT_FEE_ISSUES = [
+  'required',
+  'unknown_value',
+  'too_many_decimals',
+  'out_of_range',
+  'unsupported_currency',
+  'field_not_allowed',
+  'event_already_started',
+] as const;
+
+/** Cliente del BFF web para los eventos del organizador (HU021 a HU025). */
 @Injectable({ providedIn: 'root' })
 export class BffWebEventsApi {
   private readonly http = inject(HttpClient);
@@ -257,6 +478,52 @@ export class BffWebEventsApi {
     });
   }
 
+  /** Eventos publicados del periodo, con filtros opcionales (HU023, ADR-040). */
+  getPublishedEvents(
+    accessToken: string,
+    query: PublishedEventsQueryDto,
+  ): Observable<PublishedEventsResponseDto> {
+    let params = new HttpParams({ encoder: STRICT_CODEC });
+    for (const [name, value] of Object.entries(query)) {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(name, String(value));
+      }
+    }
+    return this.http.get<PublishedEventsResponseDto>(this.bffWebUrl.resolve('v1/events'), {
+      headers: bearer(accessToken),
+      params,
+    });
+  }
+
+  /** Coincidencias de un evento propio con los eventos publicados (HU023 CA2). */
+  getEventConflicts(accessToken: string, eventId: string): Observable<EventConflictsResponseDto> {
+    return this.http.get<EventConflictsResponseDto>(
+      this.bffWebUrl.resolve(`v1/me/events/${encodeURIComponent(eventId)}/conflicts`),
+      { headers: bearer(accessToken) },
+    );
+  }
+
+  /**
+   * Inscritos de un evento propio (HU022, ADR-039). Un evento ajeno o inexistente
+   * responde `404 event_not_found` sin revelar participantes.
+   */
+  getEventAttendees(
+    accessToken: string,
+    eventId: string,
+    query: EventAttendeesQueryDto,
+  ): Observable<EventAttendeesResponseDto> {
+    let params = new HttpParams({ encoder: STRICT_CODEC });
+    for (const [name, value] of Object.entries(query)) {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(name, String(value));
+      }
+    }
+    return this.http.get<EventAttendeesResponseDto>(
+      this.bffWebUrl.resolve(`v1/me/events/${encodeURIComponent(eventId)}/registrations`),
+      { headers: bearer(accessToken), params },
+    );
+  }
+
   /** Detalle de un evento: `DRAFT` solo para su organizador; si no, `404`. */
   getEvent(accessToken: string, eventId: string): Observable<EventDetailResponseDto> {
     return this.http.get<EventDetailResponseDto>(
@@ -289,6 +556,52 @@ export class BffWebEventsApi {
       },
     );
   }
+
+  /**
+   * Asigna la tarifa de un evento propio (HU025). Se devuelve la respuesta
+   * completa para leer `Idempotent-Replayed`.
+   *
+   * @param idempotencyKey UUID; igual en todos los reintentos del mismo intento.
+   */
+  putEventFee(
+    accessToken: string,
+    eventId: string,
+    body: EventFeeRequestDto,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<OwnEventResponseDto>> {
+    return this.http.put<OwnEventResponseDto>(
+      this.bffWebUrl.resolve(`v1/events/${encodeURIComponent(eventId)}/fee`),
+      body,
+      { headers: commandHeaders(accessToken, idempotencyKey), observe: 'response' },
+    );
+  }
+
+  /**
+   * Retira la tarifa (`fee = null`). `expected_version` viaja en la consulta,
+   * como lo publica el contrato.
+   */
+  deleteEventFee(
+    accessToken: string,
+    eventId: string,
+    expectedVersion: number,
+    idempotencyKey: string,
+  ): Observable<HttpResponse<OwnEventResponseDto>> {
+    return this.http.delete<OwnEventResponseDto>(
+      this.bffWebUrl.resolve(`v1/events/${encodeURIComponent(eventId)}/fee`),
+      {
+        headers: commandHeaders(accessToken, idempotencyKey),
+        params: new HttpParams().set('expected_version', String(expectedVersion)),
+        observe: 'response',
+      },
+    );
+  }
+}
+
+function commandHeaders(accessToken: string, idempotencyKey: string): HttpHeaders {
+  return new HttpHeaders({
+    Authorization: `Bearer ${accessToken}`,
+    'Idempotency-Key': idempotencyKey,
+  });
 }
 
 function bearer(accessToken: string): HttpHeaders {

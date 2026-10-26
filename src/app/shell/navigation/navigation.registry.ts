@@ -20,7 +20,15 @@ import { ActorType } from '../../core/session/session.store';
  */
 
 export type NavGroup =
-  'main' | 'events' | 'services' | 'training' | 'health' | 'nutrition' | 'calendar' | 'account';
+  | 'main'
+  | 'events'
+  | 'services'
+  | 'training'
+  | 'routes'
+  | 'health'
+  | 'nutrition'
+  | 'calendar'
+  | 'account';
 
 export interface NavItem {
   /** Identificador estable de la opción. */
@@ -70,31 +78,24 @@ const home = (route: string): NavItem => ({
 });
 
 /**
- * «Mi perfil». El deportista lo abre en `/deportista/perfil`, donde HU005 registra
- * sus datos demográficos y fisiológicos (ADR-034). Los demás actores no tienen
- * ruta de perfil hasta HU002, así que su opción sigue como «Próximamente».
+ * «Mi perfil» de cada actor. HU002 le da ruta para los tres, con sus datos
+ * personales (ADR-035); en el del deportista HU005, HU006 y HU009 registran además
+ * su perfil deportivo (ADR-034).
  */
-const PROFILE: NavItem = {
+const profile = (route: string, hu = 'HU002'): NavItem => ({
   id: 'profile',
   group: 'account',
   order: 20,
   icon: 'person',
-  route: null,
+  route,
   permission: null,
   capability: null,
-  hu: 'HU002',
-  available: false,
-};
-
-const ATHLETE_PROFILE: NavItem = {
-  ...PROFILE,
-  route: '/deportista/perfil',
-  hu: 'HU005',
+  hu,
   available: true,
-};
+});
 
-const account = (profile: NavItem = PROFILE): NavItem[] => [
-  profile,
+const account = (profileItem: NavItem): NavItem[] => [
+  profileItem,
   // HU004: acción de cierre para los tres actores web; no tiene ruta.
   {
     id: 'logout',
@@ -174,9 +175,20 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     planCapabilities: true,
     items: [
       home('/deportista/inicio'),
-      ...account(ATHLETE_PROFILE),
-      // «Mi plan» solo existe para el deportista (navegacion/README.md).
-      upcoming('plan', 'account', 30, 'workspace_premium', null, null, 'HU016'),
+      ...account(profile('/deportista/perfil', 'HU005')),
+      // «Mi plan» solo existe para el deportista (navegacion/README.md). HU016: plan
+      // actual, comparación y cambio; opción base, sin capacidad (planes/05).
+      {
+        id: 'plan',
+        group: 'account',
+        order: 30,
+        icon: 'workspace_premium',
+        route: '/deportista/plan',
+        permission: null,
+        capability: null,
+        hu: 'HU016',
+        available: true,
+      },
       // HU011: historial propio, sin capacidad de plan (ADR-024 no define una);
       // decisión del responsable del 2026-10-12.
       {
@@ -203,6 +215,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         hu: 'HU020',
         available: true,
       },
+      // «Mi alimentación»: opción base del deportista, sin capacidad de plan (ADR-037).
+      // HU014 aporta la sección «Planes de alimentación»; los consumos serán HU013.
+      {
+        id: 'athlete-nutrition',
+        group: 'nutrition',
+        order: 60,
+        icon: 'restaurant_menu',
+        route: '/deportista/alimentacion',
+        permission: null,
+        capability: null,
+        hu: 'HU014',
+        available: true,
+      },
       // Capacidades del plan con HU aprobada para la web (ADR-024).
       planOption(
         'athlete-training-plans',
@@ -214,6 +239,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'HU010',
         true,
       ),
+      // HU018: calendario integrado del deportista (ADR-039).
       planOption(
         'sport-calendar',
         'calendar',
@@ -221,10 +247,11 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar_month',
         '/deportista/calendario',
         'calendar.sport.view',
-        'HU023',
+        'HU018',
+        true,
       ),
-      // Abre la pantalla de HU020 filtrada por medicina deportiva (ADR-038); la
-      // búsqueda y asociación de servicios médicos sigue siendo HU017.
+      // Abre la pantalla de HU020 filtrada por medicina deportiva (ADR-038), donde
+      // HU017 agrega «Asociar»/«Quitar» y «Mis servicios asociados».
       planOption(
         'sports-medicine',
         'services',
@@ -252,7 +279,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.create',
         'HU021',
       ),
-      upcoming(
+      // HU022: el organizador consulta los inscritos de sus eventos (ADR-039).
+      permissionOption(
         'event-attendees',
         'events',
         110,
@@ -261,7 +289,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.attendees.view',
         'HU022',
       ),
-      upcoming(
+      // HU023: calendario de eventos publicados con coincidencias (ADR-040).
+      permissionOption(
         'event-calendar',
         'events',
         120,
@@ -279,7 +308,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.publish',
         'HU024',
       ),
-      upcoming(
+      // HU025: el organizador asigna o retira la tarifa de sus eventos (ADR-040).
+      permissionOption(
         'event-pricing',
         'events',
         140,
@@ -288,7 +318,17 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'events.pricing.manage',
         'HU025',
       ),
-      upcoming(
+      // HU026: el organizador publica rutas y retira las propias (ADR-041; actor-permissions v2).
+      permissionOption(
+        'organizer-routes',
+        'routes',
+        150,
+        'route',
+        '/organizador/rutas',
+        'training.routes.author',
+        'HU026',
+      ),
+      permissionOption(
         'integrated-calendar',
         'calendar',
         160,
@@ -297,7 +337,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar.integrated.view',
         'HU018',
       ),
-      ...account(),
+      ...account(profile('/organizador/perfil')),
     ],
   },
   service_provider: {
@@ -306,7 +346,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
     planCapabilities: false,
     items: [
       home('/profesional/inicio'),
-      upcoming(
+      // HU015: el profesional crea un servicio en borrador (ADR-027).
+      permissionOption(
         'service-create',
         'services',
         100,
@@ -315,7 +356,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'services.create',
         'HU015',
       ),
-      upcoming(
+      // HU019: el profesional revisa sus servicios y publica un borrador (ADR-027).
+      permissionOption(
         'service-publish',
         'services',
         110,
@@ -332,6 +374,16 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         '/profesional/entrenamientos/planes',
         'training.plan.author',
         'HU010',
+      ),
+      // HU028: el profesional publica plantillas de plan para sugerirlas en el móvil (ADR-041).
+      permissionOption(
+        'training-templates',
+        'training',
+        125,
+        'library_books',
+        '/profesional/entrenamientos/plantillas',
+        'training.plan.author',
+        'HU028',
       ),
       permissionOption(
         'training-history',
@@ -360,7 +412,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'nutrition.history.view_assigned',
         'HU013',
       ),
-      upcoming(
+      // HU014: el profesional crea y asigna planes de alimentación (ADR-037).
+      permissionOption(
         'nutrition-plans',
         'nutrition',
         160,
@@ -369,7 +422,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'nutrition.plan.author',
         'HU014',
       ),
-      upcoming(
+      permissionOption(
         'integrated-calendar',
         'calendar',
         170,
@@ -378,7 +431,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'calendar.integrated.view',
         'HU018',
       ),
-      ...account(),
+      ...account(profile('/profesional/perfil')),
     ],
   },
 };
@@ -389,6 +442,7 @@ export const GROUP_ORDER: readonly NavGroup[] = [
   'events',
   'services',
   'training',
+  'routes',
   'health',
   'nutrition',
   'calendar',

@@ -2,14 +2,19 @@ import {
   AthleteProfile,
   DemographicDraft,
   DemographicProfile,
+  NutritionHabits,
+  NutritionHabitsDraft,
   PhysiologicalDraft,
   PhysiologicalProfile,
   SaveOutcome,
+  SportHabits,
+  SportHabitsDraft,
+  SportHabitsUpdate,
 } from './profile.model';
 
 /**
- * Puerto hacia el BFF web para el perfil del deportista (HU005).
- * `HttpProfileGateway` traduce el contrato bff-web 0.16.0.
+ * Puerto hacia el BFF web para el perfil del deportista (HU005, HU006, HU008 y
+ * HU009). `HttpProfileGateway` traduce el contrato bff-web 0.30.0.
  */
 export abstract class ProfileGateway {
   /**
@@ -40,4 +45,38 @@ export abstract class ProfileGateway {
     idempotencyKey: string,
     onRetry?: (attempt: number) => void,
   ): Promise<SaveOutcome<PhysiologicalProfile>>;
+
+  /** Registra o reemplaza los hábitos deportivos (HU006); mismas reglas que las secciones de HU005. */
+  abstract saveSportHabits(
+    draft: SportHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>>;
+
+  /**
+   * Actualiza parcialmente los hábitos deportivos vigentes (HU008): solo envía
+   * `update.sections`; el backend conserva las demás. Mismas reglas de clave,
+   * reintentos y resultados que el reemplazo; `404 sport_habits_not_found` es un
+   * fallo con su código.
+   *
+   * @param expectedVersion la última versión conocida (obligatoria).
+   */
+  abstract updateSportHabits(
+    update: SportHabitsUpdate,
+    expectedVersion: number,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<SportHabits>>;
+
+  /**
+   * Registra o reemplaza los hábitos alimenticios (HU009), con el consentimiento
+   * de datos de salud; mismas reglas que las secciones de HU005.
+   */
+  abstract saveNutritionHabits(
+    draft: NutritionHabitsDraft,
+    expectedVersion: number | null,
+    idempotencyKey: string,
+    onRetry?: (attempt: number) => void,
+  ): Promise<SaveOutcome<NutritionHabits>>;
 }
