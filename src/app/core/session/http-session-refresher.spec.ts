@@ -43,16 +43,25 @@ describe('HttpSessionRefresher (HU003, contrato bff-web 0.12.0)', () => {
 
   afterEach(() => http.verify());
 
-  /** Espera a que la solicitud salga (puede pasar antes por el bloqueo entre pestañas). */
+  /**
+   * Espera a que la solicitud salga (puede pasar antes por el bloqueo entre pestañas).
+   * El navegador concede el bloqueo de forma asíncrona y bajo carga tarda más que unas
+   * pocas vueltas del ciclo de eventos: se espera por tiempo, no por número de vueltas.
+   * `performance.now()` porque `Date.now` está simulado.
+   */
   async function nextRefreshRequest() {
-    for (let attempt = 0; attempt < 20; attempt++) {
+    const deadline = performance.now() + 3000;
+    while (performance.now() < deadline) {
       const pending = http.match(REFRESH_URL);
       if (pending.length > 0) {
         return pending[0];
       }
       await new Promise((resolve) => setTimeout(resolve));
     }
-    return http.expectOne(REFRESH_URL);
+    return http.expectOne(
+      REFRESH_URL,
+      'POST /v1/sessions/refresh tras 3 s esperando el bloqueo entre pestañas (Web Locks)',
+    );
   }
 
   async function refreshWith(response: SimulatedResponse): Promise<RefreshOutcome> {

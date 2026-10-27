@@ -62,11 +62,16 @@ async function openRoutines(page: Page): Promise<void> {
 }
 
 async function choose(scope: Locator, label: string, option: string): Promise<void> {
+  // Un panel que aún se está cerrando ofrece opciones que se desprenden y, si es el
+  // del mismo campo, impide reabrirlo: se espera a que no quede ninguno.
+  const panel = scope.page().getByRole('listbox');
+  await expect(panel).toHaveCount(0);
   // Se pulsa el campo completo: la etiqueta de un `mat-select` vacío cubre el disparador.
   await scope
     .locator('mat-form-field', { has: scope.page().getByLabel(label, { exact: true }) })
     .click();
-  await scope.page().getByRole('option', { name: option, exact: true }).click();
+  await panel.getByRole('option', { name: option, exact: true }).click();
+  await expect(panel).toHaveCount(0);
 }
 
 async function fillItem(page: Page, m: number, i: number, food: string, portions: number) {
@@ -346,6 +351,8 @@ test.describe('HU030 Rutinas de alimentación del profesional (simulador del con
   test('una versión vencida no retira y ofrece actualizar la lista', async ({ page }) => {
     const { routines: simulation } = await loginAs(page);
     await openRoutines(page);
+    // Se cambia el simulador cuando la lista ya llegó; antes, la página leería la versión 2.
+    await expect(items(page)).toHaveCount(2);
     // Otra sesión cambió la rutina: la vigente es la versión 2.
     simulation.routines = simulation.routines.map((routine, index) =>
       index === 0 ? { ...routine, version: 2 } : routine,
@@ -375,6 +382,7 @@ test.describe('HU030 Rutinas de alimentación del profesional (simulador del con
   test('CA4: una rutina que no existe o no es propia no se retira', async ({ page }) => {
     const { routines: simulation } = await loginAs(page);
     await openRoutines(page);
+    await expect(items(page)).toHaveCount(2);
     // El backend ya no la reconoce como del profesional: `404 template_not_found`.
     simulation.routines = simulation.routines.slice(1);
     const target = items(page).first();
