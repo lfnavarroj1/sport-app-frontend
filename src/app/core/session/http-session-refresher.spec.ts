@@ -58,7 +58,10 @@ describe('HttpSessionRefresher (HU003, contrato bff-web 0.12.0)', () => {
       }
       await new Promise((resolve) => setTimeout(resolve));
     }
-    return http.expectOne(REFRESH_URL);
+    return http.expectOne(
+      REFRESH_URL,
+      'POST /v1/sessions/refresh tras 3 s esperando el bloqueo entre pestañas (Web Locks)',
+    );
   }
 
   async function refreshWith(response: SimulatedResponse): Promise<RefreshOutcome> {
