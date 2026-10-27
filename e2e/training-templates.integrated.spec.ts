@@ -21,6 +21,7 @@ import {
 const PASSWORD = 'clave-sintetica-e2e-123';
 const TEMPLATES = /^\/v1\/training-plan-templates$/;
 const RETIRE = /^\/v1\/training-plan-templates\/[^/]+\/retire$/;
+const MY_TEMPLATES = /^\/v1\/me\/training-plan-templates$/;
 
 function baseUrl(): string {
   const url = process.env['PLAYWRIGHT_BASE_URL'];
@@ -59,6 +60,47 @@ function waitFor(page: Page, path: RegExp): Promise<Response> {
   return page.waitForResponse(
     (r) => r.request().method() === 'POST' && path.test(new URL(r.url()).pathname),
   );
+}
+
+/**
+ * Recarga y devuelve la primera respuesta de la operación que emite el documento
+ * nuevo, con su cuerpo ya leído. Esperarla desde antes de recargar podría capturar
+ * una respuesta del documento anterior. Cada llamada termina antes de la siguiente
+ * recarga, así que tampoco aborta una renovación de sesión en curso (perdería la
+ * cookie rotada).
+ */
+async function reloadFor<T>(
+  page: Page,
+  method: string,
+  path: RegExp,
+): Promise<{ response: Response; body: T | null }> {
+  await page.reload({ waitUntil: 'commit' });
+  const response = await page.waitForResponse(
+    (r) => r.request().method() === method && path.test(new URL(r.url()).pathname),
+  );
+  try {
+    return { response, body: (await response.json()) as T };
+  } catch {
+    return { response, body: null };
+  }
+}
+
+/**
+ * La lista del profesional sale de la proyección, que es eventual: recarga hasta que
+ * `GET /v1/me/training-plan-templates` entregue la plantilla con `status`.
+ */
+async function waitForProjectedTemplate(
+  page: Page,
+  templateId: string,
+  status: 'PUBLISHED' | 'RETIRED',
+): Promise<void> {
+  await expect(async () => {
+    const { response, body } = await reloadFor<{
+      items: { template_id: string; status: string }[];
+    }>(page, 'GET', MY_TEMPLATES);
+    await expectStatus(response, 200, 'GET /v1/me/training-plan-templates');
+    expect(body?.items.find((t) => t.template_id === templateId)?.status).toBe(status);
+  }, `la plantilla debía quedar proyectada como ${status}`).toPass({ timeout: 60_000 });
 }
 
 async function newPage(browser: Browser): Promise<Page> {
@@ -174,8 +216,8 @@ test.describe('HU028 Plantillas de entrenamiento del profesional contra el BFF w
       '2 por semana · 180 min en total',
     );
 
-    // La lista la entrega el BFF tras recargar.
-    await page.reload();
+    // La lista la entrega el BFF tras recargar, cuando la proyección la incluye.
+    await waitForProjectedTemplate(page, template.template_id, 'PUBLISHED');
     await expect(item.getByTestId('template-status')).toHaveText('Publicada');
 
     // CA3: otro profesional no puede retirarla.
@@ -202,7 +244,7 @@ test.describe('HU028 Plantillas de entrenamiento del profesional contra el BFF w
     const retiredTemplate = (await retiredResponse.json()) as { status: string; version: number };
     expect(retiredTemplate.status).toBe('RETIRED');
     await expect(item.getByTestId('template-status')).toHaveText('Retirada');
-    await page.reload();
+    await waitForProjectedTemplate(page, template.template_id, 'RETIRED');
     await expect(item.getByTestId('template-status')).toHaveText('Retirada');
     await expect(item.getByRole('button', { name: /Retirar/ })).toHaveCount(0);
 
