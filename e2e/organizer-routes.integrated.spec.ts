@@ -21,6 +21,7 @@ import {
 const PASSWORD = 'clave-sintetica-e2e-123';
 const ROUTES = /^\/v1\/routes$/;
 const RETIRE = /^\/v1\/routes\/[^/]+\/retire$/;
+const MY_ROUTES = /^\/v1\/me\/routes$/;
 
 function baseUrl(): string {
   const url = process.env['PLAYWRIGHT_BASE_URL'];
@@ -59,6 +60,47 @@ function waitFor(page: Page, path: RegExp): Promise<Response> {
   return page.waitForResponse(
     (r) => r.request().method() === 'POST' && path.test(new URL(r.url()).pathname),
   );
+}
+
+/**
+ * Recarga y devuelve la primera respuesta de la operación que emite el documento
+ * nuevo, con su cuerpo ya leído. Esperarla desde antes de recargar podría capturar
+ * una respuesta del documento anterior. Cada llamada termina antes de la siguiente
+ * recarga, así que tampoco aborta una renovación de sesión en curso (perdería la
+ * cookie rotada).
+ */
+async function reloadFor<T>(
+  page: Page,
+  method: string,
+  path: RegExp,
+): Promise<{ response: Response; body: T | null }> {
+  await page.reload({ waitUntil: 'commit' });
+  const response = await page.waitForResponse(
+    (r) => r.request().method() === method && path.test(new URL(r.url()).pathname),
+  );
+  try {
+    return { response, body: (await response.json()) as T };
+  } catch {
+    return { response, body: null };
+  }
+}
+
+/**
+ * La lista del organizador sale de la proyección, que es eventual: recarga hasta que
+ * `GET /v1/me/routes` entregue la ruta con `status`.
+ */
+async function waitForProjectedRoute(
+  page: Page,
+  routeId: string,
+  status: 'PUBLISHED' | 'RETIRED',
+): Promise<void> {
+  await expect(async () => {
+    const { response, body } = await reloadFor<{
+      items: { route_id: string; status: string }[];
+    }>(page, 'GET', MY_ROUTES);
+    await expectStatus(response, 200, 'GET /v1/me/routes');
+    expect(body?.items.find((r) => r.route_id === routeId)?.status).toBe(status);
+  }, `la ruta debía quedar proyectada como ${status}`).toPass({ timeout: 60_000 });
 }
 
 async function newPage(browser: Browser): Promise<Page> {
@@ -157,8 +199,8 @@ test.describe('HU026 Rutas del organizador contra el BFF web @integrado', () => 
     const item = page.locator(`li[data-route="${route.route_id}"]`);
     await expect(item).toContainText('42,3 km');
 
-    // La lista la entrega el BFF tras recargar.
-    await page.reload();
+    // La lista la entrega el BFF tras recargar, cuando la proyección la incluye.
+    await waitForProjectedRoute(page, route.route_id, 'PUBLISHED');
     await expect(item).toContainText('Publicada');
 
     // CA4: otro organizador no puede retirarla.
@@ -178,7 +220,7 @@ test.describe('HU026 Rutas del organizador contra el BFF web @integrado', () => 
     await item.getByRole('button', { name: 'Sí, retirar' }).click();
     await expectStatus(await retired, 200, 'POST /v1/routes/{id}/retire');
     await expect(item).toContainText('Retirada');
-    await page.reload();
+    await waitForProjectedRoute(page, route.route_id, 'RETIRED');
     await expect(item).toContainText('Retirada');
   });
 });
