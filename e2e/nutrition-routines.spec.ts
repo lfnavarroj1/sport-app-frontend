@@ -351,6 +351,8 @@ test.describe('HU030 Rutinas de alimentación del profesional (simulador del con
   test('una versión vencida no retira y ofrece actualizar la lista', async ({ page }) => {
     const { routines: simulation } = await loginAs(page);
     await openRoutines(page);
+    // Se cambia el simulador cuando la lista ya llegó; antes, la página leería la versión 2.
+    await expect(items(page)).toHaveCount(2);
     // Otra sesión cambió la rutina: la vigente es la versión 2.
     simulation.routines = simulation.routines.map((routine, index) =>
       index === 0 ? { ...routine, version: 2 } : routine,
@@ -380,6 +382,7 @@ test.describe('HU030 Rutinas de alimentación del profesional (simulador del con
   test('CA4: una rutina que no existe o no es propia no se retira', async ({ page }) => {
     const { routines: simulation } = await loginAs(page);
     await openRoutines(page);
+    await expect(items(page)).toHaveCount(2);
     // El backend ya no la reconoce como del profesional: `404 template_not_found`.
     simulation.routines = simulation.routines.slice(1);
     const target = items(page).first();
