@@ -1,0 +1,301 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="routine-form"
+  data-testid="routine-form"
+>
+  @if (summary().length > 0) {
+    <div class="routine-form__errors" role="alert" tabindex="-1" data-testid="routine-errors">
+      <p>{{ 'training.nutrition.routines.errors.rulesTitle' | translate }}</p>
+      <ul>
+        @for (item of summary(); track $index) {
+          <li>
+            {{
+              'training.nutrition.routines.issues.item'
+                | translate
+                  : {
+                      field: (item.field.key | translate: item.field.params),
+                      rule: (item.issue | translate),
+                    }
+            }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <fieldset class="routine-form__group">
+    <legend>{{ 'training.nutrition.routines.sections.routine' | translate }}</legend>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.nutrition.routines.fields.title' | translate }}</mat-label>
+      <input matInput formControlName="title" [maxlength]="limits.titleMax" required />
+      <mat-hint>{{
+        'training.nutrition.routines.hints.title'
+          | translate: { min: limits.titleMin, max: limits.titleMax }
+      }}</mat-hint>
+      <mat-error><app-routine-field-error [control]="form.controls.title" /></mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'training.nutrition.routines.fields.description' | translate }}</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        rows="4"
+        [maxlength]="limits.descriptionMax"
+        required
+      ></textarea>
+      <mat-hint>{{
+        'training.nutrition.routines.hints.description' | translate: { max: limits.descriptionMax }
+      }}</mat-hint>
+      <mat-error><app-routine-field-error [control]="form.controls.description" /></mat-error>
+    </mat-form-field>
+    <div class="routine-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.nutrition.routines.fields.goal' | translate }}</mat-label>
+        <mat-select formControlName="goal" required>
+          @for (goal of goals; track goal) {
+            <mat-option [value]="goal">{{
+              'training.templates.goals.' + goal | translate
+            }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-routine-field-error [control]="form.controls.goal" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.nutrition.routines.fields.sport' | translate }}</mat-label>
+        <mat-select formControlName="sport">
+          <mat-option [value]="null">{{
+            'training.nutrition.routines.values.noSport' | translate
+          }}</mat-option>
+          @for (sport of sports; track sport) {
+            <mat-option [value]="sport">{{ 'training.sports.' + sport | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'training.nutrition.routines.hints.sport' | translate }}</mat-hint>
+        <mat-error><app-routine-field-error [control]="form.controls.sport" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.nutrition.routines.fields.dietaryPattern' | translate }}</mat-label>
+        <mat-select formControlName="dietaryPattern" required>
+          @for (pattern of patterns; track pattern) {
+            <mat-option [value]="pattern">{{
+              'profile.nutrition.patterns.' + pattern | translate
+            }}</mat-option>
+          }
+        </mat-select>
+        <mat-error><app-routine-field-error [control]="form.controls.dietaryPattern" /></mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'training.nutrition.routines.fields.durationDays' | translate }}</mat-label>
+        <input
+          matInput
+          type="number"
+          step="1"
+          inputmode="numeric"
+          formControlName="durationDays"
+          [min]="limits.daysMin"
+          [max]="limits.daysMax"
+          required
+        />
+        <mat-hint>{{
+          'training.nutrition.routines.hints.durationDays'
+            | translate: { min: limits.daysMin, max: limits.daysMax }
+        }}</mat-hint>
+        <mat-error><app-routine-field-error [control]="form.controls.durationDays" /></mat-error>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset
+    class="routine-form__group"
+    formGroupName="containsAllergens"
+    data-testid="routine-allergens"
+    aria-describedby="routine-allergens-hint routine-allergens-rule"
+  >
+    <legend>{{ 'training.nutrition.routines.fields.containsAllergens' | translate }}</legend>
+    <p class="routine-form__note" id="routine-allergens-hint">
+      {{ 'training.nutrition.routines.hints.containsAllergens' | translate }}
+    </p>
+    <div class="routine-form__options">
+      @for (allergen of allergens; track allergen) {
+        <mat-checkbox [formControlName]="allergen">{{
+          'profile.nutrition.allergies.' + allergen | translate
+        }}</mat-checkbox>
+      }
+    </div>
+    <p class="routine-form__rule" id="routine-allergens-rule" aria-live="polite">
+      @if (allergensRule(); as rule) {
+        <span data-testid="routine-allergens-error">{{ rule | translate }}</span>
+      }
+    </p>
+  </fieldset>
+
+  <fieldset class="routine-form__group" formArrayName="dailyMeals" data-testid="routine-meals">
+    <legend>{{ 'training.nutrition.routines.fields.dailyMeals' | translate }}</legend>
+    <p class="routine-form__note">
+      {{
+        'training.nutrition.routines.hints.dailyMeals'
+          | translate: { min: limits.mealsMin, max: limits.mealsMax }
+      }}
+    </p>
+    @for (mealGroup of meals.controls; track mealGroup; let m = $index) {
+      <fieldset class="routine-form__meal" [formGroupName]="m" [attr.data-meal]="m">
+        <legend>{{ 'training.nutrition.routines.mealN' | translate: { n: m + 1 } }}</legend>
+        <div class="routine-form__meal-head">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'training.nutrition.routines.fields.meal' | translate }}</mat-label>
+            <mat-select formControlName="meal" required>
+              @for (type of mealTypes; track type) {
+                <mat-option [value]="type">{{
+                  'training.nutrition.mealTypes.' + type | translate
+                }}</mat-option>
+              }
+            </mat-select>
+            <mat-error><app-routine-field-error [control]="mealGroup.controls.meal" /></mat-error>
+          </mat-form-field>
+          <button
+            mat-button
+            type="button"
+            [disabled]="!canRemoveMeal()"
+            [attr.aria-label]="
+              'training.nutrition.routines.actions.removeMealN' | translate: { n: m + 1 }
+            "
+            (click)="removeMeal(m)"
+          >
+            <mat-icon aria-hidden="true">delete</mat-icon>
+            {{ 'training.nutrition.routines.actions.removeMeal' | translate }}
+          </button>
+        </div>
+        @if (mealRules().get(m); as rule) {
+          <p class="routine-form__rule" role="alert" [attr.data-testid]="'routine-meal-error-' + m">
+            {{ rule | translate }}
+          </p>
+        }
+
+        <div formArrayName="items" class="routine-form__items">
+          <p class="routine-form__note">
+            {{
+              'training.nutrition.routines.hints.items'
+                | translate: { min: limits.itemsMin, max: limits.itemsMax }
+            }}
+          </p>
+          @for (food of mealGroup.controls.items.controls; track food; let i = $index) {
+            <div
+              class="routine-form__item"
+              [formGroupName]="i"
+              [attr.data-item]="i"
+              [attr.data-testid]="'routine-item-' + m + '-' + i"
+              role="group"
+              [attr.aria-label]="
+                'training.nutrition.routines.itemN' | translate: { meal: m + 1, n: i + 1 }
+              "
+            >
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{
+                  'training.nutrition.routines.fields.food' | translate: { n: i + 1 }
+                }}</mat-label>
+                <mat-select formControlName="foodCode" required>
+                  @for (group of foodGroups(); track group.category) {
+                    <mat-optgroup
+                      [label]="'training.nutrition.categories.' + group.category | translate"
+                    >
+                      @for (option of group.foods; track option.code) {
+                        <mat-option [value]="option.code">{{
+                          option.labelKey | translate
+                        }}</mat-option>
+                      }
+                    </mat-optgroup>
+                  }
+                </mat-select>
+                <mat-error
+                  ><app-routine-field-error [control]="food.controls.foodCode"
+                /></mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{
+                  'training.nutrition.routines.fields.portions' | translate: { n: i + 1 }
+                }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  step="1"
+                  inputmode="numeric"
+                  formControlName="portions"
+                  [min]="limits.portionsMin"
+                  [max]="limits.portionsMax"
+                  required
+                />
+                <mat-hint>{{
+                  'training.nutrition.routines.hints.portions'
+                    | translate: { min: limits.portionsMin, max: limits.portionsMax }
+                }}</mat-hint>
+                <mat-error
+                  ><app-routine-field-error [control]="food.controls.portions"
+                /></mat-error>
+              </mat-form-field>
+              <button
+                mat-icon-button
+                type="button"
+                class="routine-form__remove"
+                [disabled]="mealGroup.controls.items.length <= limits.itemsMin"
+                [attr.aria-label]="
+                  'training.nutrition.routines.actions.removeItemN'
+                    | translate: { meal: m + 1, n: i + 1 }
+                "
+                (click)="removeItem(m, i)"
+              >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+              </button>
+            </div>
+          }
+          <div>
+            <button
+              mat-stroked-button
+              type="button"
+              [attr.data-testid]="'routine-add-item-' + m"
+              [disabled]="mealGroup.controls.items.length >= limits.itemsMax"
+              [attr.aria-label]="
+                'training.nutrition.routines.actions.addItemTo' | translate: { n: m + 1 }
+              "
+              (click)="addItem(m)"
+            >
+              <mat-icon aria-hidden="true">add</mat-icon>
+              {{ 'training.nutrition.routines.actions.addItem' | translate }}
+            </button>
+          </div>
+        </div>
+      </fieldset>
+    }
+    <div>
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="routine-add-meal"
+        [disabled]="!canAddMeal()"
+        (click)="addMeal()"
+      >
+        <mat-icon aria-hidden="true">add</mat-icon>
+        {{ 'training.nutrition.routines.actions.addMeal' | translate }}
+      </button>
+    </div>
+  </fieldset>
+
+  <p class="routine-form__note" role="note" data-testid="routine-disclaimer">
+    {{ 'training.nutrition.routines.disclaimer' | translate }}
+  </p>
+
+  <div class="routine-form__actions">
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{
+        (submitting()
+          ? 'training.nutrition.routines.actions.publishing'
+          : 'training.nutrition.routines.actions.publish'
+        ) | translate
+      }}
+    </button>
+    <button mat-stroked-button type="button" [disabled]="submitting()" (click)="cancelled.emit()">
+      {{ 'training.nutrition.routines.actions.cancel' | translate }}
+    </button>
+  </div>
+</form>

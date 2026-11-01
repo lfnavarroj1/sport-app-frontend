@@ -5,6 +5,7 @@ import {
   CREATE_NUTRITION_PLAN_RESPONSES,
   GET_NUTRITION_PLAN_RESPONSES,
 } from '../src/testing/bff-web/nutrition.fixtures';
+import { simulateFoodIntakes } from './support/food-intakes-simulator';
 import {
   NutritionPlansStore,
   NutritionSimulation,
@@ -30,6 +31,8 @@ async function loginAs(
   const session = await simulateSession(page, sessionFor(actorType));
   configure(session);
   const simulation = await simulateNutrition(page, store);
+  // HU013: «Mi alimentación» también consulta los consumos; sin ellos, colección vacía.
+  await simulateFoodIntakes(page);
   await login(page);
   // El ingreso termina al llegar al inicio del actor: navegar antes perdería la sesión.
   await expect(page).toHaveURL(/\/(deportista|profesional|organizador)\/inicio$/);
@@ -286,8 +289,8 @@ test.describe('HU014 Crear plan de alimentación (simulador del contrato) @simul
     const empty = await newPage(browser);
     await loginAs(empty, 'athlete');
     await empty.locator('mat-sidenav [data-menu-item="athlete-nutrition"]').click();
-    await expect(empty.getByTestId('state-empty')).toContainText(
-      'Aún no tienes planes de alimentación',
-    );
+    await expect(
+      empty.getByTestId('athlete-nutrition-plans').getByTestId('state-empty'),
+    ).toContainText('Aún no tienes planes de alimentación');
   });
 });

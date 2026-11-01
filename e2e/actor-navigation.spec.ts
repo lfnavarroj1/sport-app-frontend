@@ -142,16 +142,17 @@ test.describe('HU003 Inicio y navegación por actor (simulador del contrato) @si
     await expect(menuItem(page, 'event-create')).toHaveCount(0);
   });
 
-  test('las opciones «Próximamente» no navegan; «Inicio» sí', async ({ page }) => {
-    // Desde HU018 el organizador ya no tiene opciones «Próximamente»: se usa el
-    // historial de molestias o lesiones del profesional (HU012).
+  test('el historial de molestias o lesiones ya navega; «Inicio» también', async ({ page }) => {
+    // Desde HU012 y HU013 ninguna opción web es «Próximamente»: que una opción así
+    // no navegue lo cubren las pruebas de componente del menú y del inicio
+    // (`actor-shell.spec.ts`, `actor-home-page.spec.ts`) con una opción marcada
+    // como no disponible solo durante la prueba.
     await loginAs(page, 'service_provider');
 
-    const upcoming = menuItem(page, 'health-history');
-    await expect(upcoming).toContainText('Próximamente');
-    await expect(upcoming.locator('a, button')).toHaveCount(0);
-    await upcoming.click();
-    await expect(page).toHaveURL(/\/profesional\/inicio$/);
+    const health = menuItem(page, 'health-history');
+    await expect(health).toHaveAttribute('href', '/profesional/historial/salud');
+    await expect(health).toContainText('Historial de molestias o lesiones');
+    await expect(health).not.toContainText('Próximamente');
 
     const home = menu(page).getByRole('link', { name: 'Inicio' });
     await expect(home).toHaveAttribute('href', '/profesional/inicio');

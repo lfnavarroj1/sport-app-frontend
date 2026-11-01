@@ -75,6 +75,15 @@ export interface AvailabilityIntervalDto {
   readonly capacity: number;
 }
 
+/**
+ * Esquema `CatalogInterval` (0.32.0): el intervalo del catálogo con su
+ * identificador. La web no lo usa; se declara para que el transporte corresponda
+ * al contrato. Las solicitudes de HU015 siguen con `AvailabilityInterval`.
+ */
+export interface CatalogIntervalDto extends AvailabilityIntervalDto {
+  readonly availability_id: string;
+}
+
 /** Esquema `CatalogService`. */
 export interface CatalogServiceDto {
   readonly service_id: string;
@@ -84,7 +93,7 @@ export interface CatalogServiceDto {
   readonly category: ServiceCategoryDto;
   readonly modality: ServiceModalityDto;
   readonly price: ServicePriceDto;
-  readonly availability: readonly AvailabilityIntervalDto[];
+  readonly availability: readonly CatalogIntervalDto[];
   /** `false` solo con `availability=all` y sin intervalos en el periodo. */
   readonly available: boolean;
 }

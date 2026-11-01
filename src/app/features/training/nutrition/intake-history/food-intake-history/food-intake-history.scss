@@ -1,0 +1,80 @@
+// Historial de consumos (HU013) sobre `training-page.scss` y `nutrition-page.scss`.
+
+.intakes__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.5rem 1rem;
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+
+.intakes__filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 3.5rem;
+}
+
+.intakes__hint,
+.intakes__field-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font: var(--mat-sys-body-small);
+}
+
+.intakes__hint {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.intakes__field-error {
+  color: var(--mat-sys-error);
+}
+
+.intakes__days {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.intakes__day-title {
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+  font-weight: 700;
+}
+
+.intakes__meal-title {
+  margin: 0.75rem 0 0.25rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.intakes__entries,
+.intakes__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intakes__entry {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+.intakes__time {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.intakes__items li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  justify-content: space-between;
+}

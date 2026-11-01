@@ -202,6 +202,19 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         hu: 'HU011',
         available: true,
       },
+      // HU012: «Mi salud», historial propio de molestias, incapacidades o lesiones;
+      // opción base del deportista, sin capacidad de plan (ADR-037).
+      {
+        id: 'athlete-health',
+        group: 'health',
+        order: 50,
+        icon: 'healing',
+        route: '/deportista/salud',
+        permission: null,
+        capability: null,
+        hu: 'HU012',
+        available: true,
+      },
       // HU020: catálogo de servicios y su disponibilidad; opción base del deportista,
       // sin capacidad de plan (ADR-038). Medicina deportiva la filtra el BFF.
       {
@@ -216,7 +229,7 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         available: true,
       },
       // «Mi alimentación»: opción base del deportista, sin capacidad de plan (ADR-037).
-      // HU014 aporta la sección «Planes de alimentación»; los consumos serán HU013.
+      // HU014 aporta la sección «Planes de alimentación» y HU013 la de consumos.
       {
         id: 'athlete-nutrition',
         group: 'nutrition',
@@ -394,7 +407,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'training.history.view_assigned',
         'HU011',
       ),
-      upcoming(
+      // HU012: reportes de salud de los deportistas que autorizaron al profesional (ADR-037).
+      permissionOption(
         'health-history',
         'health',
         140,
@@ -403,7 +417,8 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         'health.history.view_assigned',
         'HU012',
       ),
-      upcoming(
+      // HU013: consumos de los deportistas que autorizaron al profesional (ADR-037).
+      permissionOption(
         'nutrition-history',
         'nutrition',
         150,
@@ -421,6 +436,16 @@ export const NAVIGATION: Readonly<Record<ActorType, ActorNavigation>> = {
         '/profesional/alimentacion/planes',
         'nutrition.plan.author',
         'HU014',
+      ),
+      // HU030: el profesional publica rutinas de alimentación para sugerirlas en el móvil (ADR-041).
+      permissionOption(
+        'nutrition-routines',
+        'nutrition',
+        165,
+        'restaurant_menu',
+        '/profesional/alimentacion/plantillas',
+        'nutrition.plan.author',
+        'HU030',
       ),
       permissionOption(
         'integrated-calendar',

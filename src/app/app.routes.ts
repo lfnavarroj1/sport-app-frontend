@@ -83,6 +83,15 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU012: «Mi salud», historial propio de molestias, incapacidades o lesiones
+      // (ADR-037). Opción base, sin capacidad de plan.
+      path: 'salud',
+      loadChildren: () =>
+        import('./features/training/health/health.routes').then(
+          (module) => module.ATHLETE_HEALTH_ROUTES,
+        ),
+    },
+    {
       // HU011: historial propio de entrenamiento.
       path: 'historial/entrenamientos',
       loadChildren: () =>
@@ -91,7 +100,7 @@ export const routes: Routes = [
         ),
     },
     {
-      // HU014: sección «Planes de alimentación» de «Mi alimentación» (ADR-037).
+      // «Mi alimentación» (ADR-037): planes de HU014 y consumos de HU013.
       path: 'alimentacion',
       loadChildren: () =>
         import('./features/training/nutrition/nutrition.routes').then(
@@ -244,11 +253,35 @@ export const routes: Routes = [
         ),
     },
     {
+      // HU030: el profesional publica rutinas de alimentación y retira las propias (ADR-041).
+      path: 'alimentacion/plantillas',
+      loadChildren: () =>
+        import('./features/training/nutrition/routines/nutrition-routines.routes').then(
+          (module) => module.NUTRITION_ROUTINES_ROUTES,
+        ),
+    },
+    {
+      // HU013: consumos de alimentos de un deportista que autorizó al profesional (ADR-037).
+      path: 'historial/alimentacion',
+      loadChildren: () =>
+        import('./features/training/nutrition/nutrition.routes').then(
+          (module) => module.PROFESSIONAL_NUTRITION_HISTORY_ROUTES,
+        ),
+    },
+    {
       // HU011: historial de un deportista que autorizó al profesional.
       path: 'historial/entrenamientos',
       loadChildren: () =>
         import('./features/training/history/history.routes').then(
           (module) => module.PROFESSIONAL_HISTORY_ROUTES,
+        ),
+    },
+    {
+      // HU012: historial de salud de un deportista que autorizó al profesional (ADR-037).
+      path: 'historial/salud',
+      loadChildren: () =>
+        import('./features/training/health/health.routes').then(
+          (module) => module.PROFESSIONAL_HEALTH_HISTORY_ROUTES,
         ),
     },
     {
